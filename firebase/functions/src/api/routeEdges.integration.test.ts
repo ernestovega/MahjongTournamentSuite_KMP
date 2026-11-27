@@ -3,7 +3,9 @@ import { randomUUID } from "node:crypto";
 import { after, before, describe, it, mock } from "node:test";
 
 import { db } from "../firebase";
+import * as playerHandService from "../services/playerHandService";
 import * as roundClockService from "../services/roundClockService";
+import * as usersService from "../services/usersService";
 import { seedOrganization, seedTournament } from "../testing/firestoreFixtures";
 import { createAccount, requireAuthEmulator, startServer, type TestAccount, type TestServer } from "../testing/authFixtures";
 
@@ -94,5 +96,34 @@ describe("route edges", () => {
     await db.doc(`tournaments/${empty}`).update({ numPlayers: 0 });
     const response = await server.request("GET", `/tournaments/${empty}/score-sheets?mode=tables`, { token: admin.token });
     assert.equal(response.status, 409);
+  });
+
+  it("answers a penalty of a registered player with what the service saved", async () => {
+    const player = await createAccount({ role: "PLAYER", playerOf: [tournamentId] });
+    const saving = mock.method(playerHandService, "addPenalties", async () => ({ version: 2 }));
+    try {
+      const response = await server.request("POST", `/player/tournaments/${tournamentId}/tables/1/1/penalties`, {
+        token: player.token, body: { playerEastPenalty: "-10", expectedVersion: 1 },
+      });
+      assert.equal(response.status, 200);
+      assert.deepEqual(response.body, { version: 2 });
+      const call = saving.mock.calls[0].arguments[0] as unknown as { uid: string; expectedVersion: number; roundId: number };
+      assert.equal(call.uid, player.uid);
+      assert.equal(call.expectedVersion, 1);
+    } finally {
+      saving.mock.restore();
+    }
+  });
+
+  it("keeps the last enabled super admin from deleting the own account", async () => {
+    const last = await createAccount({ role: "SUPER_ADMIN" });
+    const count = mock.method(usersService, "countEnabledSuperAdmins", async () => 1);
+    try {
+      const response = await server.request("DELETE", "/auth/me", { token: last.token });
+      assert.equal(response.status, 400);
+      assert.match(String((response.body as { message?: string }).message), /last enabled super admin/);
+    } finally {
+      count.mock.restore();
+    }
   });
 });

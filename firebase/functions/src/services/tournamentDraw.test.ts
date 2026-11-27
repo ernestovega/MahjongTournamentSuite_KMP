@@ -98,3 +98,9 @@ test("a draw in blocks may repeat a pair, but not more than the blocks allow", (
   const rowsOnly = [1, 2, 3, 4, 5, 6].flatMap((round) => rows().map((t) => ({ ...t, roundId: round })));
   assert.match(drawProblem(players, rowsOnly, 6, 4) ?? "", /more than 4 rounds/);
 });
+
+test("a table number beyond the tables of a round is refused", () => {
+  const tables = validTables();
+  tables[0].tableId = 5;
+  assert.match(drawProblem(players, tables, 2, 4) ?? "", /The table of round 1 table 5 is out of range/);
+});
