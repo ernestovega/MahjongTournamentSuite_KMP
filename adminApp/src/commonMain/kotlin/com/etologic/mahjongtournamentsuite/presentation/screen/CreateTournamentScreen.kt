@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,7 +21,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PrimaryScrollableTabRow
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -57,6 +55,7 @@ import com.etologic.mahjongtournamentsuite.domain.validation.TournamentDateRange
 import com.etologic.mahjongtournamentsuite.domain.validation.TournamentPlayerCountValidator
 import com.etologic.mahjongtournamentsuite.presentation.components.AgendaItemEditorRow
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import com.etologic.mahjongtournamentsuite.presentation.components.CreateProgressDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.DateField
 import com.etologic.mahjongtournamentsuite.presentation.components.DrawExplanationButton
@@ -103,6 +102,9 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
+import kotlin.time.Clock
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -163,12 +165,10 @@ import mahjongtournamentsuite.adminapp.generated.resources.tournament_organizers
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import kotlin.time.Clock
-import kotlin.time.TimeMark
-import kotlin.time.TimeSource
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as AppTextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsTextTab as Tab
 
 /** The fields of the form that can be wrong. A wrong field gets a red mark and a short text. */
 private enum class CreateField {

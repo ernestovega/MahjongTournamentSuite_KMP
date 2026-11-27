@@ -68,4 +68,17 @@ class SingleHighlightConventionTest {
         }
         assertEquals(emptyList(), offenders, "Use Card(onClick = ...) or Surface(onClick = ...), so the hover follows the round corners.")
     }
+
+    /** The chips, tabs and segmented buttons with the pink focus ring. Material's own focus layer is off. */
+    @Test
+    fun noSourceFileUsesARawChipTabOrSegmentedButton() {
+        val raw = listOf("FilterChip", "InputChip", "AssistChip", "Tab", "SegmentedButton", "SuggestionChip", "ElevatedFilterChip", "LeadingIconTab")
+        val allowed = setOf("MtsFocusRing.kt", "MtsTabs.kt", "KeyboardFocus.kt")
+        val offenders = sourceFiles().filterNot { it.name in allowed }.flatMap { file ->
+            file.readLines().mapIndexedNotNull { index, line ->
+                if (raw.any { line.trim() == "import androidx.compose.material3.$it" }) "${file.path}:${index + 1}: ${line.trim()}" else null
+            }
+        }
+        assertEquals(emptyList(), offenders, "Use MtsFilterChip, MtsInputChip, MtsTab, MtsTextTab, MtsSegmentedButton or FocusedAssistChip, so the keyboard focus shows.")
+    }
 }

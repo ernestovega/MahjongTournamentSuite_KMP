@@ -20,7 +20,6 @@ import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
-import androidx.compose.material3.InputChip
 import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -71,6 +70,7 @@ import mahjongtournamentsuite.ui.generated.resources.stats_filter_tournament_cou
 import mahjongtournamentsuite.ui.generated.resources.stats_filters
 import mahjongtournamentsuite.ui.generated.resources.stats_filters_title
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsInputChip as InputChip
 
 /**
  * The filters of the statistics screen, the same in both apps. They combine. A null field keeps everything.

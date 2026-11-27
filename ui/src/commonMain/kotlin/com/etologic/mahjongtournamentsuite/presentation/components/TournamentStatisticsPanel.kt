@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -37,6 +36,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.forRound
 import com.etologic.mahjongtournamentsuite.domain.model.playedRounds
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.PlaceholderNames
+import kotlin.math.ceil
+import kotlin.math.roundToInt
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.hands_drawn
 import mahjongtournamentsuite.ui.generated.resources.hands_won_by_discard
@@ -69,8 +70,7 @@ import mahjongtournamentsuite.ui.generated.resources.stats_totals
 import mahjongtournamentsuite.ui.generated.resources.tables_completed_of
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
-import kotlin.math.ceil
-import kotlin.math.roundToInt
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsFilterChip as FilterChip
 
 /**
  * The statistics of one tournament, or of all tournaments, in the same cards as the player statistics.
