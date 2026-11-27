@@ -1269,4 +1269,7 @@ I risultati si rivelano alla premiazione da Controllo del turno.</string>
     <string name="score_sheets_chicken_on">Ha una colonna per le chicken hand, perché il torneo le conta.</string>
     <string name="score_sheets_chicken_off">Non ha una colonna per le chicken hand, perché il torneo non le conta.</string>
     <string name="score_sheets_save">Salva i fogli punteggio</string>
+    <string name="reveal_third_place">Svela il 3º posto</string>
+    <string name="reveal_second_place">Svela il 2º posto</string>
+    <string name="reveal_first_place">Svela il 1º posto</string>
 </resources>

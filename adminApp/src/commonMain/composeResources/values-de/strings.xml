@@ -1269,4 +1269,7 @@ Die Ergebnisse werden bei der Siegerehrung in der Rundensteuerung aufgedeckt.</s
     <string name="score_sheets_chicken_on">Er hat eine Spalte für Chicken Hands, weil das Turnier sie zählt.</string>
     <string name="score_sheets_chicken_off">Er hat keine Spalte für Chicken Hands, weil das Turnier sie nicht zählt.</string>
     <string name="score_sheets_save">Punktezettel speichern</string>
+    <string name="reveal_third_place">3. Platz enthüllen</string>
+    <string name="reveal_second_place">2. Platz enthüllen</string>
+    <string name="reveal_first_place">1. Platz enthüllen</string>
 </resources>

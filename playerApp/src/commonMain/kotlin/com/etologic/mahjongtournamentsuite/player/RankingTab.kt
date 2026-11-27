@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.material3.Card
@@ -291,14 +292,15 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
 /** The ranking stays as it was after [round]: the tournament hides the later results until the prize giving. */
 @Composable
 private fun RankingFrozenNotice(round: Int) {
+    // Blue, the color of neutral information (Ernesto, 2026-11-27).
     Surface(
-        color = MaterialTheme.colorScheme.secondaryContainer,
-        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        color = MtsTheme.colors.info,
+        contentColor = MtsTheme.colors.onInfo,
         shape = MaterialTheme.shapes.medium,
         modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 8.dp, end = 16.dp).testTag("ranking_frozen_notice"),
     ) {
         Row(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(Icons.Default.VisibilityOff, contentDescription = null, Modifier.size(18.dp))
+            Icon(Icons.Outlined.Info, contentDescription = null, Modifier.size(18.dp))
             Text(stringResource(Res.string.ranking_frozen_notice, round), style = MaterialTheme.typography.bodyMedium)
         }
     }

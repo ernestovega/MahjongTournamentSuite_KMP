@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -32,6 +33,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -134,6 +136,9 @@ import mahjongtournamentsuite.adminapp.generated.resources.seconds_short
 import mahjongtournamentsuite.adminapp.generated.resources.settings
 import mahjongtournamentsuite.adminapp.generated.resources.show_fewer_rows
 import mahjongtournamentsuite.adminapp.generated.resources.show_ranking_here_anyway
+import mahjongtournamentsuite.adminapp.generated.resources.reveal_first_place
+import mahjongtournamentsuite.adminapp.generated.resources.reveal_second_place
+import mahjongtournamentsuite.adminapp.generated.resources.reveal_third_place
 import mahjongtournamentsuite.adminapp.generated.resources.ranking_hidden_from_public_message
 import mahjongtournamentsuite.adminapp.generated.resources.ranking_hidden_from_public_title
 import mahjongtournamentsuite.adminapp.generated.resources.show_first_3
@@ -187,6 +192,8 @@ private fun RankingStandaloneContent(
     var remainingSeconds by remember { mutableIntStateOf(intervalSeconds) }
     var maxRowsPerScreen by remember { mutableIntStateOf(MAX_ROWS_PER_SCROLL) }
     var showTopThree by rememberSaveable { mutableStateOf(false) }
+    // The prize giving: how many of the hidden top three each page shows, from the third up (Ernesto, 2026-11-27).
+    var revealedByPage by remember { mutableStateOf(mapOf<String, Int>()) }
     // While the public cannot see the results, this screen asks before it shows them to the room.
     var showHiddenResults by rememberSaveable { mutableStateOf(false) }
     var playing by remember { mutableStateOf(false) }
@@ -227,8 +234,8 @@ private fun RankingStandaloneContent(
         }
     }
     val labels = rememberRankingLabels()
-    val pages = remember(snapshot, showTopThree, labels) {
-        snapshot?.toPages(showTopThree, labels).orEmpty()
+    val pages = remember(snapshot, showTopThree, revealedByPage, labels) {
+        snapshot?.toPages(showTopThree, revealedByPage, labels).orEmpty()
     }
     LaunchedEffect(pages.size) {
         if (pages.isNotEmpty()) pageIndex = pageIndex.coerceIn(0, pages.lastIndex)
@@ -393,7 +400,20 @@ private fun RankingStandaloneContent(
                         },
                         onToggleTheme = onToggleTheme,
                         showTopThree = showTopThree,
-                        onShowTopThreeChanged = { showTopThree = it },
+                        onShowTopThreeChanged = {
+                            showTopThree = it
+                            revealedByPage = emptyMap()
+                        },
+                        // The place that the next press shows: the lowest hidden one of the page, 3, then 2, then 1.
+                        nextReveal = currentPage?.rows?.take(3)?.indexOfLast { it.isMasked }?.takeIf { it >= 0 }?.plus(1),
+                        onReveal = {
+                            currentPage?.let { page ->
+                                // The room watches the podium: the paging stops and the page goes back to its top.
+                                playing = false
+                                revealedByPage = revealedByPage + (page.key to ((revealedByPage[page.key] ?: 0) + 1).coerceAtMost(3))
+                                scope.launch { listState.animateScrollToItem(0) }
+                            }
+                        },
                         modifier = Modifier
                             .align(if (compact) Alignment.BottomCenter else Alignment.CenterStart)
                             .padding(if (compact) 8.dp else 12.dp),
@@ -422,6 +442,9 @@ private fun RankingControls(
     onToggleTheme: () -> Unit,
     showTopThree: Boolean,
     onShowTopThreeChanged: (Boolean) -> Unit,
+    /** The place (3, 2 or 1) that [onReveal] shows on this page, or null when its top three shows. */
+    nextReveal: Int?,
+    onReveal: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val playFocusRequester = remember { FocusRequester() }
@@ -432,12 +455,14 @@ private fun RankingControls(
     val shorterIntervalFocusRequester = remember { FocusRequester() }
     val longerIntervalFocusRequester = remember { FocusRequester() }
     val themeFocusRequester = remember { FocusRequester() }
+    val revealFocusRequester = remember { FocusRequester() }
 
     val compact = LocalCompactLayout.current
     val settingsFocusRequester = remember { FocusRequester() }
     var settingsOpen by remember { mutableStateOf(false) }
     val activeFocusRequesters = buildList {
         add(playFocusRequester)
+        if (nextReveal != null) add(revealFocusRequester)
         if (pageCount > 1) {
             add(previousFocusRequester)
             add(nextFocusRequester)
@@ -487,6 +512,30 @@ private fun RankingControls(
             onCheckedChange = onShowTopThreeChanged,
             style = MaterialTheme.typography.labelSmall,
         )
+    }
+    val reveal: @Composable () -> Unit = {
+        if (nextReveal != null) {
+            FocusedButton(
+                onClick = onReveal,
+                focusRequester = revealFocusRequester,
+                // Beside the ranking the button keeps to the width of the other controls, in two lines if needed.
+                buttonModifier = focusLoopFor(revealFocusRequester)
+                    .then(if (compact) Modifier else Modifier.widthIn(max = 136.dp))
+                    .testTag("ranking_reveal_next"),
+                contentPadding = if (compact) ButtonDefaults.ContentPadding else PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+            ) {
+                ButtonText(
+                    textAlign = TextAlign.Center,
+                    text = stringResource(
+                        when (nextReveal) {
+                            3 -> Res.string.reveal_third_place
+                            2 -> Res.string.reveal_second_place
+                            else -> Res.string.reveal_first_place
+                        },
+                    ),
+                )
+            }
+        }
     }
     val pager: @Composable () -> Unit = {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -580,6 +629,7 @@ private fun RankingControls(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 playButton()
+                reveal()
                 pager()
                 FocusedIconButton(
                     onClick = { settingsOpen = true },
@@ -616,6 +666,7 @@ private fun RankingControls(
         ) {
             playButton()
             topThree()
+            reveal()
             pager()
             settings()
         }
@@ -957,7 +1008,7 @@ private fun rememberRankingLabels(): RankingLabels {
     }
 }
 
-private fun RankingSnapshot.toPages(showTopThree: Boolean, labels: RankingLabels): List<RankingPage> {
+private fun RankingSnapshot.toPages(showTopThree: Boolean, revealed: Map<String, Int>, labels: RankingLabels): List<RankingPage> {
     val slotsById = tournamentPlayers.associateBy { it.id }
     val playersByEma = basePlayers.associateBy { it.emaId }
     val teamNamesById = tournamentTeams.associate { it.id to it.name }
@@ -973,7 +1024,7 @@ private fun RankingSnapshot.toPages(showTopThree: Boolean, labels: RankingLabels
             teamHeader = labels.team,
             rows = rankings.players.map {
                 it.toRow(slotsById, playersByEma, teamNamesById, labels)
-            }.maskTopThree(!showTopThree),
+            }.maskTopThree(!showTopThree, revealed["players"] ?: 0),
         )
     }
     if (isTeams && rankings.teams.isNotEmpty()) {
@@ -982,7 +1033,7 @@ private fun RankingSnapshot.toPages(showTopThree: Boolean, labels: RankingLabels
             title = labels.teams,
             nameHeader = labels.team,
             showCountry = false,
-            rows = rankings.teams.map { it.toRow(teamNamesById, labels) }.maskTopThree(!showTopThree),
+            rows = rankings.teams.map { it.toRow(teamNamesById, labels) }.maskTopThree(!showTopThree, revealed["teams"] ?: 0),
         )
     }
     if (tournament.countChickenHands && rankings.chickenHands.isNotEmpty()) {
@@ -993,7 +1044,7 @@ private fun RankingSnapshot.toPages(showTopThree: Boolean, labels: RankingLabels
             extraHeader = labels.chickenHands,
             rows = rankings.chickenHands.map {
                 it.toRow(slotsById, playersByEma, labels)
-            }.maskTopThree(!showTopThree),
+            }.maskTopThree(!showTopThree, revealed["chicken-hands"] ?: 0),
         )
     }
     if (tournament.countBestHands && rankings.bestHands.isNotEmpty()) {
@@ -1006,14 +1057,15 @@ private fun RankingSnapshot.toPages(showTopThree: Boolean, labels: RankingLabels
             showScore = false,
             rows = rankings.bestHands.map {
                 it.toRow(slotsById, playersByEma, labels)
-            }.maskTopThree(!showTopThree),
+            }.maskTopThree(!showTopThree, revealed["best-hands"] ?: 0),
         )
     }
     return pages
 }
 
-private fun List<RankingRow>.maskTopThree(mask: Boolean): List<RankingRow> = mapIndexed { index, row ->
-    row.copy(isMasked = mask && index < 3)
+/** Hides the top three of a page, except the [revealed] of its places from the third up. */
+private fun List<RankingRow>.maskTopThree(mask: Boolean, revealed: Int): List<RankingRow> = mapIndexed { index, row ->
+    row.copy(isMasked = mask && index < 3 - revealed)
 }
 
 private fun PlayerRanking.toRow(

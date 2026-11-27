@@ -1269,4 +1269,7 @@ Los resultados se revelan en la entrega de premios desde Control de ronda.</stri
     <string name="score_sheets_chicken_on">Lleva la columna de chicken hand, porque el torneo las cuenta.</string>
     <string name="score_sheets_chicken_off">No lleva la columna de chicken hand, porque el torneo no las cuenta.</string>
     <string name="score_sheets_save">Guardar las hojas de puntuación</string>
+    <string name="reveal_third_place">Revelar 3.º puesto</string>
+    <string name="reveal_second_place">Revelar 2.º puesto</string>
+    <string name="reveal_first_place">Revelar 1.er puesto</string>
 </resources>

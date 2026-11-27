@@ -1269,4 +1269,7 @@ Resultaten visas vid prisutdelningen från Omgångskontroll.</string>
     <string name="score_sheets_chicken_on">Det har en kolumn för chicken hands, eftersom turneringen räknar dem.</string>
     <string name="score_sheets_chicken_off">Det har ingen kolumn för chicken hands, eftersom turneringen inte räknar dem.</string>
     <string name="score_sheets_save">Spara poängbladen</string>
+    <string name="reveal_third_place">Avslöja 3:e plats</string>
+    <string name="reveal_second_place">Avslöja 2:a plats</string>
+    <string name="reveal_first_place">Avslöja 1:a plats</string>
 </resources>

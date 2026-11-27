@@ -20,6 +20,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingPresenter
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController
@@ -33,6 +34,8 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TestTimeSource
 
 /** The ranking screen stays still while it is open. It loads once and asks the server nothing more. */
 @OptIn(ExperimentalTestApi::class)
@@ -72,6 +75,9 @@ class RankingScreenUiTest {
 
     private var screen = ShownScreen()
 
+    /** The buttons ignore a second press within a short time; the tests move this clock past it. */
+    private val pressClock = TestTimeSource()
+
     private fun androidx.compose.ui.test.ComposeUiTest.show(server: FakeTournamentRepository, compact: Boolean = false) {
         setContent {
             val themeController = ThemeController(ThemePreference.Light, false, {})
@@ -88,7 +94,7 @@ class RankingScreenUiTest {
                 }.koin
             }
             KoinContext(koin) {
-                CompositionLocalProvider(LocalThemeController provides themeController, LocalCompactLayout provides compact, LocalLifecycleOwner provides screen) {
+                CompositionLocalProvider(LocalThemeController provides themeController, LocalCompactLayout provides compact, LocalLifecycleOwner provides screen, LocalPressTimeSource provides pressClock) {
                     RankingStandaloneScreen(tournamentId = "t1")
                 }
             }
@@ -190,6 +196,30 @@ class RankingScreenUiTest {
         }
         press("Pause automatic paging")
         onNodeWithText("Results r1 · loaded ", substring = true).assertExists()
+    }
+
+    @Test
+    fun thePrizeGivingRevealsTheTopThreeOneByOneFromTheThird() = runComposeUiTest {
+        show(playedToday())
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Points").fetchSemanticsNodes().isNotEmpty() }
+        fun shown(text: String) = onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
+
+        // The winner and the next two hide behind "???" until the organizer reveals them.
+        assertTrue(!shown("PLAYER 1"))
+        assertTrue(!shown("PLAYER 2") && shown("PLAYER 4"))
+        onNodeWithText("Reveal 3rd place").performClick()
+        pressClock += 1.seconds
+        waitForIdle()
+        onNodeWithText("Reveal 2nd place").performClick()
+        pressClock += 1.seconds
+        waitForIdle()
+        assertTrue(!shown("PLAYER 1"), "the winner is the last one")
+        onNodeWithText("Reveal 1st place").performClick()
+        pressClock += 1.seconds
+        waitForIdle()
+
+        assertTrue(shown("PLAYER 1"))
+        assertTrue(!shown("Reveal 1st place") && !shown("Reveal 3rd place"))
     }
 
     @Test

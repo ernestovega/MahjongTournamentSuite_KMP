@@ -28,6 +28,7 @@ import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.outlined.Info
 import com.etologic.mahjongtournamentsuite.presentation.components.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.HorizontalDivider
@@ -889,9 +890,10 @@ private fun FinishedRoundsNotice(openTables: List<TableKey>, enabled: Boolean, o
  */
 @Composable
 private fun HiddenResultsNotice(fromRound: Int, revealed: Boolean, enabled: Boolean, onReveal: () -> Unit, onHideAgain: () -> Unit) {
+    // Blue with an info icon, like the notice of the frozen ranking in the player app (Ernesto, 2026-11-27).
     Surface(
-        color = MaterialTheme.colorScheme.secondaryContainer,
-        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        color = MtsTheme.colors.info,
+        contentColor = MtsTheme.colors.onInfo,
         shape = MaterialTheme.shapes.medium,
         modifier = Modifier.fillMaxWidth().testTag("hidden_results_notice"),
     ) {
@@ -900,6 +902,7 @@ private fun HiddenResultsNotice(fromRound: Int, revealed: Boolean, enabled: Bool
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            Icon(Icons.Outlined.Info, contentDescription = null, Modifier.size(18.dp))
             Text(
                 if (revealed) {
                     stringResource(Res.string.results_revealed_notice)

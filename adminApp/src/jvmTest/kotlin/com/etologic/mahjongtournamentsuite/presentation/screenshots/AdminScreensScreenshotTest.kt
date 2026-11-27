@@ -370,6 +370,19 @@ class AdminScreensScreenshotTest {
         },
     ) { RankingStandaloneScreen(ONGOING, clock = FixedClock) }
 
+    /** The prize giving: the third place shows, the button reveals the second next (the first one waits). */
+    @Test
+    fun rankingStandaloneReveal() = adminScreenshots(
+        "ranking-standalone-reveal",
+        ready = {
+            waitForText("LUCÍA MARTÍN", substring = true)
+            onAllNodesWithText(adminText("reveal_third_place")).onFirst().performClick()
+            waitForIdle()
+            Thread.sleep(1_500)
+            waitForIdle()
+        },
+    ) { RankingStandaloneScreen(ONGOING, clock = FixedClock) }
+
     @Test
     fun rankingStandalone() = adminScreenshots(
         "ranking-standalone",
