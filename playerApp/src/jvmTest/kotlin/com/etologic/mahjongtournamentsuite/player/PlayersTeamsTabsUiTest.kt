@@ -55,6 +55,9 @@ class PlayersTeamsTabsUiTest {
         rule.onNodeWithTag(PLAYER_SEARCH_TAG).performTextInput("winds")
         rule.onNodeWithText("Carla Gil").assertIsDisplayed()
         rule.onNodeWithText("Ana Lopez").assertDoesNotExist()
+
+        rule.onNodeWithTag(PLAYER_SEARCH_TAG).performTextInput("zzz")
+        rule.onNodeWithText("No player matches the search.").assertIsDisplayed()
     }
 
     @Test
