@@ -364,6 +364,24 @@ jobs:
           workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
 
+      # The accounts of the Google Play reviewers (docs/google-play-tester.md). Each one is created only when it no
+      # longer exists, always with the same email, with the password of its secret (the one in Play Console > App
+      # access). Without the secret, a missing account is only reported.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: firebase/functions/package-lock.json
+
+      - name: Google Play review accounts in production
+        working-directory: firebase/functions
+        env:
+          GOOGLE_PLAY_TESTER_PASSWORD: ${{ secrets.GOOGLE_PLAY_TESTER_PASSWORD }}
+          GOOGLE_PLAY_DELETE_TESTER_PASSWORD: ${{ secrets.GOOGLE_PLAY_DELETE_TESTER_PASSWORD }}
+        run: |
+          npm ci --no-audit --no-fund
+          npm run seed:google-play-tester:apply
+
       # Only an app whose version code is not on Google Play yet is built and uploaded.
       - name: Find the apps with a new version
         id: pending

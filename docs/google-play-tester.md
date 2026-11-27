@@ -56,3 +56,12 @@ The notes also explain how the reviewer can create an own account from ADMIN > U
 
 The link to the screen recording of the notes comes from the input `review_video_url` of the workflow, or from the
 repository variable `APP_REVIEW_VIDEO_URL`. The workflow stops when it has none.
+
+## Google Play account for the deletion test
+
+Like the App Store one: `GOOGLE_PLAY_DELETE_TESTER` (`mtsgoogleplaydelete@mahjongmadrid.com`, alias PLAY STORE REVIEWER
+DISPOSABLE ACCOUNT, player, no EMA number). The job Publish to Google Play of Deploy · Production runs
+`seed:google-play-tester:apply` before it uploads: each account is created only when it no longer exists (always the
+same email, never a second account), with the password of the secrets `GOOGLE_PLAY_TESTER_PASSWORD` and
+`GOOGLE_PLAY_DELETE_TESTER_PASSWORD`, the same ones that are in Play Console > App content > App access. Without a
+secret, a missing account is only reported.

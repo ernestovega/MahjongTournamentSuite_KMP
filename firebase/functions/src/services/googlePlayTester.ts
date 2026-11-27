@@ -23,6 +23,18 @@ export const GOOGLE_PLAY_TESTER: StoreTester = {
 };
 
 /**
+ * The account that the Google Play reviewers may delete to try the account deletion, so that GOOGLE_PLAY_TESTER stays.
+ * A player with no EMA number. Publish to Google Play creates it again, only when it no longer exists, with the
+ * password of the secret GOOGLE_PLAY_DELETE_TESTER_PASSWORD, the same one that is in Play Console (App access).
+ */
+export const GOOGLE_PLAY_DELETE_TESTER: StoreTester = {
+  email: "mtsgoogleplaydelete@mahjongmadrid.com",
+  alias: "PLAY STORE REVIEWER DISPOSABLE ACCOUNT",
+  role: "PLAYER",
+  photoPath: resolve(__dirname, "../../assets/google-play-tester.png"),
+};
+
+/**
  * The account of the App Review of Apple (docs/google-play-tester.md), like the one of Google Play. Its password is
  * only in App Store Connect (App Review Information): the workflow Publish · App Store listing makes a new one each
  * run and puts it there.
@@ -36,8 +48,8 @@ export const APP_STORE_TESTER: StoreTester = {
 
 /**
  * The account that App Review may delete to try the account deletion (Guideline 5.1.1(v)), so that the account of
- * APP_STORE_TESTER stays. A player with no EMA number. The workflow Publish · App Store listing creates it again on
- * each run, when a review deleted it, and puts its email and password in the review notes.
+ * APP_STORE_TESTER stays. A player with no EMA number. The workflow Publish · App Store listing creates it again, only
+ * when it no longer exists (always with the same email), and puts its email and password in the review notes.
  */
 export const APP_STORE_DELETE_TESTER: StoreTester = {
   email: "mtsappstoredelete@mahjongmadrid.com",
@@ -59,11 +71,6 @@ export type GooglePlayTesterReport = {
   /** True when [setPassword] changed the password of an existing account. */
   passwordSet?: boolean;
 };
-
-/** The account of the Google Play reviewers, as GOOGLE_PLAY_TESTER says. See [ensureStoreTester]. */
-export function ensureGooglePlayTester(params: { apply: boolean; password?: string }): Promise<GooglePlayTesterReport> {
-  return ensureStoreTester(GOOGLE_PLAY_TESTER, params);
-}
 
 /**
  * Makes the account of the reviewers of a store exist as [tester] says. It changes only what differs, and only with

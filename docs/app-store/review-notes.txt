@@ -3,13 +3,7 @@ Thank you for the review. Here is the information requested.
 1. SCREEN RECORDING
 - Video: {VIDEO_URL}
 - Recorded on a physical iPhone with the latest iOS, starting at app launch.
-- It shows:
-  • Browsing tournaments without an account.
-  • A live table and its hands.
-  • Ranking and statistics.
-  • Sign-in and profile editing.
-  • The admin area.
-  • In-app account deletion (Profile > Delete my account > Delete).
+- It shows: tournaments without an account, a live table, ranking, statistics, sign-in, profile, admin area and account deletion.
 - No self sign-up: tournament organizers create the accounts of their players and staff.
 - Every account can delete itself from the Profile dialog.
 - No paid content, in-app purchases, ads or subscriptions.
@@ -35,26 +29,21 @@ Thank you for the review. Here is the information requested.
   • Tap a tournament to see its tables, hands, ranking, statistics and venue.
 - Demo account (credentials in Sign-in Information):
   • An administrator.
-  • Tap the Profile button (top right) and sign in.
+  • Tap Sign in (top right; on a phone it may be in the ⋮ menu).
   • The ADMIN button of the top bar opens the management area (tournaments, registrations, tables, rounds).
 - Account deletion:
-  • Please do not delete the demo account: it is not the last administrator, so it would really be deleted and the next review would have no demo account.
+  • Please do not delete the demo account: it is not the last administrator, so it would really be deleted and the next review would have no demo account. You have these options instead:
   • Option A, a disposable account ready to delete: {DELETE_ACCOUNT_EMAIL} / {DELETE_ACCOUNT_PASSWORD}
     Sign in with it, then Profile > Delete my account > Delete.
+    We create it again for each submission when needed, so it is always there to try.
   • Option B, your own account: with the demo account open ADMIN > Users, tap +, enter an email you can read and tap "Save and send password reset".
     Set the password from the email, sign in with that account, then Profile > Delete my account > Delete.
 - No sample files are needed.
 
 4. EXTERNAL SERVICES
-- Google Firebase:
-  • Authentication (email and password).
-  • Cloud Functions (our API).
-  • Cloud Firestore (database).
-  • Cloud Storage (photos).
-  • Hosting (website and universal links).
-  • App Check with Apple App Attest (API protection).
-  • Google Analytics for Firebase (anonymous, only after consent, no IDFA, no ad tracking).
-- European Mahjong Association public player registry (names, countries, EMA numbers, photos).
+- Google Firebase: Authentication, Cloud Functions, Firestore, Storage, Hosting, App Check with Apple App Attest.
+- Google Analytics for Firebase: anonymous, only after consent, no IDFA, no ad tracking.
+- European Mahjong Association public player registry (names, countries, EMA numbers, photos): https://mahjong-europe.org (temporarily offline after a recent server problem).
 - Email (SMTP) for password resets and the support form.
 - Map link to open the venue address.
 - No payment processors and no AI services.
