@@ -340,7 +340,7 @@ private fun RankingStandaloneContent(
                                 onShowWhileRunningChange = { showOrganizerLogo = it },
                                 modifier = Modifier
                                     .align(Alignment.TopStart)
-                                    .padding(start = if (compact) 8.dp else 24.dp, top = if (compact) 20.dp else 40.dp),
+                                    .padding(start = if (compact) 8.dp else 24.dp, top = if (compact) MtsTheme.spacing.xl else 40.dp),
                             ) {
                                 OrganizationLogo(
                                     name = tournament.mainOrganizerName(),
@@ -356,7 +356,7 @@ private fun RankingStandaloneContent(
                             onShowWhileRunningChange = { showEmaLogo = it },
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
-                                .padding(end = if (compact) 8.dp else 24.dp, top = if (compact) 20.dp else 40.dp),
+                                .padding(end = if (compact) 8.dp else 24.dp, top = if (compact) MtsTheme.spacing.xl else 40.dp),
                         ) {
                             EmaLogo(size = logoSize)
                         }

@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.etologic.mahjongtournamentsuite.presentation.components.DialogBackHandler
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
@@ -157,6 +158,7 @@ internal fun ConsentScreen(onAnswer: (Boolean) -> Unit, initiallyShowDetails: Bo
 @Composable
 fun ConsentDialog(onAnswer: (Boolean) -> Unit, onDismiss: () -> Unit) {
     TrackedDialog("Consent") {
+        DialogBackHandler(onDismiss = onDismiss)
         Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
             Box(Modifier.fillMaxSize().testTag(CONSENT_DIALOG_TAG)) {
                 ConsentScreen(onAnswer = onAnswer)
