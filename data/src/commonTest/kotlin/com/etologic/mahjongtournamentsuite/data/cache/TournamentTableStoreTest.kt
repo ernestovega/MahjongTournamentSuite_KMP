@@ -302,4 +302,74 @@ class TournamentTableStoreTest {
 
         assertEquals(2, server.fullLoads)
     }
+
+    @Test
+    fun changedRoundsWithoutARoundLoaderFallBackToTheOutdatedCheck() = runTest {
+        val server = Server(table(1, 1))
+        with(server) { store.all() }
+        server.tables[TableKey(1, 1)] = table(1, 1, version = 2)
+
+        val tables = store.all(
+            ownerUid = "u1",
+            tournamentId = "t1",
+            isOutdated = { true },
+            changedRounds = { error("never asked without a round loader") },
+            fetchAll = { server.tables.values.map { it to hands() } },
+        )
+
+        assertEquals(2L, tables.single().first.version)
+    }
+
+    @Test
+    fun aRestoredCopyIsVerifiedOnceAndReloadedWhenStale() = runTest {
+        var fullLoads = 0
+        val tables = store.all(
+            ownerUid = "u1",
+            tournamentId = "t1",
+            restore = { listOf(table(1, 1) to hands()) },
+            verifyRestored = { known -> known[TableKey(1, 1)] == 1L },
+            fetchAll = {
+                fullLoads++
+                listOf(table(1, 1, version = 3) to hands())
+            },
+        )
+
+        assertEquals(1, fullLoads)
+        assertEquals(3L, tables.single().first.version)
+    }
+
+    @Test
+    fun aRestoredCopyThatIsStillFreshNeedsNoRequest() = runTest {
+        val tables = store.all(
+            ownerUid = "u1",
+            tournamentId = "t1",
+            restore = { listOf(table(1, 1) to hands()) },
+            verifyRestored = { false },
+            fetchAll = { error("never loaded") },
+        )
+
+        assertEquals(1L, tables.single().first.version)
+    }
+
+    @Test
+    fun aRestoreFinishedAfterAFullLoadKeepsTheLoadedTables() = runTest {
+        val gate = CompletableDeferred<Unit>()
+        val restoring = async {
+            store.all(
+                ownerUid = "u1",
+                tournamentId = "t1",
+                restore = {
+                    gate.await()
+                    listOf(table(1, 1, east = "old") to hands())
+                },
+                verifyRestored = { error("only a copy this call restored is verified") },
+                fetchAll = { error("never loaded") },
+            )
+        }
+        runCurrent()
+        store.all(ownerUid = "u1", tournamentId = "t1", fetchAll = { listOf(table(1, 1, version = 2, east = "new") to hands()) })
+
+        gate.complete(Unit)
+        assertEquals("new", restoring.await().single().first.playerEastId)
+    }
 }
