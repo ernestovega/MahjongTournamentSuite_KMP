@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -359,27 +360,29 @@ private fun ColumnScope.HandEditor(
     }
 
     val scoreAndChicken: @Composable RowScope.() -> Unit = {
-        KeyboardAwareOutlinedTextField(
-            value = hand.handScore,
-            onValueChange = { hand.updateHandScore(it) },
-            signedIntegerOnly = true,
-            enabled = rowEnabled,
-            isChanged = hand.hasScoreChanged,
-            isError = hand.showValidationError,
-            currentSlot = HandFieldSlot.Score,
-            rowEnabled = rowEnabled,
-            rowNavigation = navigation,
-            previousNavigation = previousNavigation,
-            nextNavigation = nextNavigation,
-            focusRequester = navigation.score,
-            label = { Text(stringResource(Res.string.score)) },
-            modifier = Modifier
-                .width(96.dp)
-                .testTag("hand-$number-score")
-                .onFocusChanged { if (!it.isFocused) hand.markResultFieldsTouched() },
-            singleLine = true,
-            textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.Center),
-        )
+        // The tag sits on a box around the field, so the tests find the field inside it.
+        Box(Modifier.testTag("hand-$number-score")) {
+            KeyboardAwareOutlinedTextField(
+                value = hand.handScore,
+                onValueChange = { hand.updateHandScore(it) },
+                signedIntegerOnly = true,
+                enabled = rowEnabled,
+                isChanged = hand.hasScoreChanged,
+                isError = hand.showValidationError,
+                currentSlot = HandFieldSlot.Score,
+                rowEnabled = rowEnabled,
+                rowNavigation = navigation,
+                previousNavigation = previousNavigation,
+                nextNavigation = nextNavigation,
+                focusRequester = navigation.score,
+                label = { Text(stringResource(Res.string.score)) },
+                modifier = Modifier
+                    .width(96.dp)
+                    .onFocusChanged { if (!it.isFocused) hand.markResultFieldsTouched() },
+                singleLine = true,
+                textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.Center),
+            )
+        }
         if (showChicken) {
             Text(
                 text = stringResource(Res.string.chicken_hand_two_lines),
