@@ -9,7 +9,7 @@ Thank you for the review. Here is the information requested.
 - No paid content, in-app purchases, ads or subscriptions.
 - Content created by users:
   • No chat, comments or posts.
-  • Players only enter the scores of their own table, checked by the organizers.
+  • Players only enter the scores of their own table.
   • An account may upload its own profile photo, which other users see next to the player's name (for example in tournament registrations).
   • Administrators can remove any profile photo, and anyone can report a photo or a name through the Contact form of the app.
   • The optional alias of an account is visible only to that account and to the organizers.
@@ -22,6 +22,7 @@ Thank you for the review. Here is the information requested.
   • Automatic seating draw.
   • Players enter the hands of their table from their phone.
   • Live tables, rankings and statistics that anyone can follow.
+  • Organizer tools: printable player ID cards and table cards, final result reports for the official EMA ranking, and tools to adapt the tournament to the unexpected (substitutes, player count changes).
 
 3. HOW TO USE IT
 - Without an account:
@@ -32,7 +33,7 @@ Thank you for the review. Here is the information requested.
   • Tap Sign in (top right; on a phone it may be in the ⋮ menu).
   • The ADMIN button of the top bar opens the management area (tournaments, registrations, tables, rounds).
 - Account deletion:
-  • Please do not delete the demo account: it is not the last administrator, so it would really be deleted and the next review would have no demo account. You have these options instead:
+  • Please do not delete the demo account: it would really be deleted and the next review would have no demo account. You have these options instead:
   • Option A, a disposable account ready to delete: {DELETE_ACCOUNT_EMAIL} / {DELETE_ACCOUNT_PASSWORD}
     Sign in with it, then Profile > Delete my account > Delete.
     We create it again for each submission when needed, so it is always there to try.
@@ -43,7 +44,7 @@ Thank you for the review. Here is the information requested.
 4. EXTERNAL SERVICES
 - Google Firebase: Authentication, Cloud Functions, Firestore, Storage, Hosting, App Check with Apple App Attest.
 - Google Analytics for Firebase: anonymous, only after consent, no IDFA, no ad tracking.
-- European Mahjong Association public player registry (names, countries, EMA numbers, photos): https://mahjong-europe.org (temporarily offline after a recent server problem).
+- European Mahjong Association public player registry (names, countries, EMA numbers, photos): https://mahjong-europe.org (temporarily offline after a server problem).
 - Email (SMTP) for password resets and the support form.
 - Map link to open the venue address.
 - No payment processors and no AI services.
