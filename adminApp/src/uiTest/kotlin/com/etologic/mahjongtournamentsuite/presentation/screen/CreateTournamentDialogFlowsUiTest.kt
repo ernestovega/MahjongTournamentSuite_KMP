@@ -348,4 +348,39 @@ class CreateTournamentDialogFlowsUiTest {
         click("Cancel")
         assertEquals(1, world.dismissed)
     }
+
+    @Test
+    fun theFirstWrongFieldOfTheGeneralTabGetsTheFocus() = runComposeUiTest {
+        val world = show()
+        field("Name").performTextInput("Open Madrid")
+        create()
+        onNodeWithText("Use 1 to 10 characters.").assertExists()
+
+        field("Short name").performTextInput("OPEN")
+        field("Players").performTextReplacement("16")
+        field("Rounds").performTextReplacement("0")
+        create()
+        onNodeWithText("Must be a positive whole number.").assertExists()
+        assertEquals(emptyList(), world.requests)
+    }
+
+    @Test
+    fun aPlaceWithoutItsNameOrItsEmailOpensTheVenueTab() = runComposeUiTest {
+        val world = show()
+        fillGeneral()
+        click("Venue")
+        field("City").performScrollTo().performTextInput("Madrid")
+        field("Contact email").performScrollTo().performTextInput("club@example.test")
+        click("General")
+        create()
+        assertTrue(count("required", substring = true) >= 1)
+
+        field("Venue name").performScrollTo().performTextInput("Club")
+        field("Address").performScrollTo().performTextInput("Calle 1")
+        field("Contact email").performScrollTo().performTextReplacement("")
+        click("General")
+        create()
+        onNodeWithText("Contact email is required.").assertExists()
+        assertEquals(emptyList(), world.requests)
+    }
 }
