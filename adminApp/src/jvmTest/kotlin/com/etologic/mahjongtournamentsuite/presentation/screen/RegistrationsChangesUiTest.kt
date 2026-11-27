@@ -255,4 +255,14 @@ class RegistrationsChangesUiTest {
         waitUntil(timeoutMillis = 10_000) { onAllNodesWithText("Make the draw?").fetchSemanticsNodes().isEmpty() }
         waitUntil(timeoutMillis = 5_000) { onAllNodes(hasText("OK")).fetchSemanticsNodes().isNotEmpty() }
     }
+
+    @Test
+    fun anExportThatCannotOpenTheSaveDialogShowsTheError() = runComposeUiTest {
+        // Without a screen the save dialog cannot open. With one it would wait for a person, so the test runs only headless.
+        if (!java.awt.GraphicsEnvironment.isHeadless()) return@runComposeUiTest
+        show(ScreenshotRegistrationRepository())
+        click("Export CSV")
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(hasText("OK")).fetchSemanticsNodes().isNotEmpty() }
+        click("OK")
+    }
 }
