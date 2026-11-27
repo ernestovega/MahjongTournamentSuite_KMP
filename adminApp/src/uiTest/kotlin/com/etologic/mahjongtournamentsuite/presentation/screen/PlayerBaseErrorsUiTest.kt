@@ -9,6 +9,7 @@ import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
@@ -19,10 +20,9 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onParent
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextReplacement
-import androidx.compose.ui.test.hasScrollToIndexAction
-import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.navigation.compose.rememberNavController
 import co.touchlab.kermit.Logger
@@ -62,8 +62,7 @@ import kotlin.time.TestTimeSource
 private class FailingRegistry(private val players: List<Player>, private val loadsBeforeFailing: Int = Int.MAX_VALUE) : PlayerRepository {
     val calls = mutableListOf<String>()
     private var loads = 0
-    override suspend fun listPlayers(refreshMode: RefreshMode): AppResult<List<Player>> =
-        if (loads++ < loadsBeforeFailing) AppResult.Success(players) else AppResult.Failure(AppError.Network)
+    override suspend fun listPlayers(refreshMode: RefreshMode): AppResult<List<Player>> = if (loads++ < loadsBeforeFailing) AppResult.Success(players) else AppResult.Failure(AppError.Network)
     override suspend fun createPlayer(player: Player): AppResult<Player> {
         calls += "create:${player.emaId}"
         return AppResult.Failure(AppError.Network)
