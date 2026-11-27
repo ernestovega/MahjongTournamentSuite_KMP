@@ -78,6 +78,20 @@ describe("document routes", () => {
     assert.equal((await post([{ ...row(1, 1), place: 0 }])).status, 400);
   });
 
+  it("makes a proof of the ID card with a logo of its own, a logo link and a schedule", async () => {
+    const png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+    const proof = (body: unknown) => server.request("POST", "/tournaments/id-card-proof", { token: admin.token, body });
+    const base = { shortName: "OPEN", year: "2026", primaryColor: "#112233" };
+
+    const withLogo = await proof({ ...base, associationLogoContentType: "image/png", associationLogoDataBase64: png });
+    assert.equal(withLogo.status, 200, message(withLogo.body));
+    const withLink = await proof({
+      ...base, associationLogoUrl: "https://example.test/logo.png",
+      roundSchedules: [{ roundId: 1, date: "2026-10-01", startTime: "10:00" }, { roundId: 2, date: "later" }, null],
+    });
+    assert.equal(withLink.status, 200, message(withLink.body));
+  });
+
   it("refuses a proof of the ID card with wrong fields or a logo too large", async () => {
     const proof = (body: unknown) => server.request("POST", "/tournaments/id-card-proof", { token: admin.token, body });
     assert.equal((await proof({ shortName: "x".repeat(40), year: "2026", primaryColor: "#112233" })).status, 400);
