@@ -109,7 +109,7 @@ Run web (Wasm):
 Run web (Wasm) on the local test backend (see `docs/test-environment.md`):
 
 ```bash
-(cd firebase/functions && npm run test-env:backend)
+(cd firebase/functions && npm run e2e:backend)
 MTS_API_TARGET=http://localhost:5055 ./gradlew :playerApp:wasmJsBrowserDevelopmentRun
 ```
 
@@ -219,13 +219,25 @@ Apply these rules to every new or changed dialog:
 ## Buttons
 
 - Every button ignores a second press within 500 ms. A double click or a double tap must never run an action twice.
-- Use the `Focused*` buttons (`FocusedButton`, `FocusedTextButton`, `FocusedOutlinedButton`, `FocusedIconButton`, `FocusedAssistChip`) when the button needs the focus halo.
+- Use the `Focused*` buttons (`FocusedButton`, `FocusedTextButton`, `FocusedOutlinedButton`, `FocusedIconButton`, `FocusedAssistChip`) when the button needs the keyboard focus ring.
 - Use the `Debounced*` buttons (`DebouncedButton`, `DebouncedTextButton`, `DebouncedOutlinedButton`, `DebouncedIconButton`, `DebouncedExtendedFloatingActionButton`) for the same look and layout as the Material button.
 - Import them with an alias, for example `import ...components.DebouncedButton as Button`.
 - Never import a raw Material button. `ButtonConventionTest` fails when a source file does.
 - The text of a button is `ButtonText`, never `Text`: every button shows its text in capitals, while screen readers
   and tests get the text as written. `ButtonTextConventionTest` fails when a button content uses `Text`.
 - Menu items, chips that toggle a filter, checkboxes and switches have no threshold on purpose. They must stay fast to use.
+
+## One Lit Area Per Control
+
+- A control lights up in one place only, in its own shape. Material buttons, chips, cards and ripples already draw
+  their hover and focus layer; never add a fill behind them.
+- `FocusHighlightContainer` draws only a focus ring in the `shape` of the control by default. Pass
+  `lightsUpContent = true` only when the control inside has `indication = null`; the container then fills its area.
+- For a custom focus mark use `Modifier.focusRing`, not a `background` that follows `collectIsHoveredAsState` or
+  `collectIsFocusedAsState`.
+- A clickable card or surface uses `Card(onClick = ...)` / `Surface(onClick = ...)`, so the ripple follows its round
+  corners. A folding card header is clickable edge to edge, with its margins inside the click area.
+- `SingleHighlightUiTest` and `SingleHighlightConventionTest` (ui jvmTest) guard these rules.
 
 ## Checkboxes, Switches And Radio Buttons
 

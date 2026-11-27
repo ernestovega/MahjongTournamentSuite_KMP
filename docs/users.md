@@ -92,13 +92,10 @@ Firebase Authentication stores the sign-in email and disabled state.
 
 The custom claims `superAdmin`, `clubAdmin`, `editor` and `player` hold the roles. The API reads the roles and the
 organizations from the account itself on each request (cached 30 seconds), not from the token, so a change works at once.
-The organizations of a club admin are in `users/{uid}.adminOrganizations`. `npm run migrate:organizations` (dry run;
-`migrate:organizations:apply` writes) gives each old tournament a placeholder organizer of its country and takes the old
-`countryAdmin` claim away.
+The organizations of a club admin are in `users/{uid}.adminOrganizations`.
 
 The application has no public sign-up endpoint. The API has no route to create the first super admin: set the
-`superAdmin: true` custom claim with the Firebase Admin SDK. `npm run migrate:role-claims` turns the old `admin` claim
-into `superAdmin` (dry run; `migrate:role-claims:apply` writes).
+`superAdmin: true` custom claim with the Firebase Admin SDK.
 
 ## Firestore assignments
 
@@ -147,24 +144,7 @@ DELETE /tournaments/{tournamentId}/members/{uid}   tournament.members
 The member list includes the assigned editors, the club admins of the organizers of the tournament and all enabled super
 admins. The last two are implicit and cannot be removed.
 
-## Full access reset
-
-The maintenance script `npm run reset:access` resets accounts and tournament assignments before the new role model starts.
-
-Deploy the new backend before this reset. The new client requires the `role` field returned by the new `whoami` endpoint.
-
-The script uses a dry run by default. Apply mode requires the project ID twice and creates a local metadata inventory before remote changes.
-
-The reset performs these actions:
-
-- keeps or creates one selected Firebase Authentication account;
-- deletes every other Firebase Authentication account;
-- deletes all user profiles and tournament membership documents;
-- creates one clean profile with the global `SUPER_ADMIN` role;
-- leaves all tournament content and EMA registry data unchanged;
-- verifies that one enabled super admin and no tournament assignments remain.
-
-Use [Firebase access reset](firebase-access-reset.md) for the commands, credential requirements, and inventory location.
+## Role rollout
 
 Use [Firebase role rollout](firebase-role-rollout.md) for the deployment order and the role checks.
 

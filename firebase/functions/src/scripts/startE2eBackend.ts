@@ -73,7 +73,7 @@ async function main(): Promise<void> {
   await writer.close();
 
   function seedTournaments(only?: string[]): void {
-    const args = ["lib/scripts/seedTestTournaments.js", "--apply", ...(only ? [`--only=${only.join(",")}`] : [])];
+    const args = ["lib/scripts/seedTestTournaments.js", "--target=emulator", "--apply", ...(only ? [`--only=${only.join(",")}`] : ["--set=edge"])];
     const seed = spawnSync(process.execPath, args, { stdio: "inherit", env: process.env });
     if (seed.status !== 0) throw new Error("The seed script failed.");
     // The statistics are written when a table is saved, so seeded tournaments need the rebuild.

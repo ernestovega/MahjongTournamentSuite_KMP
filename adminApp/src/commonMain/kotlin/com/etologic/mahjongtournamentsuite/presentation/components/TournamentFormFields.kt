@@ -335,6 +335,7 @@ private fun VisualColorWheel(
     FocusHighlightContainer(
         modifier = Modifier,
         interactionSource = interactionSource,
+        lightsUpContent = true,
     ) {
         Canvas(
             modifier = Modifier

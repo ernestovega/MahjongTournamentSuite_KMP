@@ -4,7 +4,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.screenFullBle
 import com.etologic.mahjongtournamentsuite.presentation.components.screenListPadding
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -379,13 +378,18 @@ private fun OrganizationsGrid(organizations: List<Organization>, card: @Composab
 @Composable
 private fun OrganizationCard(organization: Organization, details: String, enabled: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val interactionSource = remember { MutableInteractionSource() }
-    FocusHighlightContainer(modifier = modifier, interactionSource = interactionSource) {
+    FocusHighlightContainer(modifier = modifier, interactionSource = interactionSource, shape = CardDefaults.shape) {
+        // The card is the button, so its hover and its ripple follow its round corners.
         Card(
+            onClick = onClick,
+            enabled = enabled,
+            interactionSource = interactionSource,
             modifier = Modifier
                 .fillMaxSize()
-                .activateOnEnter(enabled, onClick)
-                .clickable(enabled = enabled, interactionSource = interactionSource, onClick = onClick),
+                .activateOnEnter(enabled, onClick),
             elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            // While the screen is busy the card only stops taking clicks. It keeps its look.
+            colors = CardDefaults.cardColors().let { it.copy(disabledContainerColor = it.containerColor, disabledContentColor = it.contentColor) },
         ) {
             Box(Modifier.fillMaxSize()) {
                 Column(

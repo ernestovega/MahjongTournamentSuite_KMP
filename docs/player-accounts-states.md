@@ -9,7 +9,7 @@ Tests: `firebase/functions/src/api/playerAccounts.integration.test.ts`, `firebas
 ## Base rules
 
 - One account has at most one EMA id. One EMA id has at most one account.
-- **The player capability exists only with an EMA id.** Giving an EMA id to an account adds the capability. Taking the EMA id away removes it. A player account cannot exist without an EMA id. `npm run audit:ema-ids` checks it, and `npm run cleanup:player-claims` fixes accounts that broke the rule.
+- **The player capability exists only with an EMA id.** Giving an EMA id to an account adds the capability. Taking the EMA id away removes it. A player account cannot exist without an EMA id. `npm run check:integrity` checks it.
 - **The slot holds a pending email.** The import writes it. Only admins read it. When an account owns the EMA id of the slot, the email of the account wins and the pending email is ignored.
 - **An email never links an account to an EMA id.** One email belongs to one account. The import refuses a file where two rows share an email, or where an account of another EMA id owns the email.
 - A slot holds a registered EMA player or nothing. There are no non-member players and no provisional EMA ids.

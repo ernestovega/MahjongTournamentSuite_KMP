@@ -3,7 +3,6 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import com.etologic.mahjongtournamentsuite.domain.model.Permission
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerCountRules
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,10 +43,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -449,8 +446,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     }
     val assignFocusRequesters = remember(players.map { it.id }) { players.map { FocusRequester() } }
     val clearFocusRequesters = remember(players.map { it.id }) { players.map { FocusRequester() } }
-    var focusedAssignRowIndex by remember { mutableStateOf<Int?>(null) }
-    var focusedClearRowIndex by remember { mutableStateOf<Int?>(null) }
 
     fun openAssignment(slotId: Int) {
         assignmentSearchQuery = ""
@@ -779,7 +774,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     // A slot with a player is not clickable. The editor must use the menu and Clear to change it.
                                     onClick = if (slot.isAssigned) null else ({ openAssignment(slot.id) }),
                                     clickFocusable = false,
-                                    highlighted = focusedAssignRowIndex == index || focusedClearRowIndex == index,
                                 ) {
                                     if (compact) {
                                         // A phone shows the player in one cell: photo, name, then the other columns as small text.
@@ -899,26 +893,12 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                         contentAlignment = Alignment.CenterEnd,
                                     ) {
                                         if (!slot.isAssigned) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .clip(MaterialTheme.shapes.small)
-                                                    .background(
-                                                        if (focusedAssignRowIndex == index) {
-                                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
-                                                        } else {
-                                                            androidx.compose.ui.graphics.Color.Transparent
-                                                        },
-                                                    )
-                                                    .padding(3.dp),
-                                            ) {
+                                            Box {
                                                 Button(
                                                     enabled = !loading && savingId == null,
                                                     onClick = { openAssignment(slot.id) },
                                                     modifier = Modifier
                                                         .focusRequester(assignFocusRequesters[filteredPlayerIndexes[index]])
-                                                        .onFocusChanged {
-                                                            focusedAssignRowIndex = if (it.isFocused) index else null
-                                                        }
                                                         .onPreviewKeyEvent { event ->
                                                             if (event.type != KeyEventType.KeyDown) {
                                                                 return@onPreviewKeyEvent false
@@ -941,26 +921,12 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                         }
                                         if (slot.isAssigned) {
                                             var actionsMenuOpen by remember { mutableStateOf(false) }
-                                            Box(
-                                                modifier = Modifier
-                                                    .clip(MaterialTheme.shapes.small)
-                                                    .background(
-                                                        if (focusedClearRowIndex == index) {
-                                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
-                                                        } else {
-                                                            androidx.compose.ui.graphics.Color.Transparent
-                                                        },
-                                                    )
-                                                    .padding(3.dp),
-                                            ) {
+                                            Box {
                                                 IconButton(
                                                     enabled = !loading && savingId == null,
                                                     onClick = { actionsMenuOpen = true },
                                                     modifier = Modifier
                                                         .focusRequester(clearFocusRequesters[filteredPlayerIndexes[index]])
-                                                        .onFocusChanged {
-                                                            focusedClearRowIndex = if (it.isFocused) index else null
-                                                        }
                                                         .onPreviewKeyEvent { event ->
                                                             if (event.type != KeyEventType.KeyDown) {
                                                                 return@onPreviewKeyEvent false
