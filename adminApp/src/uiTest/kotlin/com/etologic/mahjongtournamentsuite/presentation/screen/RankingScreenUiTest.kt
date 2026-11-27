@@ -7,12 +7,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -88,6 +92,8 @@ class RankingScreenUiTest {
         compact: Boolean = false,
         /** The other window: the control screen beside the projected ranking, which then has no buttons. */
         withControl: Boolean = false,
+        /** The control screen alone, with no projected ranking open. */
+        controlOnly: Boolean = false,
     ) {
         setContent {
             val themeController = ThemeController(ThemePreference.Light, false, {})
@@ -105,7 +111,9 @@ class RankingScreenUiTest {
             }
             KoinContext(koin) {
                 CompositionLocalProvider(LocalThemeController provides themeController, LocalCompactLayout provides compact, LocalLifecycleOwner provides screen, LocalPressTimeSource provides pressClock) {
-                    if (withControl) {
+                    if (controlOnly) {
+                        RankingControlScreen(tournamentId = "t1", onOpenProjection = {}, onBack = {})
+                    } else if (withControl) {
                         Row {
                             Box(Modifier.weight(1f)) { RankingStandaloneScreen(tournamentId = "t1", separateControls = true) }
                             Box(Modifier.weight(1f)) { RankingControlScreen(tournamentId = "t1", onOpenProjection = {}, onBack = {}) }
@@ -269,6 +277,13 @@ class RankingScreenUiTest {
         assertTrue(shown("PLAYER 1"))
         assertTrue(shown("Podium revealed"))
 
+        // The theme of the projection.
+        listOf("Dark", "Light", "System").forEach { theme ->
+            onAllNodes(hasText(theme) and hasClickAction()).onLast().performScrollTo().performClick()
+            mainClock.advanceTimeBy(600)
+            waitForIdle()
+        }
+
         // Next list from the control screen.
         onAllNodesWithContentDescription("Next ranking list").onFirst().performClick()
         mainClock.advanceTimeBy(600)
@@ -343,5 +358,13 @@ class RankingScreenUiTest {
 
         onNodeWithText("Show here anyway").performClick()
         waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Points").fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    @Test
+    fun withoutTheProjectionTheControlAsksToOpenIt() = runComposeUiTest {
+        RankingDisplayLink.reset()
+        show(playedToday(), controlOnly = true)
+
+        onNodeWithTag("ranking_control_not_open").assertExists()
     }
 }
