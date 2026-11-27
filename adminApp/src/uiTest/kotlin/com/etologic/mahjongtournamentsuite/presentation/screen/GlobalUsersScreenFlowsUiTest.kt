@@ -401,4 +401,17 @@ class GlobalUsersScreenFlowsUiTest {
         press("Cancel", last = true)
         assertEquals(0, count("ID cards"))
     }
+
+    @Test
+    fun aRequestForAnAccountNotInTheListThatTheServerRefusesShowsTheError() = runComposeUiTest {
+        val world = world(me, cy)
+        world.admin.accountRequests = listOf(AccountRequest("r9", AccountRequestKind.DISABLE, "p9", "gone@example.test", "Gone", "club@example.test", 0))
+        world.admin.failWrites = true
+        show(world)
+        awaitText("asks to disable gone@example.test")
+        click("Approve")
+        onNodeWithText("Disable account?").assertExists()
+        click("Disable")
+        awaitText("Network request failed.")
+    }
 }

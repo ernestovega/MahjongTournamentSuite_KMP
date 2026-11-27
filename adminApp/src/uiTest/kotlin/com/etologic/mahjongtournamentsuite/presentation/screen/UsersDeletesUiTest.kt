@@ -159,4 +159,16 @@ class UsersDeletesUiTest {
 
         onAllNodesWithText("Delete (0)").assertCountEquals(0)
     }
+
+    @Test
+    fun aDeleteThatFailsShowsTheErrorAndKeepsTheList() = runComposeUiTest {
+        val admin = adminWith(ann, bob).apply { failDeletesFromRequest = 1 }
+        show(admin)
+
+        onNodeWithContentDescription("ann@example.test").performClick()
+        onNodeWithText("Delete (1)").performClick()
+        onAllNodesWithText("Delete (1)").onLast().performClick()
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("OK").fetchSemanticsNodes().isNotEmpty() }
+        onNodeWithText("ann@example.test").assertExists()
+    }
 }

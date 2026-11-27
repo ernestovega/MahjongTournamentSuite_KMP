@@ -603,4 +603,19 @@ class RoleGatingUiTest {
         // Invited people are accounts without a password now. The accounts list shows them.
         onAllNodesWithText("Invited", substring = true).assertCountEquals(0)
     }
+
+    @Test
+    fun aRemovalTheServerRefusesShowsTheError() = runComposeUiTest {
+        val world = World(GlobalUserRole.CLUB_ADMIN, listOf(boss, ed.copy(canManage = true)))
+        world.admin.failWrites = true
+        show(world) { GlobalUsersScreen(rememberNavController()) }
+
+        awaitText("ed@example.test")
+        onNodeWithText("ed@example.test").performClick()
+        waitForIdle()
+        onNodeWithText("Remove from my organizations").performClick()
+        waitForIdle()
+        onNodeWithText("Remove").performClick()
+        awaitText("Network request failed.")
+    }
 }

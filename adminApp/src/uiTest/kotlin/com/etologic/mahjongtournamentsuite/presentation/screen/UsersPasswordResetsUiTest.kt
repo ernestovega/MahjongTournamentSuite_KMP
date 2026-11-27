@@ -193,4 +193,16 @@ class UsersPasswordResetsUiTest {
         onNodeWithContentDescription("ann@example.test").performClick()
         onNodeWithText("Send password reset (1)").assertIsEnabled()
     }
+
+    @Test
+    fun aSendThatFailsShowsTheError() = runComposeUiTest {
+        val admin = adminWith(ann, bob).apply { failResetsFromRequest = 1 }
+        show(admin)
+
+        onNodeWithContentDescription("ann@example.test").performClick()
+        onNodeWithText("Send password reset (1)").performClick()
+        onAllNodesWithText("Send password reset (1)").onLast().performClick()
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("OK").fetchSemanticsNodes().isNotEmpty() }
+        onAllNodesWithText("Sent").assertCountEquals(0)
+    }
 }
