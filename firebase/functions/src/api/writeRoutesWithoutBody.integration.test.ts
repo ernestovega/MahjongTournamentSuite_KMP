@@ -1,0 +1,78 @@
+import assert from "node:assert/strict";
+import { after, before, describe, it } from "node:test";
+
+import { MOUNTED_ROUTERS } from "./app";
+import { setMailTransportForTests } from "../services/mailService";
+import { seedTournament } from "../testing/firestoreFixtures";
+import { createAccount, requireAuthEmulator, startServer, type TestAccount, type TestServer } from "../testing/authFixtures";
+
+type Layer = { route?: { path: string; methods: Record<string, boolean> } };
+
+/** Every route of [methods], from the routers that the app mounts. */
+function routesOf(methods: string[]): Array<{ method: string; path: string }> {
+  return MOUNTED_ROUTERS.flatMap(([prefix, build]) =>
+    (build() as unknown as { stack: Layer[] }).stack.flatMap((layer) =>
+      layer.route == null
+        ? []
+        : Object.keys(layer.route.methods)
+          .filter((method) => methods.includes(method))
+          .map((method) => ({ method: method.toUpperCase(), path: prefix + layer.route!.path })),
+    ),
+  );
+}
+
+/**
+ * A client that sends a write without any body, not even `{}`: every route answers with a refusal or does nothing,
+ * never with a server error. Each route falls back to an empty body.
+ */
+describe("write routes without a body", () => {
+  let server: TestServer;
+  let admin: TestAccount;
+  let tournamentId = "";
+
+  before(async () => {
+    requireAuthEmulator();
+    setMailTransportForTests(async () => {});
+    server = await startServer();
+    admin = await createAccount({ role: "SUPER_ADMIN" });
+    tournamentId = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
+  });
+  after(async () => {
+    setMailTransportForTests(null);
+    await server.close();
+  });
+
+  for (const [what, options] of [["without a body", { noBody: true }], ["with a list as its body", { body: [] }]] as const) {
+    it(`answers every write ${what} with no server error`, async () => {
+      const values: Record<string, string> = {
+        tournamentId, roundId: "1", tableId: "1", playerId: "1", teamId: "1", emaId: "07720001",
+        uid: "no-such-account", roleId: "no-such-role", requestId: "no-such-request", organizationId: "no-such-organization",
+      };
+      const routes = routesOf(["post", "put", "patch"]);
+      assert.ok(routes.length > 50, `${routes.length} routes`);
+      const failures: string[] = [];
+      for (const route of routes) {
+        const path = route.path.replace(/:(\w+)/g, (_whole, name: string) => values[name] ?? name);
+        const response = await server.request(route.method, path, { token: admin.token, ...options });
+        // The open routes allow few requests from one address, so the second round may meet their limit.
+        if (response.status >= 500) failures.push(`${route.method} ${route.path}: ${response.status} ${JSON.stringify(response.body)}`);
+      }
+      assert.deepEqual(failures, []);
+    });
+  }
+
+  it("answers every read of a tournament, account or player that does not exist with no server error", async () => {
+    const values: Record<string, string> = {
+      tournamentId: "no-such-tournament", roundId: "1", tableId: "1", playerId: "1", teamId: "1", emaId: "07729999",
+      uid: "no-such-account", roleId: "no-such-role", requestId: "no-such-request", organizationId: "no-such-organization",
+      id: "no-such-id", slug: "no-such-slug", token: "no-such-token",
+    };
+    const failures: string[] = [];
+    for (const route of routesOf(["get", "delete"])) {
+      const path = route.path.replace(/:(\w+)/g, (_whole, name: string) => values[name] ?? `no-such-${name}`);
+      const response = await server.request(route.method, path, { token: admin.token });
+      if (response.status >= 500) failures.push(`${route.method} ${route.path}: ${response.status} ${JSON.stringify(response.body)}`);
+    }
+    assert.deepEqual(failures, []);
+  });
+});

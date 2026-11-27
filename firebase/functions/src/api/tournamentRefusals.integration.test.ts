@@ -75,14 +75,14 @@ describe("tournament and organization refusals", () => {
     { what: "a table that is not an object", method: "POST", path: "/tournaments", body: withTable(null), status: 400, message: /roundId/ },
     { what: "a seat that is empty", method: "POST", path: "/tournaments", body: withTable({ ...goodTable, playerIds: [1, 2, 3, null] }), status: 400, message: /playerIds entry/ },
     { what: "a venue link that is not a link", method: "POST", path: "/tournaments", body: { ...newTournament, venueMapUrl: "javascript:alert(1)" }, status: 400, message: /./ },
-    { what: "settings that are not an object", method: "PUT", path: `/tournaments/${tournamentId}/settings`, body: undefined, status: 400, message: /name is required/ },
+    { what: "settings that are not an object", method: "PUT", path: `/tournaments/${tournamentId}/settings`, body: undefined, status: 400, message: /must be JSON/ },
     { what: "a rename that is not an object", method: "PUT", path: `/tournaments/${tournamentId}`, body: undefined, status: 400, message: /name is required/ },
   ];
 
   it("answers each bad request with its status and a message", async () => {
     const wrong: string[] = [];
     for (const item of cases()) {
-      const { status, body } = await server.request(item.method, item.path, { token: admin.token, body: item.body });
+      const { status, body } = await server.request(item.method, item.path, { token: admin.token, body: item.body, noBody: "body" in item && item.body === undefined });
       const message = String((body as Body | null)?.message ?? (body as Body | null)?.error ?? "");
       if (status !== item.status || !item.message.test(message)) wrong.push(`${item.what}: HTTP ${status} ${message}`);
     }

@@ -214,6 +214,7 @@ class DefaultTournamentRepository(
         timeZone: String?,
         isPublic: Boolean?,
         showTableDiffs: Boolean?,
+        hideResultsFromRound: Int?,
     ): AppResult<Tournament> = runCatching {
         withFreshIdToken { idToken ->
             val dto = backendApi.updateTournamentSettings(
@@ -241,6 +242,7 @@ class DefaultTournamentRepository(
                     timeZone = timeZone?.trim(),
                     isPublic = isPublic,
                     showTableDiffs = showTableDiffs,
+                    hideResultsFromRound = hideResultsFromRound,
                 ),
             )
             val tournament = dto.toDomain()
@@ -251,6 +253,27 @@ class DefaultTournamentRepository(
         onSuccess = { AppResult.Success(it) },
         onFailure = { throwable ->
             logger.w(throwable) { "Updating tournament settings failed." }
+            AppResult.Failure(throwable.toTournamentAppError())
+        },
+    )
+
+    override suspend fun setResultsRevealed(tournamentId: String, revealed: Boolean): AppResult<Unit> = runCatching {
+        withFreshIdToken { idToken -> backendApi.setResultsRevealed(idToken, tournamentId, revealed) }
+        cache.markStale(GLOBAL_TOURNAMENTS_CACHE_KEY)
+    }.fold(
+        onSuccess = { AppResult.Success(Unit) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Changing the hidden results failed." }
+            AppResult.Failure(throwable.toTournamentAppError())
+        },
+    )
+
+    override suspend fun getOwnHiddenTables(tournamentId: String): AppResult<List<Pair<TableState, List<TableHand>>>> = runCatching {
+        withFreshIdToken { idToken -> backendApi.getOwnHiddenTables(idToken, tournamentId).tables.map { it.toDomain() } }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Getting the own hidden tables failed." }
             AppResult.Failure(throwable.toTournamentAppError())
         },
     )
@@ -282,6 +305,13 @@ class DefaultTournamentRepository(
         cacheSuffix = "table-qr-$perSheet-${currentLanguageTag().orEmpty()}",
         action = "Generating the QR codes of the tables",
         load = { token -> backendApi.generateTableQrCodes(token, tournamentId, perSheet) },
+    )
+
+    override suspend fun generateScoreSheets(tournamentId: String, perTable: Boolean, emaLogo: Boolean): AppResult<ByteArray> = cachedGeneratedFile(
+        tournamentId = tournamentId,
+        cacheSuffix = "score-sheets-${if (perTable) "tables" else "blank"}-${if (emaLogo) "ema" else "no-ema"}",
+        action = "Generating the score sheets",
+        load = { token -> backendApi.generateScoreSheets(token, tournamentId, perTable, emaLogo) },
     )
 
     private suspend fun cachedGeneratedFile(

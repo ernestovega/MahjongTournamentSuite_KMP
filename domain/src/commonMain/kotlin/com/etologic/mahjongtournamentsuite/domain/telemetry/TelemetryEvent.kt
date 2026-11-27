@@ -194,6 +194,9 @@ object TelemetryOutcome {
 object TelemetryAction {
     const val TOURNAMENT_RENAMED = "tournament_renamed"
     const val TOURNAMENT_SETTINGS_UPDATED = "tournament_settings_updated"
+
+    /** The hidden results of a tournament were revealed at the prize giving, or hidden again. */
+    const val RESULTS_VISIBILITY_CHANGED = "results_visibility_changed"
     const val PLAYER_ASSIGNED = "player_assigned"
     const val PLAYER_UNASSIGNED = "player_unassigned"
     const val PLAYER_SUBSTITUTED = "player_substituted"
@@ -203,6 +206,7 @@ object TelemetryAction {
     const val ID_CARDS_EXPORTED = "id_cards_exported"
     const val ID_LIST_EXPORTED = "id_list_exported"
     const val TABLE_QR_EXPORTED = "table_qr_exported"
+    const val SCORE_SHEETS_EXPORTED = "score_sheets_exported"
     const val ID_CARD_PROOF_CREATED = "id_card_proof_created"
     const val EMA_REPORT_EXPORTED = "ema_report_exported"
     const val ACCOUNT_CREATED = "account_created"
@@ -258,6 +262,7 @@ object TelemetryAction {
     val all: List<String> = listOf(
         TOURNAMENT_RENAMED,
         TOURNAMENT_SETTINGS_UPDATED,
+        RESULTS_VISIBILITY_CHANGED,
         PLAYER_ASSIGNED,
         PLAYER_UNASSIGNED,
         PLAYER_SUBSTITUTED,
@@ -267,6 +272,7 @@ object TelemetryAction {
         ID_CARDS_EXPORTED,
         ID_LIST_EXPORTED,
         TABLE_QR_EXPORTED,
+        SCORE_SHEETS_EXPORTED,
         ID_CARD_PROOF_CREATED,
         EMA_REPORT_EXPORTED,
         ACCOUNT_CREATED,

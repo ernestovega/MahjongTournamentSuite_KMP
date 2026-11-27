@@ -1296,4 +1296,31 @@
         <item quantity="many">%1$d стран</item>
         <item quantity="other">%1$d страны</item>
     </plurals>
+    <string name="hide_results">Скрыть результаты до награждения</string>
+    <string name="hide_results_description">С выбранного раунда игроки и зрители видят столы без результатов, а рейтинг остаётся таким, каким был до этого раунда. Каждый игрок по-прежнему видит свой стол. Администраторы видят всё.
+Результаты открываются на награждении в «Управлении раундом».</string>
+    <string name="hide_results_from_round">Скрыть с раунда</string>
+    <string name="results_hidden_notice">Игроки и зрители не видят результаты с раунда %1$d. Их видят только администраторы.</string>
+    <string name="results_revealed_notice">Результаты открыты: все видят рейтинг.</string>
+    <string name="reveal_results">Открыть результаты</string>
+    <string name="reveal_results_confirm_title">Открыть результаты?</string>
+    <string name="reveal_results_confirm_message">Игроки и зрители увидят итоговый рейтинг и все результаты менее чем через минуту.</string>
+    <string name="hide_results_again">Скрыть снова</string>
+    <string name="hide_results_again_confirm_title">Снова скрыть результаты?</string>
+    <string name="hide_results_again_confirm_message">Если результаты открыли по ошибке. Кто уже видел рейтинг, его знает.</string>
+    <string name="ranking_hidden_from_public_title">Результаты скрыты от зрителей</string>
+    <string name="ranking_hidden_from_public_message">Если этот экран стоит в зале, все увидят рейтинг. Откройте результаты на награждении в «Управлении раундом».</string>
+    <string name="show_ranking_here_anyway">Всё равно показать здесь</string>
+    <string name="projection_logo_show_while_running">Показывать во время показа</string>
+    <string name="score_sheets_title">Листы записи</string>
+    <string name="score_sheets_info">Листы для печати на A4 и заполнения за столами. Всегда на английском.</string>
+    <string name="score_sheets_blank">Пустой</string>
+    <string name="score_sheets_blank_info">Один лист, чтобы копировать сколько нужно.</string>
+    <string name="score_sheets_tables">С раундом и столом</string>
+    <string name="score_sheets_tables_info">Лист для каждого стола каждого раунда, с номером раунда и стола (листов: %1$d).</string>
+    <string name="score_sheets_no_tables">У турнира пока нет столов.</string>
+    <string name="score_sheets_ema_logo">Логотип EMA</string>
+    <string name="score_sheets_chicken_on">Есть столбец для чикен-хэндов: турнир их считает.</string>
+    <string name="score_sheets_chicken_off">Нет столбца для чикен-хэндов: турнир их не считает.</string>
+    <string name="score_sheets_save">Сохранить листы записи</string>
 </resources>

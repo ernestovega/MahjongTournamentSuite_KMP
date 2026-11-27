@@ -138,6 +138,7 @@ class AdminActionTrackingTest {
 
     private val cases = listOf(
         Case(TelemetryAction.TOURNAMENT_RENAMED) { it.tournamentsPresenter.renameTournament("t1", "New name") },
+        Case(TelemetryAction.RESULTS_VISIBILITY_CHANGED) { it.tournamentsPresenter.setResultsRevealed("t1", revealed = true) },
         Case(TelemetryAction.TOURNAMENT_SETTINGS_UPDATED) {
             it.tournamentsPresenter.updateTournamentSettings(
                 tournamentId = "t1",
@@ -164,6 +165,7 @@ class AdminActionTrackingTest {
         Case(TelemetryAction.ID_CARDS_EXPORTED) { it.playersPresenter.generateIdCards("t1") },
         Case(TelemetryAction.ID_LIST_EXPORTED) { it.playersPresenter.generateIdList("t1") },
         Case(TelemetryAction.TABLE_QR_EXPORTED) { it.playersPresenter.generateTableQr("t1", 4) },
+        Case(TelemetryAction.SCORE_SHEETS_EXPORTED) { it.playersPresenter.generateScoreSheets("t1", perTable = true, emaLogo = false) },
         Case(TelemetryAction.ID_CARD_PROOF_CREATED) { it.proofPresenter.generate(IdCardProofRequest("O", "2026", "#fff")) },
         Case(TelemetryAction.EMA_REPORT_EXPORTED) { it.rankingPresenter.generateEmaReport("t1", emptyList()) },
         Case(TelemetryAction.ACCOUNT_CREATED) {

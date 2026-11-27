@@ -20,6 +20,9 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.ui.platform.testTag
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import androidx.compose.material.icons.automirrored.filled.NavigateBefore
 import androidx.compose.material.icons.automirrored.filled.NavigateNext
 import androidx.compose.material.icons.filled.Add
@@ -28,6 +31,7 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -78,6 +82,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRow
+import com.etologic.mahjongtournamentsuite.presentation.components.EmaLogo
 import com.etologic.mahjongtournamentsuite.presentation.components.OrganizationLogo
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerPhoto
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
@@ -128,6 +133,9 @@ import mahjongtournamentsuite.adminapp.generated.resources.score
 import mahjongtournamentsuite.adminapp.generated.resources.seconds_short
 import mahjongtournamentsuite.adminapp.generated.resources.settings
 import mahjongtournamentsuite.adminapp.generated.resources.show_fewer_rows
+import mahjongtournamentsuite.adminapp.generated.resources.show_ranking_here_anyway
+import mahjongtournamentsuite.adminapp.generated.resources.ranking_hidden_from_public_message
+import mahjongtournamentsuite.adminapp.generated.resources.ranking_hidden_from_public_title
 import mahjongtournamentsuite.adminapp.generated.resources.show_first_3
 import mahjongtournamentsuite.adminapp.generated.resources.show_more_rows
 import mahjongtournamentsuite.adminapp.generated.resources.team
@@ -179,7 +187,11 @@ private fun RankingStandaloneContent(
     var remainingSeconds by remember { mutableIntStateOf(intervalSeconds) }
     var maxRowsPerScreen by remember { mutableIntStateOf(MAX_ROWS_PER_SCROLL) }
     var showTopThree by rememberSaveable { mutableStateOf(false) }
+    // While the public cannot see the results, this screen asks before it shows them to the room.
+    var showHiddenResults by rememberSaveable { mutableStateOf(false) }
     var playing by remember { mutableStateOf(false) }
+    var showOrganizerLogo by rememberSaveable { mutableStateOf(true) }
+    var showEmaLogo by rememberSaveable { mutableStateOf(true) }
     val listState = rememberLazyListState()
 
     fun refresh(force: Boolean = false) = scope.launch {
@@ -262,10 +274,13 @@ private fun RankingStandaloneContent(
             Box(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
                 Box(modifier = Modifier.fillMaxSize().appFocusGroup()) {
                     val compact = LocalCompactLayout.current
+                    // On a phone the switches under the logos would cover the first rows: while paused, the table
+                    // goes down to leave them room.
+                    val compactTop = if (!playing && snapshot?.tournament != null) COMPACT_TOP_WITH_SWITCHES else 24.dp
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(if (compact) PaddingValues(start = 8.dp, top = 24.dp, end = 8.dp, bottom = 132.dp) else PaddingValues(MtsTheme.spacing.lg))
+                            .padding(if (compact) PaddingValues(start = 8.dp, top = compactTop, end = 8.dp, bottom = 132.dp) else PaddingValues(MtsTheme.spacing.lg))
                             .appFocusGroup(),
                     ) {
                         error?.let {
@@ -282,6 +297,20 @@ private fun RankingStandaloneContent(
                                 message = stringResource(Res.string.the_ranking_shows_when_the_first),
                                 modifier = Modifier.weight(1f),
                             )
+                            snapshot?.tournament?.resultsHiddenFromRound != null && !showHiddenResults -> Column(
+                                modifier = Modifier.weight(1f).fillMaxWidth().testTag("ranking_hidden_results"),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                            ) {
+                                AppEmptyState(
+                                    icon = Icons.Default.VisibilityOff,
+                                    title = stringResource(Res.string.ranking_hidden_from_public_title),
+                                    message = stringResource(Res.string.ranking_hidden_from_public_message),
+                                )
+                                FocusedButton(onClick = { showHiddenResults = true }) {
+                                    ButtonText(stringResource(Res.string.show_ranking_here_anyway))
+                                }
+                            }
                             else -> RankingPage(
                                 page = currentPage,
                                 listState = listState,
@@ -301,27 +330,44 @@ private fun RankingStandaloneContent(
                         )
                     }
                     snapshot?.tournament?.let { tournament ->
-                        // The logo of the main organizer, when it has one, in the empty corner over the controls.
-                        val organizer = tournament.organizers.firstOrNull()
-                        val logoUrl = organizer?.logoUrl?.takeIf { it.isNotBlank() } ?: tournament.associationLogoUrl?.takeIf { it.isNotBlank() }
-                        if (logoUrl != null) {
-                            OrganizationLogo(
-                                name = organizer?.name ?: tournament.name,
-                                logoUrl = logoUrl,
-                                primaryColor = tournament.primaryColor,
-                                size = if (compact) COMPACT_LOGO_SIZE else LOGO_SIZE,
+                        // The logos of the main organizer (when it has one), in the empty corner over the controls, and
+                        // of the EMA, in the empty corner at the right of the table.
+                        val logoSize = if (compact) COMPACT_LOGO_SIZE else LOGO_SIZE
+                        tournament.mainOrganizerLogo()?.let { logoUrl ->
+                            ProjectionLogo(
+                                running = playing,
+                                showWhileRunning = showOrganizerLogo,
+                                onShowWhileRunningChange = { showOrganizerLogo = it },
                                 modifier = Modifier
                                     .align(Alignment.TopStart)
-                                    .padding(start = if (compact) 8.dp else 24.dp, top = if (compact) 20.dp else 40.dp),
-                            )
+                                    .padding(start = if (compact) 8.dp else 24.dp, top = if (compact) MtsTheme.spacing.xl else 40.dp),
+                            ) {
+                                OrganizationLogo(
+                                    name = tournament.mainOrganizerName(),
+                                    logoUrl = logoUrl,
+                                    primaryColor = tournament.primaryColor,
+                                    size = logoSize,
+                                )
+                            }
+                        }
+                        ProjectionLogo(
+                            running = playing,
+                            showWhileRunning = showEmaLogo,
+                            onShowWhileRunningChange = { showEmaLogo = it },
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(end = if (compact) 8.dp else 24.dp, top = if (compact) MtsTheme.spacing.xl else 40.dp),
+                        ) {
+                            EmaLogo(size = logoSize)
                         }
                     }
                     if (playing) {
+                        // The seconds to the next page, in the bottom corner: the top corners hold the logos.
                         Text(
                             text = remainingSeconds.toString(),
                             style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold).inTextFont(),
                             modifier = Modifier
-                                .align(Alignment.TopEnd)
+                                .align(Alignment.BottomEnd)
                                 .padding(16.dp),
                         )
                     }
@@ -1040,6 +1086,9 @@ private val RankingTableWidth = 1_100.dp
 private val RankingHorizontalPadding = 32.dp
 private val RankingColumnSpacing = 28.dp
 
-/** The logo of the main organizer in the corner of the ranking: big on a wide screen, small on a phone. */
+/** The logos of the main organizer and of the EMA in the corners of the ranking: big on a wide screen, small on a phone. */
 private val LOGO_SIZE = 120.dp
 private val COMPACT_LOGO_SIZE = 44.dp
+
+/** The top of the ranking on a phone while paused: under the small logos and their switches. */
+private val COMPACT_TOP_WITH_SWITCHES = 128.dp

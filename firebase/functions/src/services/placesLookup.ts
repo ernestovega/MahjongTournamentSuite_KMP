@@ -117,11 +117,12 @@ export async function lookupPlace(
   const country = countryComponent?.shortText?.trim().toUpperCase();
   const city = componentOf(components, ["locality", "postal_town", "administrative_area_level_3", "administrative_area_level_2"])
     ?.longText?.trim();
+  const timeZone = place.timeZone?.id ?? "";
   return {
     name: place.displayName?.text?.trim() || null,
     address: withoutCountry(place.formattedAddress, countryComponent?.longText) || null,
     city: city || null,
     countryCode: country && /^[A-Z]{2}$/.test(country) ? country : null,
-    timeZone: timeZoneIdShape.test(place.timeZone?.id ?? "") ? (place.timeZone?.id ?? null) : null,
+    timeZone: timeZoneIdShape.test(timeZone) ? timeZone : null,
   };
 }

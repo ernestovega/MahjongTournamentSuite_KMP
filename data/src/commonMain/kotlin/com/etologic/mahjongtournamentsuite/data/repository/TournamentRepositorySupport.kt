@@ -95,6 +95,7 @@ internal fun TableWithHandsResponseDto.toDomain(): Pair<TableState, List<TableHa
     isCompleted = table.isCompleted,
     useTotalsOnly = table.useTotalsOnly,
     forcedZeroPlayerId = table.forcedZeroPlayerId,
+    resultsHidden = table.resultsHidden,
 ) to hands.map { hand ->
     TableHand(
         handId = hand.handId,

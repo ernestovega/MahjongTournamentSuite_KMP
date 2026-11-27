@@ -92,6 +92,7 @@ Tabs: **Tables · Ranking · Players · Teams** (team tournaments only) **· Sta
 
 - **Tables**: filters Me / Team / All, tables by round with live results.
 - **Ranking**: players (with photo), teams, chicken hands and best hand. A round button next to the search shows the ranking of **now** or as it was **after a past round**, and **Share** opens a preview of the ranking on screen and shares it as a PNG image.
+- **Hidden results**: when the tournament hides its results until the prize giving, the ranking stays frozen after the last visible round with a notice (or says it is hidden, when every round is hidden). The tables of the hidden rounds show who plays but not the results, except to the players of each table, who keep seeing and entering their own hands.
 - **Players**: search; opens the player page.
 - **Teams**: team ranking and a detail with members, tables and team statistics.
 - **Statistics** of the tournament, per round or for the whole tournament.
@@ -119,6 +120,7 @@ Tabs: **Tables · Ranking · Players · Teams** (team tournaments only) **· Sta
 - **«Table N · Round R» reminder** when you open the app, from 10 minutes before the round: «Go to my table» or «Later». It says how long until the start or since the gong, or «Waiting for the starting gong».
 - **Floating «Go to my table» button** on every screen while your round is in play.
 - **Tournament QR code**: one QR code, in the venue or on the tables, that opens «My tables» and your table in play, or the next one.
+- **Score sheets**: a PDF of A4 sheets to fill in at the tables, blank or one for each table of each round with its round and table written in. The chicken hand column follows the tournament, the last column is a «Sum 0» box, the logo of the main organizer always and the EMA logo optionally. See docs/score-sheets.md.
 
 ### 4.7 Statistics (all public)
 
@@ -195,7 +197,7 @@ Tabs: **Tables · Ranking · Players · Teams** (team tournaments only) **· Sta
 ### 5.5 During the tournament
 
 - **Round editor**: round › table, with players, seats, points and the 16 hands (winner, discard, value, «Done»), penalties and manual totals.
-- **Top bar**: Timer, Ranking, QR and Round control during the rounds; Players, Tables IDs, Stats, EMA report and Activity in a **More** menu.
+- **Top bar**: Timer, Ranking, QR and Round control during the rounds; Players, Tables IDs, Score sheets, Stats, EMA report and Activity in a **More** menu.
 - **Several editors at once**: the server always wins. If someone else saved first, a dialog says so and lists what you had typed. Before saving, it warns about hands not marked as done.
 - **Tables**: all of them, with their status and filters.
 - **Round clock**
@@ -206,6 +208,7 @@ Tabs: **Tables · Ranking · Players · Teams** (team tournaments only) **· Sta
 - **Round control** (plan B)
   - Open or close hand entry and seats by hand, per round or per table; mark tables as completed or in play.
   - A warning for **open tables in finished rounds**, with a badge per round and a Review dialog to close them in bulk.
+- **Hidden results until the prize giving**: a tournament setting hides the results from a round on (the last round by default). The server gives the public and the players the tables of those rounds without hands or points, and leaves them out of the public statistics; each player still sees their own table, and the admins see everything. **Reveal results** in Round control (with confirmation) shows them to everyone within a minute, and **Hide again** undoes a reveal by mistake. The big-screen ranking asks before it shows hidden results in the room.
 - **Big-screen ranking**: to project in the venue; it pages by itself through players, teams, chicken hands and best hands.
 - **Tournament QR code**: a big QR code in a separate window to project ("QR" button), with the logo of the main organizer (or its initial) and «Or just open the app:» with the main site. The «Tables IDs» dialog previews and downloads a PDF of cards per table (big number + QR code, tournament name in grey) with 1, 2, 4, 6 or 8 per A4 sheet.
 - **Statistics**: the same as the Player, with the same filters.

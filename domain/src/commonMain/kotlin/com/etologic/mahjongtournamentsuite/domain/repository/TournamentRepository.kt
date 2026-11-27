@@ -66,7 +66,22 @@ interface TournamentRepository {
         isPublic: Boolean? = null,
         /** Null keeps the stored value. */
         showTableDiffs: Boolean? = null,
+        /** The first round with hidden results (see [Tournament.hideResultsFromRound]). 0 turns it off. Null keeps it. */
+        hideResultsFromRound: Int? = null,
     ): AppResult<Tournament>
+
+    /**
+     * Reveals the hidden results of the tournament at the prize giving, or hides them again after a reveal by mistake.
+     */
+    suspend fun setResultsRevealed(tournamentId: String, revealed: Boolean): AppResult<Unit> =
+        AppResult.Failure(AppError.Unexpected("Revealing results is not supported"))
+
+    /**
+     * While the results are hidden, the tables of the hidden rounds where the signed-in player plays, with their
+     * results. The public tables of those rounds have none. Empty when nothing is hidden.
+     */
+    suspend fun getOwnHiddenTables(tournamentId: String): AppResult<List<Pair<TableState, List<TableHand>>>> =
+        AppResult.Success(emptyList())
 
     /** Creates the ID cards PDF. Without a sheet layout, the PDF has one card side on each page. */
     suspend fun generateTournamentIdCards(
@@ -90,6 +105,14 @@ interface TournamentRepository {
     /** A PDF with a card for each physical table (its number and the QR of the tournament), [perSheet] cards per A4. See docs/table-qr.md. */
     suspend fun generateTableQrCodes(tournamentId: String, perSheet: Int): AppResult<ByteArray> =
         AppResult.Failure(AppError.Unexpected("The QR codes of the tables are not available"))
+
+    /**
+     * A PDF with the score sheets to print, on A4: one blank sheet, or with [perTable] one sheet for each table of each
+     * round with its round and table. [emaLogo] adds the logo of the EMA beside the one of the organizer. See
+     * docs/score-sheets.md.
+     */
+    suspend fun generateScoreSheets(tournamentId: String, perTable: Boolean, emaLogo: Boolean): AppResult<ByteArray> =
+        AppResult.Failure(AppError.Unexpected("The score sheets are not available"))
 
     suspend fun generateEmaReport(
         tournamentId: String,

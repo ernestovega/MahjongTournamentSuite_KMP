@@ -21,6 +21,9 @@ describe("error reports", () => {
     assert.equal(report.role, null);
     assert.equal(report.httpStatus, null);
     assert.equal("extra" in report, false);
+    assert.equal(parseErrorReport({ ...valid, httpStatus: 600 }).httpStatus, null);
+    assert.equal(parseErrorReport({ ...valid, httpStatus: 404.5 }).httpStatus, null);
+    assert.equal(parseErrorReport({ ...valid, httpStatus: 503 }).httpStatus, 503);
   });
 
   it("keeps the report id that joins the log with Analytics", () => {

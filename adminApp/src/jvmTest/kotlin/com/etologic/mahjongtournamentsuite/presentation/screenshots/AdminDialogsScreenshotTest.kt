@@ -69,6 +69,7 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.ResetTableDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.ReviewContent
 import com.etologic.mahjongtournamentsuite.presentation.screen.RoleDraft
 import com.etologic.mahjongtournamentsuite.presentation.screen.RoleEditorDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.ScoreSheetsDialogContent
 import com.etologic.mahjongtournamentsuite.presentation.screen.SendSummaryDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.SendingDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.SlotEmailDialog
@@ -295,6 +296,15 @@ class AdminDialogsScreenshotTest {
     /** The code in a window of its own, to project it. */
     @Test
     fun tableQrProjection() = adminScreenshots("table-qr-projection") { TableQrProjectionScreen("Madrid Open 2026", "$QR_SITE/madridopen/my-table", organizerName = "Madrid Riichi Club", organizerColor = "#02B16B") }
+
+    /** The score sheets: blank or one for each table of each round, with or without the chicken hand column. */
+    @Test
+    fun scoreSheets() = dialog("score-sheets") { ScoreSheetsDialogContent(qrTournament(), onDownload = { _, _ -> }, onDismiss = {}) }
+
+    @Test
+    fun scoreSheetsPerTable() = dialog("score-sheets-tables") {
+        ScoreSheetsDialogContent(qrTournament().copy(countChickenHands = false), onDownload = { _, _ -> }, onDismiss = {}, initialPerTable = true)
+    }
 
     private fun qrTournament() = ScreenshotData.tournament(ONGOING).copy(numPlayers = 24, registration = RegistrationSettings(slug = "madridopen"))
 

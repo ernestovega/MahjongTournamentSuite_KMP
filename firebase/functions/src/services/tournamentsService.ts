@@ -20,6 +20,7 @@ import { scheduleRoundCloses } from "./matchTimeTaskService";
 import { roundClockViews, type RoundClockView } from "./roundClock";
 import { roundControlViews, type RoundControlView } from "./roundControl";
 import { defaultHand, HANDS_PER_TABLE, handsCopyUpdate } from "./tableManagerService";
+import { hiddenFromRound, parseHideResultsFromRound, readStoredHideResultsFromRound } from "./resultsVisibility";
 import {
   normalizeAgendaItems,
   normalizeMatchDuration,
@@ -85,6 +86,15 @@ export type Tournament = {
   isPublic: boolean;
   /** The player app shows the differences button on the table screen. Old documents show it. */
   showTableDiffs: boolean;
+  /**
+   * From this round on, the public sees the tables without results until an admin reveals them (the prize giving).
+   * Null: the results are always visible. See resultsVisibility.
+   */
+  hideResultsFromRound: number | null;
+  /** True after an admin revealed the hidden results. */
+  resultsRevealed: boolean;
+  /** The first round whose results the public cannot see now, or null. */
+  resultsHiddenFromRound: number | null;
   /** True while a tournament with registrations has no draw yet: no players, no tables. */
   drawPending: boolean;
   /** The registrations of the tournament, or null for a tournament that never had them. */
@@ -176,6 +186,9 @@ export async function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): P
     hasTableData: Number(d.get("tablesWithProgress") ?? 0) > 0,
     isPublic: d.get("isPublic") !== false,
     showTableDiffs: d.get("showTableDiffs") !== false,
+    hideResultsFromRound: readStoredHideResultsFromRound(d.get("hideResultsFromRound")),
+    resultsRevealed: d.get("resultsRevealed") === true,
+    resultsHiddenFromRound: hiddenFromRound({ hideResultsFromRound: d.get("hideResultsFromRound"), resultsRevealed: d.get("resultsRevealed") }),
     drawPending: d.get("drawPending") === true,
     registration: readRegistrationSettings(d.get("registration")),
     createdByUid,
@@ -483,6 +496,8 @@ export async function updateTournamentSettings(params: {
   countChickenHands?: boolean;
   isPublic?: boolean;
   showTableDiffs?: boolean;
+  /** Null turns it off. Undefined keeps it. */
+  hideResultsFromRound?: unknown;
   roundSchedules?: unknown;
   agendaItems?: unknown;
   matchDurationMinutes?: unknown;
@@ -532,6 +547,13 @@ export async function updateTournamentSettings(params: {
   if (params.countChickenHands !== undefined) update.countChickenHands = params.countChickenHands;
   if (params.isPublic !== undefined) update.isPublic = params.isPublic;
   if (params.showTableDiffs !== undefined) update.showTableDiffs = params.showTableDiffs;
+  const hideBefore = hiddenFromRound({ hideResultsFromRound: before.get("hideResultsFromRound"), resultsRevealed: before.get("resultsRevealed") });
+  let hideAfter = hideBefore;
+  if (params.hideResultsFromRound !== undefined) {
+    const round = parseHideResultsFromRound(params.hideResultsFromRound, numRounds);
+    update.hideResultsFromRound = round;
+    hideAfter = hiddenFromRound({ hideResultsFromRound: round, resultsRevealed: before.get("resultsRevealed") });
+  }
   if (params.organizerIds !== undefined) {
     if (params.organizerIds.length === 0) throw badRequest("A tournament needs at least one organizer");
     update.organizerIds = params.organizerIds;
@@ -540,6 +562,8 @@ export async function updateTournamentSettings(params: {
   await Promise.all([
     bumpGlobalDataVersion("tournaments"),
     bumpTournamentDataVersion(params.tournamentId, "rounds"),
+    // The public tables change without a save: the apps drop the tables they hold and read them again.
+    ...(hideAfter !== hideBefore ? [bumpTournamentDataVersion(params.tournamentId, "draw")] : []),
   ]);
 
   const after = await ref.get();

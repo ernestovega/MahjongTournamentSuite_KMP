@@ -1242,4 +1242,31 @@ Die Spielerzahl kann sich nur vor der ersten Hand ändern.</string>
         <item quantity="one">%1$d Land</item>
         <item quantity="other">%1$d Länder</item>
     </plurals>
+    <string name="hide_results">Ergebnisse bis zur Siegerehrung verbergen</string>
+    <string name="hide_results_description">Ab der gewählten Runde sehen Spieler und Öffentlichkeit die Tische ohne Ergebnisse, und die Rangliste bleibt wie vor dieser Runde. Jeder Spieler sieht weiter seinen eigenen Tisch. Admins sehen alles.
+Die Ergebnisse werden bei der Siegerehrung in der Rundensteuerung aufgedeckt.</string>
+    <string name="hide_results_from_round">Verbergen ab Runde</string>
+    <string name="results_hidden_notice">Spieler und Öffentlichkeit sehen die Ergebnisse ab Runde %1$d nicht. Nur Admins sehen sie.</string>
+    <string name="results_revealed_notice">Die Ergebnisse sind aufgedeckt: Alle sehen die Rangliste.</string>
+    <string name="reveal_results">Ergebnisse aufdecken</string>
+    <string name="reveal_results_confirm_title">Ergebnisse aufdecken?</string>
+    <string name="reveal_results_confirm_message">Spieler und Öffentlichkeit sehen die Endrangliste und alle Ergebnisse in weniger als einer Minute.</string>
+    <string name="hide_results_again">Wieder verbergen</string>
+    <string name="hide_results_again_confirm_title">Ergebnisse wieder verbergen?</string>
+    <string name="hide_results_again_confirm_message">Für ein versehentliches Aufdecken. Wer die Rangliste schon gesehen hat, kennt sie bereits.</string>
+    <string name="ranking_hidden_from_public_title">Die Ergebnisse sind für die Öffentlichkeit verborgen</string>
+    <string name="ranking_hidden_from_public_message">Steht dieser Bildschirm im Saal, sehen alle die Rangliste. Decke die Ergebnisse bei der Siegerehrung in der Rundensteuerung auf.</string>
+    <string name="show_ranking_here_anyway">Trotzdem hier zeigen</string>
+    <string name="projection_logo_show_while_running">Beim Laufen zeigen</string>
+    <string name="score_sheets_title">Punktezettel</string>
+    <string name="score_sheets_info">Zettel zum Drucken auf A4 und Ausfüllen an den Tischen. Sie sind immer auf Englisch.</string>
+    <string name="score_sheets_blank">Leer</string>
+    <string name="score_sheets_blank_info">Ein Zettel zum Kopieren, so oft wie nötig.</string>
+    <string name="score_sheets_tables">Mit Runde und Tisch</string>
+    <string name="score_sheets_tables_info">Ein Zettel für jeden Tisch jeder Runde, mit Runde und Tisch eingetragen (%1$d Zettel).</string>
+    <string name="score_sheets_no_tables">Das Turnier hat noch keine Tische.</string>
+    <string name="score_sheets_ema_logo">EMA-Logo</string>
+    <string name="score_sheets_chicken_on">Er hat eine Spalte für Chicken Hands, weil das Turnier sie zählt.</string>
+    <string name="score_sheets_chicken_off">Er hat keine Spalte für Chicken Hands, weil das Turnier sie nicht zählt.</string>
+    <string name="score_sheets_save">Punktezettel speichern</string>
 </resources>

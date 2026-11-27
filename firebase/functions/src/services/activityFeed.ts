@@ -402,7 +402,8 @@ export class PlayerNames {
     for (const [entry, keys] of slotsOf) {
       entry.players = keys
         .map((key) => this.slots.get(key))
-        .map((emaId) => (emaId ? this.names.get(emaId) ?? "" : ""))
+        // loadNames gave every EMA id a name, empty when the registry has none.
+        .map((emaId) => (emaId ? this.names.get(emaId)! : ""))
         .filter((name) => name !== "");
     }
   }

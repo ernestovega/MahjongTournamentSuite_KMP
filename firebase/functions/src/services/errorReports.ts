@@ -214,7 +214,7 @@ export async function loadErrorGroup(id: string, reportLimit: number, cursor?: P
   if (cursor) reportQuery = reportQuery.startAfter(cursor.at, cursor.id);
   const [group, reports] = await Promise.all([ref.get(), reportQuery.limit(reportLimit + 1).get()]);
   if (!group.exists) return null;
-  const { expireAt: _groupExpire, ...data } = group.data() ?? {};
+  const { expireAt: _groupExpire, ...data } = group.data() as Record<string, unknown>;
   const page = reports.docs.slice(0, reportLimit);
   const last = page[page.length - 1];
   const hasMore = reports.docs.length > reportLimit;

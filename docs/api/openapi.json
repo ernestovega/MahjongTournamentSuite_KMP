@@ -2,7 +2,7 @@
  "openapi": "3.1.0",
  "info": {
   "title": "Mahjong Tournament Suite API",
-  "version": "1.0.90",
+  "version": "1.0.103",
   "description": "The API of the backend: one HTTP Cloud Function (`api`, Express, Node 22, europe-southwest1).\n\n- The apps never read or write Firestore directly (the rules deny everything): everything goes through here.\n- **Authentication:** header `Authorization: Bearer <Firebase ID token>`, from `POST /auth/signIn`.\n- **App Check:** the apps send `X-Firebase-AppCheck`. Today in *monitor* mode (it is only logged).\n- **Errors:** always `{ error, message, details }` (see the `Error` schema).\n- **Limits:** 600 writes/min per address, 120 per account; 600 reads/min per address on `/public`.\n\nDocumentation with diagrams: `docs/architecture/` in the repository.\n\nOn this page «Try it out» only works for GET: changes are made from the apps."
  },
  "servers": [
@@ -4559,6 +4559,80 @@
        "type": "integer"
       },
       "description": "1, 2, 4, 6 or 8."
+     }
+    ]
+   }
+  },
+  "/tournaments/{tournamentId}/score-sheets": {
+   "get": {
+    "tags": [
+     "Exports"
+    ],
+    "summary": "PDF with the score sheets to print",
+    "description": "✏️ Admin, or an editor assigned to this tournament (`tournaments/{id}/members/{uid}`).\n\nA4 sheets to fill in by hand: a row for each of the 16 hands, the score and penalty of each seat, the running total, a box to tick once a hand adds up to 0, the table points and the signatures. The chicken hand column is there only when the tournament counts chicken hands. `?mode=blank` (default) makes one blank sheet; `?mode=tables` makes one sheet for each table of each round with its round and table. The logo of the main organizer always; `?ema=false` leaves out the logo of the EMA. Always in English. Permission `tournament.view`. See docs/score-sheets.md.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/pdf": {
+        "schema": {
+         "type": "string",
+         "format": "binary"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "parameters": [
+     {
+      "name": "tournamentId",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "type": "string"
+      },
+      "description": "Id of the tournament."
+     },
+     {
+      "name": "mode",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "string"
+      },
+      "description": "blank or tables."
+     },
+     {
+      "name": "ema",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "type": "boolean"
+      },
+      "description": "false to leave out the logo of the EMA."
      }
     ]
    }

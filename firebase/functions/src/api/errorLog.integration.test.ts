@@ -170,6 +170,16 @@ describe("error log API", () => {
     assert.deepEqual(seen, ["r5", "r4", "r3", "r2", "r1"]);
   });
 
+  it("lists a group whose document misses its fields with empty values", async () => {
+    await db.collection(ERROR_GROUPS_COLLECTION).doc("bare-group").set({ lastSeen: BASE + 10 });
+
+    const { page } = await list();
+    assert.deepEqual(page.groups, [{
+      id: "bare-group", errorType: "", area: "", message: "", count: 0, firstSeen: 0, lastSeen: BASE + 10, lastKind: "", lastApp: "",
+      lastPlatform: "", lastVersion: "", lastEnv: "", platforms: {}, apps: {},
+    }]);
+  });
+
   it("answers 404 for a group that does not exist", async () => {
     const response = await server.request("GET", "/admin/error-groups/missing", { token: admin.token });
     assert.equal(response.status, 404);
