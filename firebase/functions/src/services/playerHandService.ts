@@ -182,8 +182,8 @@ function buildPatch(table: Data, seats: [string, string, string, string], hands:
   const { isLastHand, isDraw, ...handFields } = input;
   const handPatch = { ...handFields, isDone: true };
   const handsAfter = hands.map((hand) => (hand.handId === next.handId ? { ...hand, ...handPatch } : hand));
-  const handScores = handSeatScores(handsAfter.find((hand) => hand.handId === next.handId) as Data, seats);
-  if (handScores == null) throw badRequest("The hand result is not valid");
+  // parseHandInput and the checks above leave only hands that count, whose players sit at the table.
+  const handScores = handSeatScores(handsAfter.find((hand) => hand.handId === next.handId) as Data, seats)!;
   // The last hand closes the table, like the Completed switch of an editor. The sixteenth hand is always the last one:
   // the app does not offer the "last hand" box there, and a table with every hand done takes no more hands.
   const closes = isLastHand || handsAfter.every((hand) => hand.isDone);
@@ -315,7 +315,7 @@ export async function addPenalties(
       const next = hands.find((hand) => !hand.isDone);
       if (!next) throw conflict("All hands of this table are done", { code: "ALL_HANDS_DONE" });
       const current = [next.playerEastPenalty, next.playerSouthPenalty, next.playerWestPenalty, next.playerNorthPenalty]
-        .map((value) => String(value ?? "").trim()) as PenaltyTexts;
+        .map((value) => value.trim()) as PenaltyTexts;
       const merged = appendPenalties(current, params.penalties);
       await saveTableStateInTransaction(transaction, {
         tournamentId: params.tournamentId,
@@ -379,7 +379,7 @@ export async function assignSeats(
       // Penalties belong to a seat, so a penalty also fixes the seats.
       const penalized = (hand: (typeof hands)[number]) => [
         hand.playerEastPenalty, hand.playerSouthPenalty, hand.playerWestPenalty, hand.playerNorthPenalty,
-      ].some((value) => String(value ?? "").trim() !== "");
+      ].some((value) => value.trim() !== "");
       if (hands.some((hand) => hand.isDone || penalized(hand))) {
         throw conflict("The seats cannot change after the first hand or penalty", { code: "SEATS_LOCKED" });
       }
