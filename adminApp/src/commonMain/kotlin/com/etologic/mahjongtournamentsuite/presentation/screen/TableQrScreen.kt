@@ -341,6 +341,10 @@ private const val DEFAULT_ORGANIZER_COLOR = "#02B16B"
 /** The name of the main organizer, for the initial of its logo when it has none. */
 internal fun Tournament.mainOrganizerName(): String = organizers.firstOrNull()?.name ?: name
 
+/** The logo of the main organizer, or of the tournament when the organizer has none. Null without any logo. */
+internal fun Tournament.mainOrganizerLogo(): String? =
+    organizers.firstOrNull()?.logoUrl?.takeIf { it.isNotBlank() } ?: associationLogoUrl?.takeIf { it.isNotBlank() }
+
 /** The cards of the tables are always in English, like the PDF (tableQrService.ts). */
 private const val TABLE_WORD = "TABLE"
 private const val HINT_TEXT = "Scan the code to go to your table."

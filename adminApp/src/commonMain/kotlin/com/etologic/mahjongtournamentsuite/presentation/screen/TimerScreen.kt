@@ -37,6 +37,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,9 +68,12 @@ import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepositor
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.GongIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
+import com.etologic.mahjongtournamentsuite.presentation.components.EmaLogo
+import com.etologic.mahjongtournamentsuite.presentation.components.OrganizationLogo
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.organizationColor
@@ -127,13 +131,17 @@ fun TimerStandaloneScreen(
     /** Null opens a Timer without a tournament, which keeps its clock on this device. */
     tournamentId: String?,
     initialRound: Int = 1,
+    /** The time of this device. The screenshots fix it. */
+    deviceNowMs: () -> Long = { Clock.System.now().toEpochMilliseconds() },
 ) {
     val themeController = rememberScreenThemeController()
     val repository = koinInject<TournamentRepository>()
     val telemetry = LocalTelemetry.current
-    val controller = remember(tournamentId) { RoundTimerController(repository, tournamentId, initialRound, telemetry = telemetry) }
+    val controller = remember(tournamentId) { RoundTimerController(repository, tournamentId, initialRound, telemetry = telemetry, deviceNowMs = deviceNowMs) }
 
     val state by controller.state.collectAsState()
+    var showOrganizerLogo by rememberSaveable { mutableStateOf(true) }
+    var showEmaLogo by rememberSaveable { mutableStateOf(true) }
 
     MtsTheme(useDarkTheme = themeController.isDarkTheme) {
         // The room sees the color of the main organizer of the tournament, not the green of the suite.
@@ -145,12 +153,47 @@ fun TimerStandaloneScreen(
                         controller = controller,
                         themePreference = themeController.preference,
                         onToggleTheme = themeController.onTogglePreference,
+                        deviceNowMs = deviceNowMs,
                     )
+                    // The logos of the main organizer (when it has one) and of the EMA: at the top corners on a wide
+                    // screen, and at the bottom corners on a phone, where the round and its buttons fill the top.
+                    state.tournament?.let { tournament ->
+                        val compact = LocalCompactLayout.current
+                        val logoSize = if (compact) TIMER_COMPACT_LOGO_SIZE else TIMER_LOGO_SIZE
+                        val padding = if (compact) 16.dp else 24.dp
+                        tournament.mainOrganizerLogo()?.let { logoUrl ->
+                            ProjectionLogo(
+                                running = state.isRunning,
+                                showWhileRunning = showOrganizerLogo,
+                                onShowWhileRunningChange = { showOrganizerLogo = it },
+                                modifier = Modifier.align(if (compact) Alignment.BottomStart else Alignment.TopStart).padding(padding),
+                            ) {
+                                OrganizationLogo(
+                                    name = tournament.mainOrganizerName(),
+                                    logoUrl = logoUrl,
+                                    primaryColor = tournament.primaryColor,
+                                    size = logoSize,
+                                )
+                            }
+                        }
+                        ProjectionLogo(
+                            running = state.isRunning,
+                            showWhileRunning = showEmaLogo,
+                            onShowWhileRunningChange = { showEmaLogo = it },
+                            modifier = Modifier.align(if (compact) Alignment.BottomEnd else Alignment.TopEnd).padding(padding),
+                        ) {
+                            EmaLogo(size = logoSize)
+                        }
+                    }
                 }
             }
         }
     }
 }
+
+/** The logos of the main organizer and of the EMA: big on a wide screen, small on a phone. */
+private val TIMER_LOGO_SIZE = 120.dp
+private val TIMER_COMPACT_LOGO_SIZE = 44.dp
 
 /** Below this width the buttons of the Timer go in a row under the gong, so they never cover it. */
 private val STACKED_CONTROLS_MAX_WIDTH = 600.dp

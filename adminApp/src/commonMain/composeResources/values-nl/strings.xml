@@ -1242,6 +1242,7 @@ Wijzig de plaatsen bij Inschrijvingen.</string>
         <item quantity="one">%1$d land</item>
         <item quantity="other">%1$d landen</item>
     </plurals>
+    <string name="projection_logo_show_while_running">Tonen tijdens lopen</string>
     <string name="score_sheets_title">Scorebladen</string>
     <string name="score_sheets_info">Bladen om op A4 te printen en aan de tafels in te vullen. Ze zijn altijd in het Engels.</string>
     <string name="score_sheets_blank">Leeg</string>

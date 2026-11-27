@@ -1242,6 +1242,7 @@ Cambia i posti in Iscrizioni.</string>
         <item quantity="one">%1$d paese</item>
         <item quantity="other">%1$d paesi</item>
     </plurals>
+    <string name="projection_logo_show_while_running">Mostra in corso</string>
     <string name="score_sheets_title">Fogli punteggio</string>
     <string name="score_sheets_info">Fogli da stampare in A4 e compilare ai tavoli. Sono sempre in inglese.</string>
     <string name="score_sheets_blank">Vuoto</string>

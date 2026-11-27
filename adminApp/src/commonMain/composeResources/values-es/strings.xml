@@ -1242,6 +1242,7 @@ Cambia las plazas en Inscripciones.</string>
         <item quantity="one">%1$d país</item>
         <item quantity="other">%1$d países</item>
     </plurals>
+    <string name="projection_logo_show_while_running">Mostrar en marcha</string>
     <string name="score_sheets_title">Hojas de puntuación</string>
     <string name="score_sheets_info">Hojas para imprimir en A4 y rellenar en las mesas. Siempre van en inglés.</string>
     <string name="score_sheets_blank">Vacía</string>

@@ -1242,6 +1242,7 @@ Change the places in Registrations.</string>
         <item quantity="one">%1$d country</item>
         <item quantity="other">%1$d countries</item>
     </plurals>
+    <string name="projection_logo_show_while_running">Show while running</string>
     <string name="score_sheets_title">Score sheets</string>
     <string name="score_sheets_info">Score sheets to print on A4 and fill in at the tables. They are always in English.</string>
     <string name="score_sheets_blank">Blank</string>
