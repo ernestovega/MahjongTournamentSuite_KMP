@@ -108,7 +108,10 @@ Ernesto's rule of 2026-11-19 (it replaces the scrollbars that showed only while 
 - **The header tells the app** (Ernesto, 2026-11-27): the top bar and the tabs under it are `MtsTheme.colors.header`,
   green in the player app and purple in the admin app (`adminHeader`, the purple of the expert level: #8E5CD9 light,
   #6538AD dark). Every `MtsTheme` of the admin app passes `adminApp = true`. The button of the player app that opens
-  the admin app is filled with `adminHeader` (`AppTopBarButton(containerColor = ...)`).
+  the admin app is filled with `adminHeader` (`AppTopBarButton(containerColor = ...)`). The whole admin app is purple
+  where the player app is green (`ColorScheme.adminColors`): filled buttons, selected chips, switches, links, text
+  buttons and their hovers. The greens that mean something (`gain`, `scoreOk`, `selfPick`, `changed`) stay green, and
+  `MtsContrastTest` checks the purple themes too.
 - **Projected screens wear the organizer** (Ernesto, 2026-11-27): the Timer, the standalone ranking and the table QR
   are not purple. The Timer and the ranking wrap their content in `MtsBrandTheme(organizationColor(tournament.primaryColor))`,
   which swaps the green of the suite for the color of the main organizer and keeps the contrast: white or ink text on
