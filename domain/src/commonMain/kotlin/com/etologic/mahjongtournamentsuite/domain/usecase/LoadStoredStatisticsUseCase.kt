@@ -123,6 +123,9 @@ class LoadStoredStatisticsUseCase(
 
 private fun Player.toProfile() = PlayerProfile(displayName, emaId, country, publicPhotoUrl)
 
+/** A player that is not in the registry is named by the EMA number. */
+private fun Player?.toProfileOr(emaId: String) = if (this == null) PlayerProfile("EMA $emaId", emaId, "", null) else toProfile()
+
 /** Builds the all-tournaments view from the sums of the server. */
 internal fun overviewFrom(overview: StatisticsOverview, registry: List<Player>): OverviewStatisticsData {
     val registryByEma = registry.associateBy { it.emaId }
@@ -131,7 +134,7 @@ internal fun overviewFrom(overview: StatisticsOverview, registry: List<Player>):
     val ids = emaIds.mapIndexed { index, emaId -> emaId to index + 1 }.toMap()
     val players = overview.players.map { PlayerStatistics.ofTotals(ids.getValue(it.emaId), it) }
     val profiles = emaIds.associate { emaId ->
-        ids.getValue(emaId) to (registryByEma[emaId]?.toProfile() ?: PlayerProfile("EMA $emaId", emaId, "", null))
+        ids.getValue(emaId) to registryByEma[emaId].toProfileOr(emaId)
     }
     val statistics = TournamentStatistics(
         tablesTotal = overview.tablesCompleted,
@@ -157,7 +160,7 @@ internal fun groupFrom(filter: StatisticsGroupFilter, group: StatisticsGroup, re
     val persons = group.persons.sortedBy { it.emaId }
     val ids = persons.mapIndexed { index, person -> person.emaId to index + 1 }.toMap()
     val profiles = persons.associate { person ->
-        ids.getValue(person.emaId) to (registryByEma[person.emaId]?.toProfile() ?: PlayerProfile("EMA ${person.emaId}", person.emaId, "", null))
+        ids.getValue(person.emaId) to registryByEma[person.emaId].toProfileOr(person.emaId)
     }
     val tables = group.tables
     val statistics = TournamentStatistics(

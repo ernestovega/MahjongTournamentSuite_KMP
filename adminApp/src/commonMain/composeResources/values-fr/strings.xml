@@ -1269,4 +1269,7 @@ Les résultats se révèlent à la remise des prix depuis le Contrôle du tour.<
     <string name="score_sheets_chicken_on">Elle a une colonne pour les chicken hands, car le tournoi les compte.</string>
     <string name="score_sheets_chicken_off">Elle n'a pas de colonne pour les chicken hands, car le tournoi ne les compte pas.</string>
     <string name="score_sheets_save">Enregistrer les feuilles de score</string>
+    <string name="reveal_third_place">Révéler la 3e place</string>
+    <string name="reveal_second_place">Révéler la 2e place</string>
+    <string name="reveal_first_place">Révéler la 1re place</string>
 </resources>

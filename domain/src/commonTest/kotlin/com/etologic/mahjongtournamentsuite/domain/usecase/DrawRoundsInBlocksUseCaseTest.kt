@@ -69,4 +69,25 @@ class DrawRoundsInBlocksUseCaseTest {
 
         assertNull(noTime(playerIds = (1..8).toList(), roundIds = listOf(2), history = played))
     }
+
+    @Test
+    fun fourTeamsOfUnevenSizesAreNotThePattern() = runTest {
+        // 4 teams, as many as the pattern needs, but of 5, 3, 4 and 4 players: a team of 5 never fits 4 tables.
+        val ends = listOf(0, 5, 8, 12, 16)
+        val teamOf = (1..16).associateWith { id -> ends.indexOfFirst { id <= it } }
+        val noTime = DrawRoundsInBlocksUseCase(blockTry = Duration.ZERO)
+
+        assertNull(noTime(playerIds = (1..16).toList(), roundIds = listOf(1, 2), teamOf = teamOf, seed = 4))
+    }
+
+    @Test
+    fun slotsWithoutATeamSitTogetherAsOneTeam() = runTest {
+        // Slots 13 to 16 have no team: they are the fourth team of the pattern, and never sit together.
+        val teamOf = (1..12).associateWith { (it - 1) / 4 + 1 }
+
+        val result = assertNotNull(draw(playerIds = (1..16).toList(), roundIds = (1..4).toList(), teamOf = teamOf, seed = 5))
+
+        assertEquals(0L, result.swaps)
+        assertTrue(result.tables.none { table -> table.playerIds.count { it > 12 } > 1 })
+    }
 }
