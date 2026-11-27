@@ -99,7 +99,7 @@ class DefaultAdminRepository(
                 origin = filter.origin?.wire,
                 fromMillis = filter.fromMillis,
                 toMillis = filter.toMillis,
-                text = filter.text?.trim()?.ifEmpty { null },
+                text = filter.text?.let { it.trim().ifEmpty { null } },
                 cursor = cursor,
             ).toDomain()
         }

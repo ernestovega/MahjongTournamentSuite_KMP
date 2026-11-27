@@ -81,8 +81,8 @@ class ErrorReporter(
         analytics.event(
             TelemetryEvent.APP_CRASH,
             mapOf(
-                TelemetryParam.REPORT_ID to report["reportId"]?.jsonPrimitive?.contentOrNull.orEmpty(),
-                TelemetryParam.KIND to report["errorType"]?.jsonPrimitive?.contentOrNull.orEmpty(),
+                TelemetryParam.REPORT_ID to report["reportId"]?.let { it.jsonPrimitive.contentOrNull }.orEmpty(),
+                TelemetryParam.KIND to report["errorType"]?.let { it.jsonPrimitive.contentOrNull }.orEmpty(),
             ),
         )
         post(report)

@@ -87,13 +87,13 @@ private fun Throwable.toImportAppError(): AppError {
         val details = runCatching { Json.parseToJsonElement(responseBody).jsonObject["details"]?.jsonObject }.getOrNull()
             ?: return toRepositoryAppError()
         // A value of the wrong shape counts as missing, so it never breaks the error.
-        val code = runCatching { details["code"]?.jsonPrimitive?.contentOrNull }.getOrNull()
+        val code = runCatching { details["code"]?.let { it.jsonPrimitive.contentOrNull } }.getOrNull()
             ?.let { name -> ImportFileErrorCode.entries.firstOrNull { it.name == name } }
         if (code != null) {
             val args = when (code) {
                 ImportFileErrorCode.MISSING_COLUMNS ->
-                    listOf(runCatching { details["missing"]?.jsonArray?.joinToString(", ") { it.jsonPrimitive.content } }.getOrNull().orEmpty())
-                ImportFileErrorCode.TOO_MANY_ROWS -> listOf(runCatching { details["max"]?.jsonPrimitive?.content }.getOrNull().orEmpty())
+                    listOf(runCatching { details["missing"]?.let { list -> list.jsonArray.joinToString(", ") { it.jsonPrimitive.content } } }.getOrNull().orEmpty())
+                ImportFileErrorCode.TOO_MANY_ROWS -> listOf(runCatching { details["max"]?.let { it.jsonPrimitive.content } }.getOrNull().orEmpty())
                 else -> emptyList()
             }
             return AppError.ImportFile(code, args)

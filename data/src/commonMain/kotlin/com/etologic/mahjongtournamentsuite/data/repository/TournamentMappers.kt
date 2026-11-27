@@ -94,7 +94,7 @@ internal fun TournamentDto.toDomain(): Tournament = Tournament(
     registration = registration?.toDomain(),
 )
 
-private fun String?.normalizedOrNull(): String? = this?.trim()?.takeIf(String::isNotBlank)
+private fun String?.normalizedOrNull(): String? = this?.let { it.trim().takeIf(String::isNotBlank) }
 
 internal fun RoundClockDto.toDomain() = RoundClock(
     roundId = roundId,
