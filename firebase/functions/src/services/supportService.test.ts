@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it, mock } from "node:test";
 
 import { HttpError } from "../api/httpError";
-import { buildSupportEmail, readSupportMessage, SUPPORT_LIMITS } from "./supportService";
+import { setMailTransportForTests } from "./mailService";
+import { buildSupportEmail, readSupportMessage, sendSupportMessage, SUPPORT_LIMITS } from "./supportService";
 
 const valid = { name: "Ana", email: "ana@example.com", message: "I cannot sign in.", app: "player", appVersion: "1.2.3", platform: "Android" };
 
@@ -42,5 +43,30 @@ describe("buildSupportEmail", () => {
     assert.match(email.subject, /^\[MTS support\] Ana: <b>help<\/b>$/);
     assert.match(email.html, /&lt;b&gt;help&lt;\/b&gt;/);
     assert.match(email.text, /App: player 1\.2\.3 \(Android\)/);
+  });
+
+  it("writes the email of a message without a name, and reads the support address from the secret", async () => {
+    const email = buildSupportEmail({ ...valid, name: "" }, "support@example.com");
+    assert.match(email.subject, /^\[MTS support\] ana@example\.com: /);
+    assert.match(email.text, /^From: ana@example\.com\n/);
+
+    const sent: string[] = [];
+    setMailTransportForTests(async (outgoing) => { sent.push(outgoing.to); });
+    const before = process.env.MTS_SUPPORT_EMAIL;
+    try {
+      process.env.MTS_SUPPORT_EMAIL = " desk@example.com ";
+      await sendSupportMessage(valid);
+      delete process.env.MTS_SUPPORT_EMAIL;
+      const quiet = mock.method(console, "error", () => {});
+      try {
+        await assert.rejects(sendSupportMessage(valid), (error: unknown) => error instanceof HttpError && error.status === 503);
+      } finally {
+        quiet.mock.restore();
+      }
+    } finally {
+      if (before === undefined) delete process.env.MTS_SUPPORT_EMAIL; else process.env.MTS_SUPPORT_EMAIL = before;
+      setMailTransportForTests(null);
+    }
+    assert.deepEqual(sent, ["desk@example.com"]);
   });
 });
