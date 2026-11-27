@@ -338,6 +338,14 @@ class DefaultRegistrationRepositoryTest {
     }
 
     @Test
+    fun theDrawWorksWithoutACache() = runTest {
+        val repository = repository(withCache = false) { ok("""{"id":"t-1","name":"Open","isTeams":false,"numPlayers":4,"numRounds":1}""") }
+
+        assertIs<AppResult.Success<*>>(repository.makeDraw("t-1", numTries = 1, players = emptyList(), tables = emptyList(), assignments = emptyList()))
+        assertTrue(cache.stale.isEmpty())
+    }
+
+    @Test
     fun aFailedChangeMarksNothingOld() = runTest {
         repository { HttpStatusCode.Conflict to """{"message":"No"}""" }.adminRemove("t-1", "10990001", notify = false)
 
@@ -493,6 +501,9 @@ class DefaultRegistrationRepositoryTest {
             .register("t-1", RegisterRequest("10990001", "a@b.c", "", consent = true))
 
         assertEquals("token-old", tokens.values["registration-token.t-1"], "a blank token is not saved")
+
+        repository { ok("""{"status":"CONFIRMED"}""") }.register("t-1", RegisterRequest("10990001", "a@b.c", "", consent = true))
+        assertEquals("token-old", tokens.values["registration-token.t-1"], "an answer without a token keeps the saved one")
     }
 
     @Test

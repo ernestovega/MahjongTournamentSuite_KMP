@@ -47,5 +47,9 @@ class HttpClientAppCheckTest {
         assertEquals("android/1.0.341; appcheck=ok", sent)
         HttpClient(engine) { configureAppCheck({ null }, { null }) }.get("https://backend.test/ping")
         assertNull(sent)
+        HttpClient(engine) { configureAppCheck({ null }, { " " }) }.get("https://backend.test/ping")
+        assertNull(sent, "a blank tag is none")
+        HttpClient(engine) { configureAppCheck({ null }, { error("no version") }) }.get("https://backend.test/ping")
+        assertNull(sent, "a tag that fails is none, and the request still goes")
     }
 }
