@@ -27,6 +27,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AdminRegistration
 import com.etologic.mahjongtournamentsuite.domain.model.AdminRegistrations
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.NewRegistration
+import com.etologic.mahjongtournamentsuite.domain.model.RegistrationPhase
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationUpdate
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
 import com.etologic.mahjongtournamentsuite.presentation.screenshots.adminModules
@@ -218,5 +219,40 @@ class RegistrationsChangesUiTest {
         click("Make the draw", last = true)
         waitForText("5 tries")
         waitForText("Now the second way is trying, by swaps.")
+    }
+
+    @Test
+    fun aPersonAddedFromTheRegistryGoesToTheServer() = runComposeUiTest {
+        val registrations = ChangingRegistrations()
+        show(registrations)
+        // The screenshots register the first 17 people of the registry, so the last one is free.
+        val newcomer = people.last()
+        click("Add a person")
+        click("Choose the EMA player", last = true)
+        waitForText("Select EMA player")
+        onAllNodes(hasSetTextAction()).onLast().performTextInput(newcomer.emaId)
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(hasClickAction() and hasText(newcomer.emaId, substring = true)).fetchSemanticsNodes().isNotEmpty() }
+        clock += 1.seconds
+        onAllNodes(hasClickAction() and hasText(newcomer.emaId, substring = true)).onLast().performClick()
+        waitForIdle()
+        click("Save", last = true)
+        waitUntil(timeoutMillis = 5_000) { registrations.calls.isNotEmpty() }
+        assertEquals(listOf("add:${newcomer.emaId}"), registrations.calls)
+    }
+
+    @Test
+    fun aDrawThatCannotBeMadeSaysWhy() = runComposeUiTest {
+        val closed = object : ScreenshotRegistrationRepository() {
+            override suspend fun loadAdminList(tournamentId: String): AppResult<AdminRegistrations> =
+                (super.loadAdminList(tournamentId) as AppResult.Success).let { loaded ->
+                    AppResult.Success(loaded.value.copy(settings = loaded.value.settings.copy(status = RegistrationPhase.CLOSED)))
+                }
+        }
+        show(closed)
+        click("Make the draw")
+        waitForText("Make the draw?")
+        click("Make the draw", last = true)
+        waitUntil(timeoutMillis = 10_000) { onAllNodesWithText("Make the draw?").fetchSemanticsNodes().isEmpty() }
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(hasText("OK")).fetchSemanticsNodes().isNotEmpty() }
     }
 }
