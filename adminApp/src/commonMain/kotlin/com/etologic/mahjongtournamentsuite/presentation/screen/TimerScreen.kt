@@ -51,6 +51,8 @@ import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
@@ -61,6 +63,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -154,6 +157,11 @@ fun TimerStandaloneScreen(
                         themePreference = themeController.preference,
                         onToggleTheme = themeController.onTogglePreference,
                         deviceNowMs = deviceNowMs,
+                        logoBand = if (state.tournament != null && !LocalCompactLayout.current) {
+                            TimerLogoBand(top = 24.dp, height = TIMER_LOGO_SIZE)
+                        } else {
+                            null
+                        },
                     )
                     // The logos of the main organizer (when it has one) and of the EMA: at the top corners on a wide
                     // screen, and at the bottom corners on a phone, where the round and its buttons fill the top.
@@ -191,9 +199,12 @@ fun TimerStandaloneScreen(
     }
 }
 
+/** Where the logos at the top of a wide screen start and how tall they are, so the round lines up with them. */
+internal class TimerLogoBand(val top: Dp, val height: Dp)
+
 /** The logos of the main organizer and of the EMA: big on a wide screen, small on a phone. */
 private val TIMER_LOGO_SIZE = 120.dp
-private val TIMER_COMPACT_LOGO_SIZE = 44.dp
+private val TIMER_COMPACT_LOGO_SIZE = 72.dp
 
 /** Below this width the buttons of the Timer go in a row under the gong, so they never cover it. */
 private val STACKED_CONTROLS_MAX_WIDTH = 600.dp
@@ -213,6 +224,8 @@ internal fun TimerContent(
     themePreference: ThemePreference,
     onToggleTheme: () -> Unit,
     deviceNowMs: () -> Long = { Clock.System.now().toEpochMilliseconds() },
+    /** The line of the logos at the top of a wide screen, or null when there are none there. */
+    logoBand: TimerLogoBand? = null,
 ) {
     val scope = rememberCoroutineScope()
     val state by controller.state.collectAsState()
@@ -352,300 +365,325 @@ internal fun TimerContent(
         }
     }
 
-    Column(
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = MtsTheme.spacing.lg, start = 24.dp, end = 24.dp),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (showRoundButtons) {
-                FocusedIconButton(
-                    enabled = roundNum > 1,
-                    onClick = { controller.selectRound(roundNum - 1) },
-                    focusRequester = roundDownFocusRequester,
-                    buttonModifier = Modifier
-                        .size(32.dp)
-                        .focusLoop(
-                            previous = themeFocusRequester,
-                            next = roundUpFocusRequester,
+    // The time is centered on the screen (Ernesto, 2026-11-27): the round goes at the top, the bar and the buttons at
+    // the bottom, and the time gets the room between equal margins above and below.
+    Layout(
+        contents = listOf(
+            {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .then(
+                            // Beside the logos of a wide screen the round is centered on their line (Ernesto, 2026-11-27).
+                            if (logoBand != null) {
+                                Modifier.padding(top = logoBand.top, start = 24.dp, end = 24.dp).height(logoBand.height)
+                            } else {
+                                Modifier.padding(top = MtsTheme.spacing.lg, start = 24.dp, end = 24.dp)
+                            },
                         ),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Remove,
-                        contentDescription = stringResource(Res.string.decrease_round),
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
-            }
-            Text(
-                text = stringResource(Res.string.round_n, roundNum),
-                style = MaterialTheme.typography.headlineLarge.copy(fontSize = 64.sp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
-                // A long word of another language ("Omgång 3") gets smaller, so the + button stays on a phone.
-                modifier = Modifier.weight(1f, fill = false).padding(horizontal = 8.dp),
-                maxLines = 1,
-                softWrap = false,
-                autoSize = TextAutoSize.StepBased(minFontSize = 24.sp, maxFontSize = 64.sp, stepSize = 2.sp),
-            )
-            if (showRoundButtons) {
-                FocusedIconButton(
-                    enabled = roundNum < state.numRounds,
-                    onClick = { controller.selectRound(roundNum + 1) },
-                    focusRequester = roundUpFocusRequester,
-                    buttonModifier = Modifier
-                        .size(32.dp)
-                        .focusLoop(
-                            previous = roundDownFocusRequester,
-                            next = startFocusRequester,
-                        ),
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = stringResource(Res.string.increase_round),
-                        modifier = Modifier.size(18.dp),
-                    )
-                }
-            }
-        }
-
-        BoxWithConstraints(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 24.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            val textMeasurer = rememberTextMeasurer()
-            val density = LocalDensity.current
-            val maxWidthPx = with(density) { maxWidth.roundToPx() }.coerceAtLeast(0)
-            val maxHeightPx = with(density) { maxHeight.roundToPx() }.coerceAtLeast(0)
-            val baseStyle = MaterialTheme.typography.displayLarge.copy(fontFamily = gangFontFamily)
-
-            val fittedFontSize = remember(sampleText, maxWidthPx, maxHeightPx, gangFontFamily) {
-                findLargestFittingFontSize(
-                    textMeasurer = textMeasurer,
-                    text = sampleText,
-                    style = baseStyle,
-                    maxWidthPx = maxWidthPx,
-                    maxHeightPx = maxHeightPx,
-                )
-            }
-
-            Text(
-                text = timeText,
-                style = baseStyle.copy(fontSize = fittedFontSize),
-                color = timeColor,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Clip,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-
-        BoxWithConstraints(
-            modifier = Modifier
-                .weight(0.35f)
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            LinearProgressIndicator(
-                progress = { progress },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(12.dp),
-                color = if (isRed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                trackColor = MaterialTheme.colorScheme.surfaceVariant,
-            )
-        }
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            val lateStart = state.latePlannedStart(now)
-            val status = when {
-                state.loadFailed && state.tournament == null -> stringResource(Res.string.timer_load_failed)
-                state.tournamentCompleted -> stringResource(Res.string.timer_tournament_completed)
-                state.isOffline -> stringResource(Res.string.timer_offline)
-                hasFinished -> stringResource(Res.string.time_is_up)
-                isStarted && !isRunning -> stringResource(Res.string.timer_paused)
-                lateStart != null -> stringResource(Res.string.timer_late_start, lateStart)
-                !isStarted && !state.independent -> stringResource(Res.string.timer_waiting_gong)
-                else -> null
-            }
-            if (status != null) {
-                Text(
-                    text = status,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (hasFinished || state.isOffline || state.loadFailed || lateStart != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
-            }
-            // The plan B of the Timer: an admin decides by hand what the players can do in this round.
-            if (!state.independent && state.control.isManual) {
-                Text(
-                    text = stringResource(Res.string.timer_manual_warning),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
-                    textAlign = TextAlign.Center,
-                )
-            }
-
-            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                // On a phone the buttons at the right would cover the gong: they go in a row under it.
-                val stacked = showControls && maxWidth < STACKED_CONTROLS_MAX_WIDTH
-                val startAlignment = if (stacked) Alignment.TopCenter else Alignment.Center
-                val startModifier = Modifier.align(startAlignment).padding(bottom = if (stacked) STACKED_CONTROLS_HEIGHT else 0.dp)
-                val startPreviousWhenRunning = if (canStop) stopFocusRequester else startFocusRequester
-                val startPrevious = when {
-                    isRunning -> startPreviousWhenRunning
-                    showRoundButtons -> roundUpFocusRequester
-                    else -> themeFocusRequester
-                }
-                val startNext = when {
-                    canStop -> stopFocusRequester
-                    isRunning -> startFocusRequester
-                    else -> resetFocusRequester
-                }
-                if (hasFinished) {
-                    // The time is over: no Pause and no gong.
-                } else if (isRunning) {
-                    FocusedIconButton(
-                        focusRequester = startFocusRequester,
-                        showFocusHighlight = false,
-                        enabled = state.canControl,
-                        onClick = { scope.launch { controller.pause() } },
-                        modifier = startModifier.alpha(RUNNING_CONTROLS_ALPHA),
-                        buttonModifier = Modifier
-                            .size(56.dp)
-                            .focusLoop(previous = startPrevious, next = startNext),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Pause,
-                            contentDescription = stringResource(Res.string.timer_pause),
-                            modifier = Modifier.size(34.dp),
-                        )
-                    }
-                } else {
-                    // The gong starts the round, or resumes it after a pause.
-                    FocusedTextButton(
-                        focusRequester = startFocusRequester,
-                        enabled = state.canControl,
-                        onClick = { scope.launch { controller.play() } },
-                        shape = MaterialTheme.shapes.large,
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
-                        modifier = startModifier,
-                        buttonModifier = Modifier.focusLoop(previous = startPrevious, next = startNext),
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (showRoundButtons) {
+                        FocusedIconButton(
+                            enabled = roundNum > 1,
+                            onClick = { controller.selectRound(roundNum - 1) },
+                            focusRequester = roundDownFocusRequester,
+                            buttonModifier = Modifier
+                                .size(32.dp)
+                                .focusLoop(
+                                    previous = themeFocusRequester,
+                                    next = roundUpFocusRequester,
+                                ),
+                        ) {
                             Icon(
-                                imageVector = GongIcon,
-                                contentDescription = stringResource(Res.string.timer_start),
-                                modifier = Modifier.size(72.dp),
+                                imageVector = Icons.Default.Remove,
+                                contentDescription = stringResource(Res.string.decrease_round),
+                                modifier = Modifier.size(18.dp),
                             )
-                            ButtonText(
-                                text = stringResource(if (isStarted) Res.string.timer_gong_resume else Res.string.timer_gong_start),
-                                style = MaterialTheme.typography.titleMedium,
+                        }
+                    }
+                    Text(
+                        text = stringResource(Res.string.round_n, roundNum),
+                        style = MaterialTheme.typography.headlineLarge.copy(fontSize = 64.sp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        // A long word of another language ("Omgång 3") gets smaller, so the + button stays on a phone.
+                        modifier = Modifier.weight(1f, fill = false).padding(horizontal = 8.dp),
+                        maxLines = 1,
+                        softWrap = false,
+                        autoSize = TextAutoSize.StepBased(minFontSize = 24.sp, maxFontSize = 64.sp, stepSize = 2.sp),
+                    )
+                    if (showRoundButtons) {
+                        FocusedIconButton(
+                            enabled = roundNum < state.numRounds,
+                            onClick = { controller.selectRound(roundNum + 1) },
+                            focusRequester = roundUpFocusRequester,
+                            buttonModifier = Modifier
+                                .size(32.dp)
+                                .focusLoop(
+                                    previous = roundDownFocusRequester,
+                                    next = startFocusRequester,
+                                ),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Add,
+                                contentDescription = stringResource(Res.string.increase_round),
+                                modifier = Modifier.size(18.dp),
                             )
                         }
                     }
                 }
+            },
+            {
+                BoxWithConstraints(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 24.dp, vertical = 24.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    val textMeasurer = rememberTextMeasurer()
+                    val density = LocalDensity.current
+                    val maxWidthPx = with(density) { maxWidth.roundToPx() }.coerceAtLeast(0)
+                    val maxHeightPx = with(density) { maxHeight.roundToPx() }.coerceAtLeast(0)
+                    val baseStyle = MaterialTheme.typography.displayLarge.copy(fontFamily = gangFontFamily)
 
-                if (isRunning && canStop) {
-                    FocusedIconButton(
-                        focusRequester = stopFocusRequester,
-                        onClick = { dialog = TimerDialog.ConfirmStop },
-                        modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .alpha(RUNNING_CONTROLS_ALPHA),
-                        buttonModifier = Modifier.focusLoop(previous = startFocusRequester, next = startFocusRequester),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Stop,
-                            contentDescription = stringResource(Res.string.timer_stop),
+                    val fittedFontSize = remember(sampleText, maxWidthPx, maxHeightPx, gangFontFamily) {
+                        findLargestFittingFontSize(
+                            textMeasurer = textMeasurer,
+                            text = sampleText,
+                            style = baseStyle,
+                            maxWidthPx = maxWidthPx,
+                            maxHeightPx = maxHeightPx,
                         )
                     }
-                }
 
-                if (showControls) {
-                    Row(
-                        modifier = Modifier.align(if (stacked) Alignment.BottomCenter else Alignment.CenterEnd),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+                    Text(
+                        text = timeText,
+                        style = baseStyle.copy(fontSize = fittedFontSize),
+                        color = timeColor,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Clip,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            },
+            {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    BoxWithConstraints(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 8.dp),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        if (canStop) {
-                            FocusedIconButton(
-                                focusRequester = stopFocusRequester,
-                                buttonModifier = Modifier.focusLoop(
-                                    previous = startFocusRequester,
-                                    next = resetFocusRequester,
-                                ),
-                                onClick = { dialog = TimerDialog.ConfirmStop },
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Stop,
-                                    contentDescription = stringResource(Res.string.timer_stop),
-                                )
+                        LinearProgressIndicator(
+                            progress = { progress },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(12.dp),
+                            color = if (isRed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                        )
+                    }
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        val lateStart = state.latePlannedStart(now)
+                        val status = when {
+                            state.loadFailed && state.tournament == null -> stringResource(Res.string.timer_load_failed)
+                            state.tournamentCompleted -> stringResource(Res.string.timer_tournament_completed)
+                            state.isOffline -> stringResource(Res.string.timer_offline)
+                            hasFinished -> stringResource(Res.string.time_is_up)
+                            isStarted && !isRunning -> stringResource(Res.string.timer_paused)
+                            lateStart != null -> stringResource(Res.string.timer_late_start, lateStart)
+                            !isStarted && !state.independent -> stringResource(Res.string.timer_waiting_gong)
+                            else -> null
+                        }
+                        if (status != null) {
+                            Text(
+                                text = status,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (hasFinished || state.isOffline || state.loadFailed || lateStart != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+                        // The plan B of the Timer: an admin decides by hand what the players can do in this round.
+                        if (!state.independent && state.control.isManual) {
+                            Text(
+                                text = stringResource(Res.string.timer_manual_warning),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.error,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
+
+                        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                            // On a phone the buttons at the right would cover the gong: they go in a row under it.
+                            val stacked = showControls && maxWidth < STACKED_CONTROLS_MAX_WIDTH
+                            val startAlignment = if (stacked) Alignment.TopCenter else Alignment.Center
+                            val startModifier = Modifier.align(startAlignment).padding(bottom = if (stacked) STACKED_CONTROLS_HEIGHT else 0.dp)
+                            val startPreviousWhenRunning = if (canStop) stopFocusRequester else startFocusRequester
+                            val startPrevious = when {
+                                isRunning -> startPreviousWhenRunning
+                                showRoundButtons -> roundUpFocusRequester
+                                else -> themeFocusRequester
+                            }
+                            val startNext = when {
+                                canStop -> stopFocusRequester
+                                isRunning -> startFocusRequester
+                                else -> resetFocusRequester
+                            }
+                            if (hasFinished) {
+                                // The time is over: no Pause and no gong.
+                            } else if (isRunning) {
+                                FocusedIconButton(
+                                    focusRequester = startFocusRequester,
+                                    showFocusHighlight = false,
+                                    enabled = state.canControl,
+                                    onClick = { scope.launch { controller.pause() } },
+                                    modifier = startModifier.alpha(RUNNING_CONTROLS_ALPHA),
+                                    buttonModifier = Modifier
+                                        .size(56.dp)
+                                        .focusLoop(previous = startPrevious, next = startNext),
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Pause,
+                                        contentDescription = stringResource(Res.string.timer_pause),
+                                        modifier = Modifier.size(34.dp),
+                                    )
+                                }
+                            } else {
+                                // The gong starts the round, or resumes it after a pause.
+                                FocusedTextButton(
+                                    focusRequester = startFocusRequester,
+                                    enabled = state.canControl,
+                                    onClick = { scope.launch { controller.play() } },
+                                    shape = MaterialTheme.shapes.large,
+                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                                    modifier = startModifier,
+                                    buttonModifier = Modifier.focusLoop(previous = startPrevious, next = startNext),
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Icon(
+                                            imageVector = GongIcon,
+                                            contentDescription = stringResource(Res.string.timer_start),
+                                            modifier = Modifier.size(72.dp),
+                                        )
+                                        ButtonText(
+                                            text = stringResource(if (isStarted) Res.string.timer_gong_resume else Res.string.timer_gong_start),
+                                            style = MaterialTheme.typography.titleMedium,
+                                        )
+                                    }
+                                }
+                            }
+
+                            if (isRunning && canStop) {
+                                FocusedIconButton(
+                                    focusRequester = stopFocusRequester,
+                                    onClick = { dialog = TimerDialog.ConfirmStop },
+                                    modifier = Modifier
+                                        .align(Alignment.CenterEnd)
+                                        .alpha(RUNNING_CONTROLS_ALPHA),
+                                    buttonModifier = Modifier.focusLoop(previous = startFocusRequester, next = startFocusRequester),
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Stop,
+                                        contentDescription = stringResource(Res.string.timer_stop),
+                                    )
+                                }
+                            }
+
+                            if (showControls) {
+                                Row(
+                                    modifier = Modifier.align(if (stacked) Alignment.BottomCenter else Alignment.CenterEnd),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    if (canStop) {
+                                        FocusedIconButton(
+                                            focusRequester = stopFocusRequester,
+                                            buttonModifier = Modifier.focusLoop(
+                                                previous = startFocusRequester,
+                                                next = resetFocusRequester,
+                                            ),
+                                            onClick = { dialog = TimerDialog.ConfirmStop },
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Stop,
+                                                contentDescription = stringResource(Res.string.timer_stop),
+                                            )
+                                        }
+                                    }
+                                    FocusedIconButton(
+                                        focusRequester = resetRequester,
+                                        enabled = isStarted,
+                                        buttonModifier = Modifier.focusLoop(
+                                            previous = when {
+                                                canStop -> stopFocusRequester
+                                                hasFinished -> if (showRoundButtons) roundUpFocusRequester else themeFocusRequester
+                                                else -> startFocusRequester
+                                            },
+                                            next = setTimeFocusRequester,
+                                        ),
+                                        onClick = { scope.launch { controller.askReset() } },
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Refresh,
+                                            contentDescription = stringResource(Res.string.reset_timer),
+                                        )
+                                    }
+                                    // A started round can change its remaining time. A round that is not started can start earlier.
+                                    FocusedIconButton(
+                                        focusRequester = setTimeFocusRequester,
+                                        enabled = state.canControl,
+                                        buttonModifier = Modifier.focusLoop(
+                                            previous = resetRequester,
+                                            next = themeFocusRequester,
+                                        ),
+                                        onClick = { dialog = if (isStarted) TimerDialog.SetTime else TimerDialog.StartedAgo },
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isStarted) Icons.Default.AccessTime else Icons.Default.History,
+                                            contentDescription = stringResource(if (isStarted) Res.string.set_time else Res.string.timer_started_ago),
+                                        )
+                                    }
+                                    FocusedIconButton(
+                                        onClick = onToggleTheme,
+                                        focusRequester = themeFocusRequester,
+                                        buttonModifier = Modifier.focusLoop(
+                                            previous = setTimeFocusRequester,
+                                            next = if (showRoundButtons) roundDownFocusRequester else startFocusRequester,
+                                        ),
+                                    ) {
+                                        Icon(
+                                            imageVector = themePreference.icon,
+                                            contentDescription = themePreference.contentDescription,
+                                        )
+                                    }
+                                }
                             }
                         }
-                        FocusedIconButton(
-                            focusRequester = resetRequester,
-                            enabled = isStarted,
-                            buttonModifier = Modifier.focusLoop(
-                                previous = when {
-                                    canStop -> stopFocusRequester
-                                    hasFinished -> if (showRoundButtons) roundUpFocusRequester else themeFocusRequester
-                                    else -> startFocusRequester
-                                },
-                                next = setTimeFocusRequester,
-                            ),
-                            onClick = { scope.launch { controller.askReset() } },
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = stringResource(Res.string.reset_timer),
-                            )
-                        }
-                        // A started round can change its remaining time. A round that is not started can start earlier.
-                        FocusedIconButton(
-                            focusRequester = setTimeFocusRequester,
-                            enabled = state.canControl,
-                            buttonModifier = Modifier.focusLoop(
-                                previous = resetRequester,
-                                next = themeFocusRequester,
-                            ),
-                            onClick = { dialog = if (isStarted) TimerDialog.SetTime else TimerDialog.StartedAgo },
-                        ) {
-                            Icon(
-                                imageVector = if (isStarted) Icons.Default.AccessTime else Icons.Default.History,
-                                contentDescription = stringResource(if (isStarted) Res.string.set_time else Res.string.timer_started_ago),
-                            )
-                        }
-                        FocusedIconButton(
-                            onClick = onToggleTheme,
-                            focusRequester = themeFocusRequester,
-                            buttonModifier = Modifier.focusLoop(
-                                previous = setTimeFocusRequester,
-                                next = if (showRoundButtons) roundDownFocusRequester else startFocusRequester,
-                            ),
-                        ) {
-                            Icon(
-                                imageVector = themePreference.icon,
-                                contentDescription = themePreference.contentDescription,
-                            )
-                        }
                     }
                 }
-            }
+            },
+        ),
+        modifier = Modifier.fillMaxSize(),
+    ) { (topMeasurables, timeMeasurables, bottomMeasurables), constraints ->
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val topPlaceable = topMeasurables.first().measure(loose)
+        val bottomPlaceable = bottomMeasurables.first().measure(loose)
+        val margin = maxOf(topPlaceable.height, bottomPlaceable.height)
+        val timeHeight = (constraints.maxHeight - 2 * margin).coerceAtLeast(0)
+        val timePlaceable = timeMeasurables.first().measure(Constraints.fixed(constraints.maxWidth, timeHeight))
+        layout(constraints.maxWidth, constraints.maxHeight) {
+            topPlaceable.place((constraints.maxWidth - topPlaceable.width) / 2, 0)
+            timePlaceable.place(0, margin)
+            bottomPlaceable.place((constraints.maxWidth - bottomPlaceable.width) / 2, constraints.maxHeight - bottomPlaceable.height)
         }
     }
 }

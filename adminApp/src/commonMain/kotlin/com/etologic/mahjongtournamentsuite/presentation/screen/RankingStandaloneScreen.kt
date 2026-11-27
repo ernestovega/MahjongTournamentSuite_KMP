@@ -724,7 +724,6 @@ private fun RankingPage(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        if (showTitle) RankingTitle(page.title, compact, Modifier.padding(bottom = 8.dp))
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
@@ -734,7 +733,13 @@ private fun RankingPage(
             contentAlignment = Alignment.TopCenter,
         ) {
             val headerHeight = 28.dp
-            val availableRowsHeight = (maxHeight - headerHeight).coerceAtLeast(0.dp)
+            // The title goes with the table, so the two are centered together when the rows do not fill the screen.
+            val titleHeight = when {
+                !showTitle -> 0.dp
+                compact -> COMPACT_RANKING_TITLE_HEIGHT
+                else -> RANKING_TITLE_HEIGHT
+            }
+            val availableRowsHeight = (maxHeight - titleHeight - headerHeight).coerceAtLeast(0.dp)
             val rowHeight = availableRowsHeight / (rowsPerScroll + ROW_LAYOUT_SAFETY_ROWS).toFloat()
             val fontSize = (rowHeight - ROW_VERTICAL_OVERHEAD).value
                 .coerceIn(MIN_RANKING_FONT_SIZE_SP, MAX_RANKING_FONT_SIZE_SP)
@@ -766,12 +771,25 @@ private fun RankingPage(
             val measuredWidths = rememberRankingColumnWidths(page, textStyle, headerStyle, teamStyle)
             val tableWidth = if (compact) maxWidth else RankingTableWidth
             val widths = measuredWidths.fitNameTo(tableWidth, spacing, if (page.showPhoto) photoSize else null, compact)
+            // When every row fits, the room left goes half between the rows and half above and below, the same on
+            // both sides, so a short page fills the screen and stays centered (Ernesto, 2026-11-27).
+            val fill = rankingFill(page.rows.size, photoSize + ROW_BASE_VERTICAL_PADDING * 2, availableRowsHeight)
 
-            Column(modifier = Modifier.width(tableWidth).fillMaxHeight()) {
+            Column(
+                modifier = Modifier.width(tableWidth).fillMaxHeight().padding(vertical = fill.margin),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                if (showTitle) {
+                    Box(modifier = Modifier.height(titleHeight), contentAlignment = Alignment.TopCenter) {
+                        RankingTitle(page.title, compact)
+                    }
+                }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .height(headerHeight)
                         .padding(bottom = 4.dp),
+                    verticalAlignment = Alignment.Bottom,
                     horizontalArrangement = Arrangement.spacedBy(
                         spacing,
                         Alignment.CenterHorizontally,
@@ -805,7 +823,7 @@ private fun RankingPage(
                             },
                             contentPadding = androidx.compose.foundation.layout.PaddingValues(
                                 horizontal = 0.dp,
-                                vertical = 2.dp,
+                                vertical = ROW_BASE_VERTICAL_PADDING + fill.extraPerRow / 2,
                             ),
                             horizontalArrangement = Arrangement.spacedBy(
                                 spacing,
@@ -1200,6 +1218,27 @@ private const val MIN_INTERVAL_SECONDS = 1
 private const val MIN_RANKING_FONT_SIZE_SP = 11f
 private const val MAX_RANKING_FONT_SIZE_SP = 54f
 private const val ROW_LAYOUT_SAFETY_ROWS = 1
+
+/** The padding above and below the text of a row. */
+private val ROW_BASE_VERTICAL_PADDING = 2.dp
+
+/** The height of the title of a page over the table, with its gap. */
+private val RANKING_TITLE_HEIGHT = 44.dp
+private val COMPACT_RANKING_TITLE_HEIGHT = 36.dp
+
+/** How a page whose rows all fit spreads over the screen: more room in each row, and equal margins above and below. */
+private class RankingFill(val extraPerRow: Dp, val margin: Dp)
+
+/**
+ * Half the room left by [rows] rows of [rowHeight] in [available] goes into the rows, at most 60 % of a row each, and
+ * the rest into two equal margins. A page that does not fit is left as it is.
+ */
+private fun rankingFill(rows: Int, rowHeight: Dp, available: Dp): RankingFill {
+    val free = available - rowHeight * rows
+    if (rows == 0 || free <= 0.dp) return RankingFill(0.dp, 0.dp)
+    val extra = minOf(free / 2f / rows.toFloat(), rowHeight * 0.6f)
+    return RankingFill(extra, (free - extra * rows.toFloat()) / 2f)
+}
 private val ROW_VERTICAL_OVERHEAD = 6.dp
 private val RankingTableWidth = 1_100.dp
 private val RankingHorizontalPadding = 32.dp
@@ -1210,13 +1249,13 @@ private const val TEAM_TEXT_SCALE = 0.45f
 
 /** The logos of the main organizer and of the EMA in the corners of the ranking: big on a wide screen, small on a phone. */
 private val LOGO_SIZE = 120.dp
-private val COMPACT_LOGO_SIZE = 44.dp
+private val COMPACT_LOGO_SIZE = 64.dp
 
 /** Where the small logos start on a phone: under the line that says which data the screen shows. */
 private val COMPACT_LOGO_TOP = 24.dp
 
 /** The height of a small logo with its switch under it, while paused. */
-private val COMPACT_LOGO_BAND_WITH_SWITCHES = 108.dp
+private val COMPACT_LOGO_BAND_WITH_SWITCHES = COMPACT_LOGO_SIZE + 64.dp
 
 /** The room the title keeps on each side for the logos and their switches. */
 private val COMPACT_TITLE_SIDE = 104.dp
