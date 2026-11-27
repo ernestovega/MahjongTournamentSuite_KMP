@@ -9,22 +9,30 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingPresenter
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.KoinContext
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.time.Clock
 
 /** The ranking screen stays still while it is open. It loads once and asks the server nothing more. */
 @OptIn(ExperimentalTestApi::class)
@@ -35,7 +43,29 @@ class RankingScreenUiTest {
         seed(syncTable(version = 1, roundId = 1, tableId = 1))
     }
 
-    private fun androidx.compose.ui.test.ComposeUiTest.show(server: FakeTournamentRepository) {
+    /** A tournament played today with one table scored, so the ranking has pages. */
+    private fun playedToday() = FakeTournamentRepository().apply {
+        val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString()
+        tournaments = listOf(
+            Tournament(id = "t1", name = "Open", isTeams = false, numPlayers = 4, numRounds = 1, eventStartDate = today, eventEndDate = today),
+        )
+        players = (1..4).map { TournamentPlayer(id = it, name = "Player $it", team = 0) }
+        seed(
+            syncTable(version = 1, roundId = 1, tableId = 1, eastScore = "48")
+                .copy(playerSouthScore = "-16", playerWestScore = "-16", playerNorthScore = "-16"),
+            syncHands(score = "24").mapIndexed { index, hand ->
+                if (index == 0) hand.copy(playerWinnerId = "1", playerLooserId = "2", isDone = true, isChickenHand = true) else hand
+            },
+        )
+    }
+
+    /** A screen that is on: the check for new hands waits while the screen is hidden. */
+    private class ShownScreen : LifecycleOwner {
+        private val registry = LifecycleRegistry.createUnsafe(this).apply { currentState = Lifecycle.State.RESUMED }
+        override val lifecycle: Lifecycle get() = registry
+    }
+
+    private fun androidx.compose.ui.test.ComposeUiTest.show(server: FakeTournamentRepository, compact: Boolean = false) {
         setContent {
             val themeController = ThemeController(ThemePreference.Light, false, {})
             val koin = remember {
@@ -51,7 +81,7 @@ class RankingScreenUiTest {
                 }.koin
             }
             KoinContext(koin) {
-                CompositionLocalProvider(LocalThemeController provides themeController) {
+                CompositionLocalProvider(LocalThemeController provides themeController, LocalCompactLayout provides compact, LocalLifecycleOwner provides ShownScreen()) {
                     RankingStandaloneScreen(tournamentId = "t1")
                 }
             }
@@ -138,5 +168,29 @@ class RankingScreenUiTest {
         waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("OK").fetchSemanticsNodes().isNotEmpty() }
         onAllNodesWithText("OK").onFirst().performClick()
         waitForIdle()
+    }
+
+    @Test
+    fun aRankingWithResultsPagesByItself() = runComposeUiTest {
+        val server = playedToday()
+        show(server)
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Points").fetchSemanticsNodes().isNotEmpty() }
+
+        press("Start automatic paging")
+        repeat(4) {
+            mainClock.advanceTimeBy(16_000)
+            waitForIdle()
+        }
+        press("Pause automatic paging")
+        onNodeWithText("Results r1 · loaded ", substring = true).assertExists()
+    }
+
+    @Test
+    fun onAPhoneTheSettingsOpenInASheet() = runComposeUiTest {
+        show(playedToday(), compact = true)
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Points").fetchSemanticsNodes().isNotEmpty() }
+
+        press("Settings")
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Show first 3").fetchSemanticsNodes().isNotEmpty() }
     }
 }
