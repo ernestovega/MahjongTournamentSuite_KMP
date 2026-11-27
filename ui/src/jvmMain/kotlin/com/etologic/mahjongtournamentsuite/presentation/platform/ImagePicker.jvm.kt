@@ -8,6 +8,7 @@ import java.awt.RenderingHints
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.nio.file.Files
 import javax.imageio.ImageIO
 import javax.swing.JFileChooser
@@ -16,6 +17,16 @@ import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.image_chooser_filter
 import mahjongtournamentsuite.ui.generated.resources.image_chooser_title
 import org.jetbrains.compose.resources.stringResource
+
+/** The open dialog of an image: the chosen file, or null when it was cancelled. Tests replace it. */
+internal var chooseImage: (title: String, filterName: String) -> File? = { title, filterName ->
+    val chooser = JFileChooser().apply {
+        dialogTitle = title
+        fileFilter = FileNameExtensionFilter(filterName, "jpg", "jpeg", "png", "webp", "gif")
+        isAcceptAllFileFilterUsed = false
+    }
+    if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) chooser.selectedFile else null
+}
 
 @Composable
 actual fun rememberImagePicker(
@@ -31,14 +42,9 @@ actual fun rememberImagePicker(
     val chooserFilter = stringResource(Res.string.image_chooser_filter)
     return remember(chooserTitle, chooserFilter) {
         ImagePicker {
-            val chooser = JFileChooser().apply {
-                dialogTitle = chooserTitle
-                fileFilter = FileNameExtensionFilter(chooserFilter, "jpg", "jpeg", "png", "webp", "gif")
-                isAcceptAllFileFilterUsed = false
-            }
-            if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
+            val file = chooseImage(chooserTitle, chooserFilter)
+            if (file != null) {
                 runCatching {
-                    val file = chooser.selectedFile
                     SelectedImage(
                         fileName = file.name,
                         contentType = Files.probeContentType(file.toPath()) ?: contentTypeFromFileName(file.name),
@@ -88,7 +94,7 @@ actual fun cropSelectedImage(
         .onFailure { onError(it.toImageUiText(ImageCropError)) }
 }
 
-private fun contentTypeFromFileName(fileName: String): String = when (fileName.substringAfterLast('.', "").lowercase()) {
+internal fun contentTypeFromFileName(fileName: String): String = when (fileName.substringAfterLast('.', "").lowercase()) {
     "png" -> "image/png"
     "webp" -> "image/webp"
     "gif" -> "image/gif"
