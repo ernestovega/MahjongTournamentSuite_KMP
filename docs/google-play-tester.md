@@ -49,7 +49,7 @@ needs to know it; to see it, open App Store Connect.
 
 App Review checks the account deletion (Guideline 5.1.1(v)). Deleting the demo account would leave the next review
 without one, so the review notes (`docs/app-store/review-notes.txt`) ask Apple not to delete it and offer a second
-account instead: `APP_STORE_DELETE_TESTER` (`mtsappstoredelete@mahjongmadrid.com`, alias APP STORE REVIEWER DISPOSABLE ACCOUNT,
+account instead: `APP_STORE_DISPOSABLE_TESTER` (`mtsappstoredisposable@mahjongmadrid.com`, alias APP STORE REVIEWER DISPOSABLE ACCOUNT,
 player, no EMA number). The same workflow creates it again on each run when a review deleted it, with a password that
 also comes from the API key, and writes its email and password into the review notes, never into the repository.
 The notes also explain how the reviewer can create an own account from ADMIN > Users and delete it.
@@ -59,9 +59,9 @@ repository variable `APP_REVIEW_VIDEO_URL`. The workflow stops when it has none.
 
 ## Google Play account for the deletion test
 
-Like the App Store one: `GOOGLE_PLAY_DELETE_TESTER` (`mtsgoogleplaydelete@mahjongmadrid.com`, alias PLAY STORE REVIEWER
+Like the App Store one: `GOOGLE_PLAY_DISPOSABLE_TESTER` (`mtsgoogleplaydisposable@mahjongmadrid.com`, alias PLAY STORE REVIEWER
 DISPOSABLE ACCOUNT, player, no EMA number). The job Publish to Google Play of Deploy · Production runs
 `seed:google-play-tester:apply` before it uploads: each account is created only when it no longer exists (always the
 same email, never a second account), with the password of the secrets `GOOGLE_PLAY_TESTER_PASSWORD` and
-`GOOGLE_PLAY_DELETE_TESTER_PASSWORD`, the same ones that are in Play Console > App content > App access. Without a
+`GOOGLE_PLAY_DISPOSABLE_TESTER_PASSWORD`, the same ones that are in Play Console > App content > App access. Without a
 secret, a missing account is only reported.

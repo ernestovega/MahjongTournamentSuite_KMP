@@ -25,10 +25,10 @@ export const GOOGLE_PLAY_TESTER: StoreTester = {
 /**
  * The account that the Google Play reviewers may delete to try the account deletion, so that GOOGLE_PLAY_TESTER stays.
  * A player with no EMA number. Publish to Google Play creates it again, only when it no longer exists, with the
- * password of the secret GOOGLE_PLAY_DELETE_TESTER_PASSWORD, the same one that is in Play Console (App access).
+ * password of the secret GOOGLE_PLAY_DISPOSABLE_TESTER_PASSWORD, the same one that is in Play Console (App access).
  */
-export const GOOGLE_PLAY_DELETE_TESTER: StoreTester = {
-  email: "mtsgoogleplaydelete@mahjongmadrid.com",
+export const GOOGLE_PLAY_DISPOSABLE_TESTER: StoreTester = {
+  email: "mtsgoogleplaydisposable@mahjongmadrid.com",
   alias: "PLAY STORE REVIEWER DISPOSABLE ACCOUNT",
   role: "PLAYER",
   photoPath: resolve(__dirname, "../../assets/google-play-tester.png"),
@@ -51,8 +51,8 @@ export const APP_STORE_TESTER: StoreTester = {
  * APP_STORE_TESTER stays. A player with no EMA number. The workflow Publish · App Store listing creates it again, only
  * when it no longer exists (always with the same email), and puts its email and password in the review notes.
  */
-export const APP_STORE_DELETE_TESTER: StoreTester = {
-  email: "mtsappstoredelete@mahjongmadrid.com",
+export const APP_STORE_DISPOSABLE_TESTER: StoreTester = {
+  email: "mtsappstoredisposable@mahjongmadrid.com",
   alias: "APP STORE REVIEWER DISPOSABLE ACCOUNT",
   role: "PLAYER",
   photoPath: resolve(__dirname, "../../assets/app-store-tester.png"),

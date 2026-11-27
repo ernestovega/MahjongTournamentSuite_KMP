@@ -7,7 +7,7 @@ writes `<out>/metadata` (texts and URLs of each language, categories, copyright,
 (the images of docs/app-store/<iphone|ipad>/<language>/, which deliver sorts by size). The description of each
 language is the full description of the Google Play listing. It checks the limits of App Store Connect and stops
 on any problem. The workflow Publish · App Store listing runs it, with the values of the review notes in
-APP_REVIEW_VIDEO_URL, APP_REVIEW_DELETE_ACCOUNT_EMAIL and APP_REVIEW_DELETE_ACCOUNT_PASSWORD.
+APP_REVIEW_VIDEO_URL, APP_REVIEW_DISPOSABLE_ACCOUNT_EMAIL and APP_REVIEW_DISPOSABLE_ACCOUNT_PASSWORD.
 """
 import os
 import re
@@ -38,7 +38,7 @@ LANGUAGES = {
 DEVICES = {"iphone": (1320, 2868), "ipad": (2064, 2752)}
 # The notes for App Review (docs/app-store/review-notes.txt). The workflow gives the values of its placeholders.
 REVIEW_NOTES = APP_STORE / "review-notes.txt"
-REVIEW_VALUES = ("VIDEO_URL", "DELETE_ACCOUNT_EMAIL", "DELETE_ACCOUNT_PASSWORD")
+REVIEW_VALUES = ("VIDEO_URL", "DISPOSABLE_ACCOUNT_EMAIL", "DISPOSABLE_ACCOUNT_PASSWORD")
 
 
 def play_descriptions() -> dict[str, str]:

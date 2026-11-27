@@ -34,7 +34,7 @@ Thank you for the review. Here is the information requested.
   • The ADMIN button of the top bar opens the management area (tournaments, registrations, tables, rounds).
 - Account deletion:
   • Please do not delete the demo account: it would really be deleted and the next review would have no demo account. You have these options instead:
-  • Option A, a disposable account ready to delete: {DELETE_ACCOUNT_EMAIL} / {DELETE_ACCOUNT_PASSWORD}
+  • Option A, a disposable account ready to delete: {DISPOSABLE_ACCOUNT_EMAIL} / {DISPOSABLE_ACCOUNT_PASSWORD}
     Sign in with it, then Profile > Delete my account > Delete.
     We create it again for each submission when needed, so it is always there to try.
   • Option B, your own account: with the demo account open ADMIN > Users, tap +, enter an email you can read and tap "Save and send password reset".
