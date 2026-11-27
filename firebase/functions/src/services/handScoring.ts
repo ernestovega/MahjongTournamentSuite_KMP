@@ -49,6 +49,16 @@ function isCompletelyEmpty(hand: Data): boolean {
     && !hand.isChickenHand;
 }
 
+const PENALTY_FIELDS = ["playerEastPenalty", "playerSouthPenalty", "playerWestPenalty", "playerNorthPenalty"] as const;
+
+/**
+ * True when the hand has no result but has a penalty. A penalty can be given at any moment, also before the hand
+ * is played, so it counts on its own: the hand changes the seats by its penalties only. It is not a played hand.
+ */
+export function isPenaltyOnly(hand: Data): boolean {
+  return isCompletelyEmpty(hand) && PENALTY_FIELDS.some((field) => penalty(hand[field]) !== 0);
+}
+
 function penalty(value: unknown): number {
   return text(value).split(";").reduce((sum, part) => {
     const parsed = /^-?\d+$/.test(part.trim()) ? Number(part.trim()) : 0;
@@ -58,13 +68,14 @@ function penalty(value: unknown): number {
 
 /** The score change of every seat for one hand, or null when the hand does not count. */
 export function handSeatScores(hand: Data, seats: [string, string, string, string]): SeatValues | null {
-  if (isResultSelectionInvalid(hand) || isCompletelyEmpty(hand)) return null;
+  if (isResultSelectionInvalid(hand)) return null;
+  if (isCompletelyEmpty(hand) && !isPenaltyOnly(hand)) return null;
   const score = text(hand.handScore);
   const winner = text(hand.playerWinnerId);
   const loser = normalizedLoser(hand);
 
   let base: SeatValues;
-  if (winner === "" && loser === "" && score === "0") {
+  if (winner === "" && loser === "" && (score === "0" || score === "")) {
     base = [0, 0, 0, 0];
   } else if (winner === "") {
     return null;
@@ -83,8 +94,7 @@ export function handSeatScores(hand: Data, seats: [string, string, string, strin
       return -MIN_HAND_SCORE;
     }) as SeatValues;
   }
-  const penalties = [hand.playerEastPenalty, hand.playerSouthPenalty, hand.playerWestPenalty, hand.playerNorthPenalty]
-    .map(penalty);
+  const penalties = PENALTY_FIELDS.map((field) => penalty(hand[field]));
   return base.map((value, index) => value + penalties[index]) as SeatValues;
 }
 

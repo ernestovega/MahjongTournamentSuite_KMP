@@ -478,8 +478,17 @@ internal class TableManagerEditorState private constructor(
         val winnerId = hand.playerWinnerId.trim()
         val loserId = hand.normalizedLoserId
 
+        val penalties = SeatIntValues(
+            east = parsePenalty(hand.currentPenalty(0)),
+            south = parsePenalty(hand.currentPenalty(1)),
+            west = parsePenalty(hand.currentPenalty(2)),
+            north = parsePenalty(hand.currentPenalty(3)),
+        )
         val base = when {
-            hand.isIgnoredForCalculation -> return null
+            hand.isResultSelectionInvalid -> return null
+            // A hand with no result counts only for its penalties. A penalty can come before the hand is played.
+            winnerId.isEmpty() && loserId.isEmpty() && score.isEmpty() ->
+                if (penalties == SeatIntValues.ZERO) return null else SeatIntValues.ZERO
             score.isEmpty() -> return null
             winnerId.isEmpty() && loserId.isEmpty() && score == "0" -> SeatIntValues.ZERO
             winnerId.isEmpty() -> return null
@@ -509,12 +518,7 @@ internal class TableManagerEditorState private constructor(
             }
         }
 
-        return base.copy(
-            east = base.east + parsePenalty(hand.currentPenalty(0)),
-            south = base.south + parsePenalty(hand.currentPenalty(1)),
-            west = base.west + parsePenalty(hand.currentPenalty(2)),
-            north = base.north + parsePenalty(hand.currentPenalty(3)),
-        )
+        return base + penalties
     }
 
     private fun currentSeatIds(): SeatIds? {
