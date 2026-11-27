@@ -115,6 +115,7 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
     var approvingRequest by remember { mutableStateOf<AccountRequest?>(null) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var selectedRoles by remember { mutableStateOf<Set<GlobalUserRole>>(emptySet()) }
+    var selectedPhotoFilters by remember { mutableStateOf<Set<UserPhotoFilter>>(emptySet()) }
     var selectedTournamentId by rememberSaveable { mutableStateOf<String?>(null) }
     var restoreUid by rememberSaveable { mutableStateOf<String?>(null) }
     // Admins select accounts and send them the password reset email in one go.
@@ -134,6 +135,7 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
     val activeLabel = stringResource(Res.string.user_status_active)
     val disabledLabel = stringResource(Res.string.user_status_disabled)
     val countryByEmaId = emaPlayers.associate { it.emaId to it.country }
+    val emaIdsWithPhoto = emaPlayers.filterNot { it.photoUrl.isNullOrBlank() }.map { it.emaId }.toSet()
     val filteredUsers = users.filter { user ->
         listOf(
             user.emaId?.let(countryByEmaId::get).orEmpty(),
@@ -144,6 +146,7 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
             if (user.disabled) disabledLabel else activeLabel,
         ).any { it.matchesSearch(searchQuery) } &&
             (selectedRoles.isEmpty() || user.roles.ifEmpty { setOf(user.role) }.any { it in selectedRoles }) &&
+            user.matchesPhotoFilters(selectedPhotoFilters, emaIdsWithPhoto) &&
             (
                 selectedTournamentId == null ||
                     GlobalUserRole.SUPER_ADMIN in user.roles ||
@@ -398,6 +401,11 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
                                         tournaments = tournaments,
                                         selectedTournamentId = selectedTournamentId,
                                         onTournamentSelected = { selectedTournamentId = it },
+                                        selectedPhotoFilters = selectedPhotoFilters,
+                                        onPhotoFilterToggle = { filter ->
+                                            selectedPhotoFilters =
+                                                if (filter in selectedPhotoFilters) selectedPhotoFilters - filter else selectedPhotoFilters + filter
+                                        },
                                     )
                                     if (accountRequests.isNotEmpty()) {
                                         AccountRequestsCard(

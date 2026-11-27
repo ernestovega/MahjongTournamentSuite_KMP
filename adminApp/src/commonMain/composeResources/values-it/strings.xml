@@ -256,6 +256,9 @@
     <string name="assign_all_before_id_cards">Assegna un giocatore EMA a ogni posto del torneo prima di creare i cartellini.</string>
     <string name="assign_all_before_id_list">Assegna un giocatore EMA a ogni posto del torneo prima di creare l'elenco di identificazione.</string>
     <string name="assign_ema_player_to_player">ASSEGNA UN GIOCATORE EMA AL GIOCATORE %1$d</string>
+    <string name="filter_ema_photo">Foto EMA</string>
+    <string name="filter_own_photo">Foto personale</string>
+    <string name="filter_with_photo">Con foto</string>
     <string name="photo">Foto</string>
     <string name="country_n">Paese %1$s</string>
     <string name="no_matches">Nessun risultato</string>

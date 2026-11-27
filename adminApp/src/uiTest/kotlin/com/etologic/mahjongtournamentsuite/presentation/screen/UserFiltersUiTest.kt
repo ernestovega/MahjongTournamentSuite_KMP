@@ -15,8 +15,10 @@ import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.height
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
+import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /** The filters of the users screen: the search field, the tournament select field and the role buttons. */
@@ -56,5 +58,38 @@ class UserFiltersUiTest {
         assertEquals(search.bottom, select.bottom)
         assertEquals(search.height, select.height + 8.dp)
         assertTrue(select.left > search.left)
+    }
+
+    @Test
+    fun eachPhotoButtonTogglesItsPhotoFilter() = runComposeUiTest {
+        val toggled = mutableListOf<UserPhotoFilter>()
+        setContent {
+            UserFilters("", {}, emptySet(), {}, emptyList(), null, {}, onPhotoFilterToggle = { toggled += it })
+        }
+        onNodeWithText("Own photo").performClick()
+        onNodeWithText("EMA photo").performClick()
+        assertEquals(listOf(UserPhotoFilter.OWN, UserPhotoFilter.EMA), toggled)
+    }
+
+    @Test
+    fun thePhotoFiltersShowTheAccountsWithAnyOfTheChosenPhotos() {
+        fun user(emaId: String? = null, photoUrl: String? = null, hasOwnPhoto: Boolean = false) =
+            ManagedUser("u", "e", "", GlobalUserRole.PLAYER, false, emptyList(), emaId = emaId, photoUrl = photoUrl, hasOwnPhoto = hasOwnPhoto)
+        val emaPhotos = setOf("1")
+        val none = user()
+        val own = user(photoUrl = "own", hasOwnPhoto = true)
+        val ema = user(emaId = "1", photoUrl = "ema")
+        val both = user(emaId = "1", photoUrl = "own", hasOwnPhoto = true)
+        val emaWithoutPhoto = user(emaId = "2")
+        val ownOnly = setOf(UserPhotoFilter.OWN)
+        val emaOnly = setOf(UserPhotoFilter.EMA)
+        val any = UserPhotoFilter.entries.toSet()
+        assertTrue(listOf(none, own, ema, both, emaWithoutPhoto).all { it.matchesPhotoFilters(emptySet(), emaPhotos) })
+        assertEquals(listOf(own, both), listOf(none, own, ema, both, emaWithoutPhoto).filter { it.matchesPhotoFilters(ownOnly, emaPhotos) })
+        assertEquals(listOf(ema, both), listOf(none, own, ema, both, emaWithoutPhoto).filter { it.matchesPhotoFilters(emaOnly, emaPhotos) })
+        assertEquals(listOf(own, ema, both), listOf(none, own, ema, both, emaWithoutPhoto).filter { it.matchesPhotoFilters(any, emaPhotos) })
+        // The EMA players are not loaded yet: the photo of an account without its own photo is the EMA photo.
+        assertTrue(ema.matchesPhotoFilters(emaOnly, emptySet()))
+        assertFalse(own.matchesPhotoFilters(emaOnly, emptySet()))
     }
 }

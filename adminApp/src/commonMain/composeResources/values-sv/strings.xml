@@ -256,6 +256,9 @@
     <string name="assign_all_before_id_cards">Tilldela en EMA-spelare till varje turneringsplats innan du skapar ID-kort.</string>
     <string name="assign_all_before_id_list">Tilldela en EMA-spelare till varje turneringsplats innan du skapar ID-listan.</string>
     <string name="assign_ema_player_to_player">TILLDELA EMA-SPELARE TILL SPELARE %1$d</string>
+    <string name="filter_ema_photo">EMA-foto</string>
+    <string name="filter_own_photo">Egen foto</string>
+    <string name="filter_with_photo">Med foto</string>
     <string name="photo">Foto</string>
     <string name="country_n">Land %1$s</string>
     <string name="no_matches">Inga träffar</string>
