@@ -73,6 +73,19 @@ class ProfilePhotoVisibilityUiTest {
     }
 
     @Test
+    fun aNewPhotoAsksFirstToAcceptThatItWillBePublic() = runComposeUiTest {
+        setContent { ProfileTheme { Dialog(player, onSetPublicPhoto = { AppResult.Success(player) }) } }
+
+        onNodeWithContentDescription("Edit photo").performClick()
+        onNodeWithText("Your photo will be public").assertExists()
+        onNodeWithText("everyone can see it", substring = true).assertExists()
+        onNodeWithText("Show my photo publicly\" in your profile", substring = true).assertExists()
+        onNodeWithText("Accept and choose").assertExists()
+        onNodeWithText("Cancel").performClick()
+        onNodeWithText("Your photo will be public").assertDoesNotExist()
+    }
+
+    @Test
     fun anAccountWithoutEmaNumberHasNoSwitch() = runComposeUiTest {
         setContent { ProfileTheme { Dialog(player.copy(emaId = null), onSetPublicPhoto = { error("unused") }) } }
 

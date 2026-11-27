@@ -44,6 +44,10 @@
     <string name="profile_alias_info">Ditt alias är privat: bara du och arrangörerna ser det.\nDet hjälper till att skilja på personer med samma namn.\nDet visas aldrig i rankningar, statistik eller på andra offentliga ställen.</string>
     <string name="profile_public_photo">Visa mitt foto offentligt</string>
     <string name="profile_public_photo_info">Ditt foto syns offentligt i rankningar, statistik och anmälningslistor.\n\nUtan eget foto används fotot från din EMA-spelare.\nUtan något av dem visas inget foto.\n\nStäng av detta för att inte visa något foto alls, varken ditt eller EMA:s.</string>
+    <string name="photo_public_notice_title">Ditt foto blir offentligt</string>
+    <string name="photo_public_notice_text">Ditt foto blir offentligt: alla kan se det i rankningar, statistik och anmälningslistor för turneringarna.</string>
+    <string name="photo_public_notice_hide">Du kan dölja det när som helst med "Visa mitt foto offentligt" i din profil.</string>
+    <string name="photo_public_notice_accept">Godkänn och välj</string>
     <string name="photo_error_type">Välj en JPEG-, PNG-, WebP- eller GIF-bild.</string>
     <string name="photo_error_size">Välj ett foto på högst 5 MB.</string>
     <string name="photo_edit">Redigera foto</string>

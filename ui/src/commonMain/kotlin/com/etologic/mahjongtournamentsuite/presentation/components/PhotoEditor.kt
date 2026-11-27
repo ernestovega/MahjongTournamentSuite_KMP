@@ -12,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -36,10 +37,12 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberImagePicker
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import kotlinx.coroutines.launch
 import mahjongtournamentsuite.ui.generated.resources.Res
+import mahjongtournamentsuite.ui.generated.resources.action_cancel
 import mahjongtournamentsuite.ui.generated.resources.photo_crop_hint
 import mahjongtournamentsuite.ui.generated.resources.photo_crop_title
 import mahjongtournamentsuite.ui.generated.resources.photo_custom_info
@@ -49,6 +52,8 @@ import mahjongtournamentsuite.ui.generated.resources.photo_error_size
 import mahjongtournamentsuite.ui.generated.resources.photo_error_type
 import mahjongtournamentsuite.ui.generated.resources.photo_none
 import mahjongtournamentsuite.ui.generated.resources.photo_of
+import mahjongtournamentsuite.ui.generated.resources.photo_public_notice_accept
+import mahjongtournamentsuite.ui.generated.resources.photo_public_notice_title
 import mahjongtournamentsuite.ui.generated.resources.photo_remove
 import org.jetbrains.compose.resources.stringResource
 
@@ -64,6 +69,8 @@ private val SUPPORTED_PHOTO_TYPES = setOf("image/jpeg", "image/png", "image/webp
  * The remove button restores the photo of the EMA player.
  * [photoSize] is the diameter of the photo. With [editBadge] the buttons give way to a small pencil on the photo, for a
  * narrow column: it opens the image picker, or a menu with Edit and Remove when the user has an own photo.
+ * With [uploadNotice], the person reads it and accepts it before choosing a new photo: the own profile says there
+ * that the photo will be public (Ernesto, 2026-11-27). An admin who changes the photo of someone else sees no notice.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,11 +83,13 @@ fun PhotoEditor(
     modifier: Modifier = Modifier,
     photoSize: Dp = 120.dp,
     editBadge: Boolean = false,
+    uploadNotice: String? = null,
 ) {
     val scope = rememberCoroutineScope()
     var imageToCrop by remember { mutableStateOf<SelectedImage?>(null) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<UiText?>(null) }
+    var showingNotice by remember { mutableStateOf(false) }
     val picker = rememberImagePicker(
         onImageSelected = { image ->
             when {
@@ -94,6 +103,11 @@ fun PhotoEditor(
         },
         onError = { error = it },
     )
+
+    // A new photo: first the notice, when there is one, and then the image picker.
+    fun choosePhoto() {
+        if (uploadNotice != null) showingNotice = true else picker.launch()
+    }
 
     Column(
         modifier = modifier,
@@ -132,7 +146,7 @@ fun PhotoEditor(
                 Box(Modifier.align(Alignment.BottomEnd).offset(x = 4.dp, y = 4.dp)) {
                     FocusedIconButton(
                         enabled = !saving,
-                        onClick = { if (hasOwnPhoto) menuOpen = true else picker.launch() },
+                        onClick = { if (hasOwnPhoto) menuOpen = true else choosePhoto() },
                         buttonModifier = Modifier.size(32.dp),
                         colors = IconButtonDefaults.filledIconButtonColors(),
                     ) {
@@ -147,7 +161,7 @@ fun PhotoEditor(
                             text = { Text(stringResource(Res.string.photo_edit)) },
                             onClick = {
                                 menuOpen = false
-                                picker.launch()
+                                choosePhoto()
                             },
                         )
                         DropdownMenuItem(
@@ -163,7 +177,7 @@ fun PhotoEditor(
         }
         if (!editBadge) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                FocusedTextButton(enabled = !saving, onClick = { picker.launch() }) {
+                FocusedTextButton(enabled = !saving, onClick = { choosePhoto() }) {
                     ButtonText(stringResource(Res.string.photo_edit))
                 }
                 if (hasOwnPhoto) {
@@ -174,6 +188,26 @@ fun PhotoEditor(
         }
         error?.let {
             Text(it.asString(), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
+        }
+    }
+
+    if (showingNotice && uploadNotice != null) {
+        TrackedDialog("PhotoPublicNotice") {
+            AlertDialog(
+                modifier = Modifier.appFocusGroup(),
+                onDismissRequest = { showingNotice = false },
+                title = { MtsDialogTitle(stringResource(Res.string.photo_public_notice_title)) },
+                text = { MtsDialogText(uploadNotice) },
+                confirmButton = {
+                    MtsDialogButtons {
+                        FocusedButton(onClick = {
+                            showingNotice = false
+                            picker.launch()
+                        }) { ButtonText(stringResource(Res.string.photo_public_notice_accept)) }
+                        FocusedTextButton(onClick = { showingNotice = false }) { ButtonText(stringResource(Res.string.action_cancel)) }
+                    }
+                },
+            )
         }
     }
 

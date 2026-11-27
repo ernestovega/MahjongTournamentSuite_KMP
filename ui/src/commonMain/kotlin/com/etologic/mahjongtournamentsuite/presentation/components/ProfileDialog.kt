@@ -66,6 +66,8 @@ import mahjongtournamentsuite.ui.generated.resources.profile_ema_number_info
 import mahjongtournamentsuite.ui.generated.resources.profile_public_photo
 import mahjongtournamentsuite.ui.generated.resources.profile_public_photo_info
 import mahjongtournamentsuite.ui.generated.resources.profile_title
+import mahjongtournamentsuite.ui.generated.resources.photo_public_notice_hide
+import mahjongtournamentsuite.ui.generated.resources.photo_public_notice_text
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -237,6 +239,10 @@ fun ProfileDialog(
                             onRemove = { savePhoto { onRemovePhoto() } },
                             photoSize = if (compact) 80.dp else 128.dp,
                             editBadge = true,
+                            // The person accepts that the photo is public before choosing it. With the switch below, the
+                            // notice also says how to hide it.
+                            uploadNotice = stringResource(Res.string.photo_public_notice_text) +
+                                if (onSetPublicPhoto != null && profile.emaId != null) "\n\n" + stringResource(Res.string.photo_public_notice_hide) else "",
                         )
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             profile.emaId?.let { emaId ->
