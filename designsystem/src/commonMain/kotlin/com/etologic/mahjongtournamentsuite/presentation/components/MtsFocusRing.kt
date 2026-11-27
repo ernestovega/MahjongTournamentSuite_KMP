@@ -87,7 +87,10 @@ fun MtsFilterChip(
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     shape: Shape = FilterChipDefaults.shape,
-    colors: SelectableChipColors = FilterChipDefaults.filterChipColors(),
+    // An unselected chip is filled like a card, lighter than the page, so it never looks transparent (Ernesto 27-nov).
+    colors: SelectableChipColors = FilterChipDefaults.filterChipColors(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+    ),
     elevation: SelectableChipElevation? = FilterChipDefaults.filterChipElevation(),
     border: BorderStroke? = FilterChipDefaults.filterChipBorder(enabled, selected),
     interactionSource: MutableInteractionSource? = null,
