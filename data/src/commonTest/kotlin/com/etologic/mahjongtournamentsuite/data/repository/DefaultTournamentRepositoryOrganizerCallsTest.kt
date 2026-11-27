@@ -53,6 +53,7 @@ class DefaultTournamentRepositoryOrganizerCallsTest {
         var failWith: HttpStatusCode? = null
         var failBody = """{"error":"refused"}"""
         var venuePlace = true
+        var broken = false
 
         fun body(methodAndPath: String) = requests.single { it.startsWith("$methodAndPath ") }.removePrefix("$methodAndPath ")
         fun count(methodAndPath: String) = requests.count { it.startsWith("$methodAndPath ") || it == methodAndPath }
@@ -66,6 +67,7 @@ class DefaultTournamentRepositoryOrganizerCallsTest {
             if (path.endsWith("/sync/manifest")) {
                 return@mockBackendApi jsonResponse("""{"resources":{},"globalResources":{},"tableVersions":{}}""")
             }
+            if (server.broken) error("The connection broke.")
             server.failWith?.let { return@mockBackendApi respond(ByteReadChannel(server.failBody), it) }
             when {
                 path == "/tournaments" && request.method.value == "POST" -> jsonResponse(TOURNAMENT)
@@ -265,6 +267,24 @@ class DefaultTournamentRepositoryOrganizerCallsTest {
         server.failWith = HttpStatusCode.BadRequest
         val other = assertIs<AppResult.Failure>(repository.updateRoundControl("t1", 1, RoundControlChange(hands = ControlMode.OPEN)))
         assertTrue(other.error != AppError.Conflict(TABLE_HAS_ALL_HANDS))
+    }
+
+    @Test
+    fun theOtherRefusalsOfTheClockAndTheControlKeepTheirOwnError() = runTest {
+        val server = Server()
+        val repository = repository(server)
+        server.failWith = HttpStatusCode.BadRequest
+        server.failBody = """{"error":"$ROUND_HAS_HANDS"}"""
+        assertTrue(assertIs<AppResult.Failure>(repository.updateRoundClock("t1", 1, RoundClockAction.Stop)).error != AppError.Conflict(ROUND_HAS_HANDS))
+
+        server.failWith = HttpStatusCode.Conflict
+        server.failBody = """{"error":"something else"}"""
+        val control = assertIs<AppResult.Failure>(repository.updateRoundControl("t1", 1, RoundControlChange(hands = ControlMode.OPEN)))
+        assertTrue(control.error != AppError.Conflict(TABLE_HAS_ALL_HANDS))
+
+        server.broken = true
+        assertIs<AppResult.Failure>(repository.updateRoundClock("t1", 1, RoundClockAction.Stop))
+        assertIs<AppResult.Failure>(repository.updateRoundControl("t1", 1, RoundControlChange(hands = ControlMode.OPEN)))
     }
 
     private companion object {

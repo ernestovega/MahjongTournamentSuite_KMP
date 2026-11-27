@@ -64,6 +64,13 @@ class DefaultTournamentRepositoryIdCardProofTest {
     }
 
     @Test
+    fun aProofWithANewLogoSendsIt() = runTest {
+        val withLogo = request.copy(associationLogoContentType = "image/png", associationLogoBytes = byteArrayOf(1, 2, 3))
+
+        assertIs<AppResult.Success<ByteArray>>(repository(HttpStatusCode.OK).generateIdCardProof(withLogo))
+    }
+
+    @Test
     fun aFailedProofIsAFailureAndCountsAsActionFailed() = runTest {
         val result = repository(HttpStatusCode.InternalServerError).generateIdCardProof(request)
 

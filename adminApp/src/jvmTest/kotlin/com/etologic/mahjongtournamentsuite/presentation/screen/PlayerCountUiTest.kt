@@ -561,6 +561,19 @@ class PlayerCountUiTest {
     }
 
     @Test
+    fun aTournamentWithoutItsDrawExplainsWhyItCannotChange() = runComposeUiTest {
+        show(World(individual.copy(drawPending = true), slots(20))) { PlayerCountScreen(tournamentId = "t1", onBack = {}) }
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("The tournament has no draw yet.", substring = true).fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    @Test
+    fun aFailedLoadOfThePlayersSaysWhy() = runComposeUiTest {
+        val world = World(individual, slots(20)).apply { server.failPlayers = true }
+        show(world) { PlayerCountScreen(tournamentId = "t1", onBack = {}) }
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("OK").fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    @Test
     fun editTournamentOpensItFromTheDataTab() = runComposeUiTest {
         val world = World(individual, slots(20))
         world.store.adminStatus.value = AdminStatus("u1", GlobalUserRole.SUPER_ADMIN)
