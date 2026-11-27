@@ -227,6 +227,15 @@ class TournamentsScreenFlowsUiTest {
     }
 
     @Test
+    fun aTournamentWithALogoShowsIt() = runComposeUiTest {
+        show(World(listOf(open.copy(associationLogoUrl = "https://logos.test/open.png"))))
+        awaitText("Open Madrid")
+        waitUntil(timeoutMillis = 5_000) {
+            onAllNodes(hasContentDescription("Logo for Open Madrid"), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
+    @Test
     fun withoutTournamentsTheListSaysSo() = runComposeUiTest {
         show(World(emptyList()))
         awaitText("No tournaments yet")

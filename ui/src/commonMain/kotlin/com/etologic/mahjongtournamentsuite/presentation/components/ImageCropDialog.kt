@@ -30,6 +30,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.IntSize
@@ -153,6 +154,9 @@ fun ImageCropDialog(
     }
 }
 
+/** The round preview of the crop. A drag on it moves the image. */
+internal const val IMAGE_CROP_PREVIEW_TAG = "image-crop-preview"
+
 @Composable
 private fun CircularCropPreview(
     model: Any,
@@ -180,6 +184,7 @@ private fun CircularCropPreview(
     Box(
         modifier = Modifier
             .size(viewport)
+            .testTag(IMAGE_CROP_PREVIEW_TAG)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)

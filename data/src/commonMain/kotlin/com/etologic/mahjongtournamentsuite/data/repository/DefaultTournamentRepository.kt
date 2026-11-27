@@ -1106,7 +1106,7 @@ class DefaultTournamentRepository(
     private suspend fun <T> withReadToken(block: suspend (String) -> T): T = if (publicReads) block(PUBLIC_TOKEN) else withFreshIdToken(block)
 
     /** Whose cache a read fills. Public answers are the same for everyone. */
-    private suspend fun readOwner(): String = if (publicReads) PUBLIC_CACHE_OWNER else authRepository.currentSession()?.uid ?: error("No active session")
+    private suspend fun readOwner(): String = if (publicReads) PUBLIC_CACHE_OWNER else (authRepository.currentSession() ?: error("No active session")).uid
 
     override suspend fun listMyTournamentSlots(): AppResult<List<MyTournamentSlot>> = when (val mine = listMyTournaments()) {
         is AppResult.Success -> AppResult.Success(mine.value.slots)

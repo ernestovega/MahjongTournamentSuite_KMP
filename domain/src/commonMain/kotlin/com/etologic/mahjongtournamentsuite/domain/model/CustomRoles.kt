@@ -24,9 +24,10 @@ data class RolesCatalog(
     fun customFor(base: GlobalUserRole): List<CustomRole> = custom.filter { it.base == base }
 
     /** The permissions of the role that an account uses at [level]: its custom role, or the standard one. */
-    fun permissionsOf(level: GlobalUserRole, customRoleId: String?): Set<Permission> = custom.firstOrNull { it.id == customRoleId && it.base == level }?.permissions
-        ?: standard[level]
-        ?: Permission.defaultsOf(level)
+    fun permissionsOf(level: GlobalUserRole, customRoleId: String?): Set<Permission> {
+        val role = custom.firstOrNull { it.id == customRoleId && it.base == level }
+        return if (role != null) role.permissions else standard[level] ?: Permission.defaultsOf(level)
+    }
 
     companion object {
         /** The roles whose permissions can change: a super admin always has all of them. */

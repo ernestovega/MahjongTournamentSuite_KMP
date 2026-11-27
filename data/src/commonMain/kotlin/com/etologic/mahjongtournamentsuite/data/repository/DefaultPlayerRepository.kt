@@ -100,7 +100,7 @@ class DefaultPlayerRepository(
         action: String,
         refreshMode: RefreshMode,
     ): AppResult<List<Player>> = runCatching {
-        val owner = if (publicReads) PUBLIC_CACHE_OWNER else authRepository.currentSession()?.uid ?: error("No active session")
+        val owner = if (publicReads) PUBLIC_CACHE_OWNER else (authRepository.currentSession() ?: error("No active session")).uid
         // The answer is also saved on the device, so a new start of the app does not download it again.
         cache.getOrLoadPersisted(
             ownerUid = owner,

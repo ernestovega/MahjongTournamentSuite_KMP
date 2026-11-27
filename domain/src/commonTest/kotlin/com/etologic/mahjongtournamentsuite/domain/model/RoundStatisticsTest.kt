@@ -123,6 +123,11 @@ class RoundStatisticsTest {
         assertEquals(listOf(2), round.players.single().results.map { it.roundId })
     }
 
+    @Test
+    fun aRoundWithoutWinningHandsHasNoAverageHand() {
+        assertNull(threeTables().forRound(3).averageHandScore)
+    }
+
     /** A value that the whole tournament does not know stays unknown in a round. */
     @Test
     fun oneRoundKeepsUnknownValuesUnknown() {
