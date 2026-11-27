@@ -45,7 +45,7 @@
     <string name="profile_alias_info">Il tuo alias è privato: lo vedete solo tu e gli organizzatori.\nServe a distinguere persone con lo stesso nome.\nNon appare mai in classifiche, statistiche o altri luoghi pubblici.</string>
     <string name="profile_public_photo">Mostra la mia foto in pubblico</string>
     <string name="profile_public_photo_info">La tua foto è visibile pubblicamente in classifiche, statistiche e liste degli iscritti.\n\nSenza una foto tua, si usa quella del tuo giocatore EMA.\nSenza nessuna delle due, non si mostra alcuna foto.\n\nDisattiva questa opzione per non mostrare nessuna foto, né la tua né quella dell'EMA.</string>
-    <string name="photo_public_notice_title">La tua foto sarà pubblica</string>
+    <string name="photo_public_notice_title">Buono a sapersi</string>
     <string name="photo_public_notice_text">La tua foto si vedrà in classifiche, statistiche e liste degli iscritti.</string>
     <string name="photo_public_notice_hide">Se non hai una foto tua, si usa quella del tuo giocatore EMA (se ce l'ha).\n\nPuoi scegliere di non mostrarne nessuna nel tuo profilo.</string>
     <string name="photo_public_notice_accept">Accetta</string>
