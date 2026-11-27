@@ -349,4 +349,9 @@ But one email can have only one account in the app: whoever wants their own acco
     <string name="apps_notice_later">You can find them later in the More menu, under Get the app.</string>
     <string name="apps_notice_close">Close</string>
     <string name="apps_notice_never">Don't show again</string>
+    <string name="ranking_hidden_title">Ranking hidden until the prize giving</string>
+    <string name="ranking_hidden_message">The organizer keeps the results secret and will reveal them at the prize giving.</string>
+    <string name="ranking_frozen_notice">Ranking frozen after round %1$d. The final results come at the prize giving.</string>
+    <string name="table_results_hidden_title">Results hidden until the prize giving</string>
+    <string name="table_results_hidden_message">Only the players of this table see its hands until the organizer reveals the results.</string>
 </resources>

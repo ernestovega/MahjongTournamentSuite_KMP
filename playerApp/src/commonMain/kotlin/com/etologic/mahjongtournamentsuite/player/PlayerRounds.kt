@@ -9,17 +9,25 @@ import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRan
 /** The rounds of a tournament, from 1 to the last one. */
 internal fun Tournament.roundIds(): List<Int> = (1..numRounds).toList()
 
+/** False for a round whose results the tournament hides now, until the prize giving. */
+internal fun Tournament.showsResultsOf(roundId: Int): Boolean = resultsHiddenFromRound.let { it == null || roundId < it }
+
+/** The rounds whose results everyone sees now. */
+internal fun Tournament.visibleRoundIds(): List<Int> = roundIds().filter(::showsResultsOf)
+
 /**
  * The rankings at the end of each round that has a completed table. A round that nobody finished yet has no ranking,
  * so its place shows as a gap.
  */
 internal fun PlayerTournamentView.rankingsByRound(): Map<Int, TournamentRankings> {
-    val played = tables.filter { it.isComplete }.map { it.roundId }.toSet()
+    // The own tables of the hidden rounds have results, but the ranking stays as it was before those rounds.
+    val visible = tables.filter { tournament.showsResultsOf(it.roundId) }
+    val played = visible.filter { it.isComplete }.map { it.roundId }.toSet()
     return CalculateTournamentRankingsUseCase().afterEachRound(
         players = players.values.map { TournamentPlayer(id = it.slotId, name = it.name, team = it.team, substitution = it.substitution) },
-        tables = tables.map { RankingTable(it.table, it.hands) },
+        tables = visible.map { RankingTable(it.table, it.hands) },
         includeTeams = tournament.isTeams,
-        rounds = tournament.roundIds().filter { it in played },
+        rounds = tournament.visibleRoundIds().filter { it in played },
     )
 }
 

@@ -92,6 +92,8 @@ class CacheCoverageTest {
         "createTournament" to Write(),
         "renameTournament" to Write(),
         "updateTournamentSettings" to Write(),
+        "setResultsRevealed" to Write(),
+        "getOwnHiddenTables" to Live("The own tables of a player while the results are hidden: they change with every hand of the player, and the load of the tournament already checks the manifest first."),
         "deleteTournament" to Write(),
         "resolveVenueLink" to Live("Resolves a map link typed in the editor."),
         "listCountries" to Cached,

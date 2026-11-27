@@ -10,6 +10,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.CompleteTablesReques
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CompleteTablesResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ConfirmRegistrationRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CountriesResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.ResultsVisibilityDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreatePlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreateTournamentRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.DataVersionsManifestDto
@@ -443,6 +444,26 @@ class FunctionsBackendApi(
     ): TournamentDto = put(
         path = "/tournaments/$tournamentId/settings",
         requestBody = request,
+        idToken = idToken,
+    )
+
+    /** Reveals the hidden results of a tournament, or hides them again. */
+    suspend fun setResultsRevealed(
+        idToken: String,
+        tournamentId: String,
+        revealed: Boolean,
+    ): ResultsVisibilityDto = post(
+        path = "/tournaments/$tournamentId/results-visibility",
+        requestBody = ResultsVisibilityDto(revealed),
+        idToken = idToken,
+    )
+
+    /** The own tables of the signed-in player in the hidden rounds, with their results. */
+    suspend fun getOwnHiddenTables(
+        idToken: String,
+        tournamentId: String,
+    ): RoundTablesWithHandsResponseDto = get(
+        path = "/player/tournaments/$tournamentId/my-hidden-tables",
         idToken = idToken,
     )
 

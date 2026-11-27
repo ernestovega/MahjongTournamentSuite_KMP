@@ -90,7 +90,7 @@ data class PlayerTournamentView(
     private val statistics: TournamentStatistics by lazy {
         CalculateStatisticsUseCase()(
             players.values.map { TournamentPlayer(id = it.slotId, name = it.name, team = 0, substitution = it.substitution) },
-            tables.map { RankingTable(it.table, it.hands) },
+            tables.filterNot { it.table.resultsHidden }.map { RankingTable(it.table, it.hands) },
         )
     }
 

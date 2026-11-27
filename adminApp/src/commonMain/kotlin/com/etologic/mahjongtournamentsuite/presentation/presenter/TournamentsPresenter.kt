@@ -90,6 +90,7 @@ class TournamentsPresenter(
         timeZone: String? = null,
         isPublic: Boolean? = null,
         showTableDiffs: Boolean? = null,
+        hideResultsFromRound: Int? = null,
     ): AppResult<Tournament> = tournamentRepository.updateTournamentSettings(
         tournamentId = tournamentId,
         name = name,
@@ -110,7 +111,12 @@ class TournamentsPresenter(
         timeZone = timeZone,
         isPublic = isPublic,
         showTableDiffs = showTableDiffs,
+        hideResultsFromRound = hideResultsFromRound,
     ).trackAction(telemetry, TelemetryAction.TOURNAMENT_SETTINGS_UPDATED)
+
+    /** The prize giving: reveals the hidden results of the tournament, or hides them again after a reveal by mistake. */
+    suspend fun setResultsRevealed(tournamentId: String, revealed: Boolean): AppResult<Unit> =
+        tournamentRepository.setResultsRevealed(tournamentId, revealed).trackAction(telemetry, TelemetryAction.RESULTS_VISIBILITY_CHANGED)
 
     suspend fun signOut() {
         authRepository.signOut()

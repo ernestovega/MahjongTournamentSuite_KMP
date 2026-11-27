@@ -59,6 +59,30 @@ describe("a tournament from its creation to the final ranking", () => {
     );
   }
 
+  /** A phone previews a hand, which writes nothing, and sends requests that the routes refuse before any read. */
+  async function previewAndRefusals(table: Table, writer: number) {
+    const token = accounts.get(writer)!.account.token;
+    const base = `/player/tournaments/${tournamentId}/tables/${table.roundId}/${table.tableId}`;
+    const before = await tableOf(table.roundId, table.tableId);
+    const preview = await api("POST", `${base}/hands/preview`, token, { isChickenHand: false, isDraw: true, isLastHand: false, playerLooserId: "" });
+    assert.equal(preview.status, 200, JSON.stringify(preview.body));
+    assert.equal((await tableOf(table.roundId, table.tableId)).version, before.version);
+
+    const refused: string[] = [];
+    const penalty = { playerEastPenalty: "-10", playerSouthPenalty: "", playerWestPenalty: "", playerNorthPenalty: "" };
+    const seats = { playerEastId: "1", playerSouthId: "2", playerWestId: "3", playerNorthId: "4" };
+    for (const [path, body] of [
+      [`${base}/penalties`, { ...penalty, expectedVersion: -1 }],
+      [`${base}/hands`, { isDraw: true, expectedVersion: "1" }],
+      [`${base}/seats`, { ...seats, expectedVersion: 1.5 }],
+      [`/player/tournaments/${tournamentId}/tables/0/${table.tableId}/hands/preview`, { isDraw: true }],
+    ] as const) {
+      const reply = await api("POST", path, token, body);
+      if (reply.status !== 400) refused.push(`${path}: ${reply.status} ${JSON.stringify(reply.body)}`);
+    }
+    assert.deepEqual(refused, []);
+  }
+
   it("creates the tournament with every table empty and every slot open", async () => {
     tables = validDrawTables(PLAYERS, ROUNDS);
     const tournament = await createTournament({
@@ -124,6 +148,7 @@ describe("a tournament from its creation to the final ranking", () => {
           { playerEastId: String(east), playerSouthId: String(south), playerWestId: String(west), playerNorthId: String(north), expectedVersion: Number(current.version ?? 0) },
         );
         assert.equal(seats.status, 200, JSON.stringify(seats.body));
+        if (round === 1 && table.tableId === 1) await previewAndRefusals(table, east);
 
         // Slot 1 wins every hand of its tables by self draw. The other tables only draw.
         const winsAll = table.playerIds.includes(1);

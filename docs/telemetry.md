@@ -81,7 +81,7 @@ A platform without Analytics settings also sends no error log and shows no conse
 
 | Group | Words |
 | --- | --- |
-| Tournament | `tournament_renamed`, `tournament_settings_updated`, `table_reset` |
+| Tournament | `tournament_renamed`, `tournament_settings_updated`, `results_visibility_changed`, `table_reset` |
 | Round control (Timer) | `round_control_changed` (the manual control, plan B), `tables_completed` (close the open tables of finished rounds) |
 | Players and teams | `player_assigned`, `player_unassigned`, `player_substituted`, `substitution_cleared`, `team_updated`, `emails_saved` |
 | Exports | `id_cards_exported`, `id_list_exported`, `table_qr_exported`, `id_card_proof_created`, `ema_report_exported` |

@@ -15,6 +15,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerHandRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
+import com.etologic.mahjongtournamentsuite.domain.model.TableState
+import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
@@ -107,6 +109,9 @@ class PlayerTournamentPresenter(
     private val authRepository: AuthRepository,
     private val calculateRankings: CalculateTournamentRankingsUseCase,
 ) {
+    /** The own tables of the hidden rounds from the last load, by tournament. See [TournamentRepository.getOwnHiddenTables]. */
+    private val ownHiddenTables = mutableMapOf<String, List<Pair<TableState, List<TableHand>>>>()
+
     suspend fun listTournaments(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<List<Tournament>> = tournamentRepository.listTournaments(refreshMode)
 
     /**
@@ -189,12 +194,26 @@ class PlayerTournamentPresenter(
         val myEmaId = (meRequest.await() as? AppResult.Success)?.value?.emaId
         // A table whose time is over counts as completed, even when nobody marked its last hand.
         val expiredTables = tournament.closeExpiredTables(tables, tournament.currentVenueDateTime())
+        // While the results are hidden, the ranking stays as it was before the first hidden round.
         val rankings = calculateRankings(
             slots,
-            expiredTables.map { (table, hands) -> RankingTable(table, hands) },
+            expiredTables.filter { (table, _) -> tournament.showsResultsOf(table.roundId) }.map { (table, hands) -> RankingTable(table, hands) },
             tournament.isTeams,
         )
-        AppResult.Success(buildPlayerTournamentView(tournament, slots, registry, expiredTables, rankings, myEmaId, teams))
+        // The public tables of the hidden rounds have no results. The own ones come with them, for the own table screen.
+        val shownTables = if (tournament.resultsHiddenFromRound != null && myEmaId != null) {
+            // A CACHED load makes no request: it uses the own tables of the last load.
+            val own = if (refreshMode == RefreshMode.CACHED) {
+                ownHiddenTables[tournamentId].orEmpty()
+            } else {
+                (tournamentRepository.getOwnHiddenTables(tournamentId) as? AppResult.Success)?.value
+                    ?.also { ownHiddenTables[tournamentId] = it } ?: ownHiddenTables[tournamentId].orEmpty()
+            }.associateBy { (table, _) -> table.roundId to table.tableId }
+            expiredTables.map { entry -> own[entry.first.roundId to entry.first.tableId]?.takeIf { it.first.version >= entry.first.version } ?: entry }
+        } else {
+            expiredTables
+        }
+        AppResult.Success(buildPlayerTournamentView(tournament, slots, registry, shownTables, rankings, myEmaId, teams))
     }
 }
 
