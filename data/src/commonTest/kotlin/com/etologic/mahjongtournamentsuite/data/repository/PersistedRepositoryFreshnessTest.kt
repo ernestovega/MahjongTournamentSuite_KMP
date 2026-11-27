@@ -323,6 +323,32 @@ class PersistedRepositoryFreshnessTest {
         assertEquals(2, server.count("/tables-with-hands"))
     }
 
+    @Test
+    fun aNewTableOnTheServerArrivesWithItsRound() = runTest {
+        val clock = TestTimeSource()
+        val app = startApp(clock)
+        app.east()
+        server.tableVersions["1_3"] = 1
+        server.tableEast["1_3"] = "3"
+        clock += 3.seconds
+
+        assertEquals(listOf("1", "2", "3"), app.east())
+    }
+
+    @Test
+    fun aReloadedRoundIsNotSavedWhenTheDeviceLostTheSavedTables() = runTest {
+        val clock = TestTimeSource()
+        val app = startApp(clock)
+        app.east()
+        device.values.keys.removeAll { it.contains("all-tables") }
+        server.tableEast["1_1"] = "6"
+        server.tableVersions["1_1"] = 2
+        clock += 3.seconds
+
+        assertEquals(listOf("6", "2"), app.east())
+        assertTrue(device.values.keys.none { it.contains("all-tables") })
+    }
+
     // --- Accounts ---
 
     @Test

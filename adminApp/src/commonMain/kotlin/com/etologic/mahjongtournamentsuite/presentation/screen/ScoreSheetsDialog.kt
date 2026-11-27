@@ -357,10 +357,8 @@ private class ScoreSheetLayout(chickenHands: Boolean) {
 private fun DrawScope.drawSheetLines(sheet: ScoreSheetLayout, k: Float) {
     val thin = (0.6f * k).coerceAtLeast(0.6f)
     val thick = (1.6f * k).coerceAtLeast(1f)
-    fun line(x1: Float, y1: Float, x2: Float, y2: Float, width: Float = thin) =
-        drawLine(Color.Black, Offset(x1 * k, y1 * k), Offset(x2 * k, y2 * k), strokeWidth = width)
-    fun rect(x: Float, y: Float, w: Float, h: Float, width: Float) =
-        drawRect(Color.Black, Offset(x * k, y * k), Size(w * k, h * k), style = Stroke(width))
+    fun line(x1: Float, y1: Float, x2: Float, y2: Float, width: Float = thin) = drawLine(Color.Black, Offset(x1 * k, y1 * k), Offset(x2 * k, y2 * k), strokeWidth = width)
+    fun rect(x: Float, y: Float, w: Float, h: Float, width: Float) = drawRect(Color.Black, Offset(x * k, y * k), Size(w * k, h * k), style = Stroke(width))
 
     // The boxes of the round and the table.
     sheet.boxTops.forEach { top -> rect(sheet.boxesLeft + 21f, top, 34f, 20f, (1.2f * k).coerceAtLeast(1f)) }

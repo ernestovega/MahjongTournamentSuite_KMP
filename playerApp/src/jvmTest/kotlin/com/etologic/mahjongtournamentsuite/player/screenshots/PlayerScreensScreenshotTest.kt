@@ -300,6 +300,14 @@ class PlayerScreensScreenshotTest {
     @Test
     fun tournamentRanking() = playerScreenshots("tournament-ranking", ready = { openTab(MainTab.RANKING) }) { nav -> TournamentScreen(nav, ONGOING) }
 
+    /** The results are hidden from round 3 until the prize giving: the ranking after round 2 with its frozen notice. */
+    @Test
+    fun tournamentRankingHidden() = playerScreenshots(
+        "tournament-ranking-hidden",
+        modules = { playerModules(tournaments = HiddenResultsTournamentRepository()) },
+        ready = { openTab(MainTab.RANKING) },
+    ) { nav -> TournamentScreen(nav, ONGOING) }
+
     /** The ranking as it was at the end of round 1, chosen with the round button next to the search. */
     @Test
     fun tournamentRankingAfterRound() = playerScreenshots(
@@ -563,6 +571,12 @@ class PlayerScreensScreenshotTest {
         StatisticsScreen(nav, StatisticsRoute(StatisticsScope.PERSON.name))
     }
 }
+
+/** [ONGOING] hides its results from round 3 until the prize giving. */
+internal class HiddenResultsTournamentRepository :
+    ScreenshotTournamentRepository(
+        tournaments = ScreenshotData.tournaments.map { if (it.id == ONGOING) it.copy(hideResultsFromRound = 3, resultsHiddenFromRound = 3) else it },
+    )
 
 /** The tournaments of the screenshots, with [UPCOMING] before its draw and taking registrations. */
 internal class RegistrationTournamentRepository :

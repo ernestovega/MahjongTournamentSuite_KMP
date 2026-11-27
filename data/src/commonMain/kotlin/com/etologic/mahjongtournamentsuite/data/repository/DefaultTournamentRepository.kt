@@ -284,10 +284,12 @@ class DefaultTournamentRepository(
     ): AppResult<ByteArray> = cachedGeneratedFile(
         tournamentId = tournamentId,
         // Every option of the sheet is in the key, so a PDF with other options is never taken from the cache.
-        cacheSuffix = sheet?.let {
-            "id-cards-sheet-${it.cardsPerSheet}-${it.scalePercent}-${it.cutMarks}-${it.landscape}-${it.doubleSided}" +
-                "-${it.backs}-${it.backSameAsFront}-${it.substituteSheets}-${it.staffSheets}-${it.cleanStaffNames().hashCode()}"
-        } ?: "id-cards",
+        cacheSuffix = if (sheet == null) {
+            "id-cards"
+        } else {
+            "id-cards-sheet-${sheet.cardsPerSheet}-${sheet.scalePercent}-${sheet.cutMarks}-${sheet.landscape}-${sheet.doubleSided}" +
+                "-${sheet.backs}-${sheet.backSameAsFront}-${sheet.substituteSheets}-${sheet.staffSheets}-${sheet.cleanStaffNames().hashCode()}"
+        },
         action = "Generating tournament ID cards",
         load = { token -> backendApi.generateTournamentIdCards(token, tournamentId, sheet) },
     )
@@ -778,7 +780,6 @@ class DefaultTournamentRepository(
         var restoredDraw: Long? = null
         var fetchedDraw: Long? = null
         val persistedName = "tournament:$tournamentId:all-tables"
-        var answer: RoundTablesWithHandsResponseDto? = null
         val roundAnswers = mutableMapOf<Int, RoundTablesWithHandsResponseDto>()
         tableStore.all(
             ownerUid = owner,
@@ -796,11 +797,8 @@ class DefaultTournamentRepository(
                         }
                 }
             },
-            verifyRestored = { known -> restoredDraw.let { it != null && it != currentDraw() } || hasNewerTables(known) },
-            onFetched = {
-                // The table versions are inside the answer. The saved revision is the draw that the tables belong to.
-                answer?.let { persisted?.write(owner, persistedName, fetchedDraw ?: 0L, RoundTablesWithHandsResponseDto.serializer(), it) }
-            },
+            // Only a copy that this call restored is verified, so restoredDraw holds its draw.
+            verifyRestored = { known -> restoredDraw != currentDraw() || hasNewerTables(known) },
             // While a round is played, only its tables change. Loading that round is a fraction of all the tables.
             changedRounds = roundsWithNewerTables.takeIf { refreshMode == RefreshMode.IF_CHANGED },
             fetchRound = { roundId ->
@@ -810,10 +808,13 @@ class DefaultTournamentRepository(
             },
             fetchAll = {
                 // The revision is read before the tables, so a draw made in between only causes one more load later.
-                fetchedDraw = drawNow ?: currentDraw()
-                withReadToken { token ->
-                    backendApi.getAllTablesWithHands(token, tournamentId).also { answer = it }.tables.map { it.toDomain() }
-                }
+                val draw = drawNow ?: currentDraw()
+                fetchedDraw = draw
+                val answer = withReadToken { token -> backendApi.getAllTablesWithHands(token, tournamentId) }
+                val tables = answer.tables.map { it.toDomain() }
+                // The table versions are inside the answer. The saved revision is the draw that the tables belong to.
+                persisted?.write(owner, persistedName, draw, RoundTablesWithHandsResponseDto.serializer(), answer)
+                tables
             },
         ).also {
             (fetchedDraw ?: drawNow ?: restoredDraw)?.let { heldDraws[tournamentId] = it }
@@ -1068,11 +1069,11 @@ class DefaultTournamentRepository(
         val globalBefore = lastPolledGlobalRevisions.also { lastPolledGlobalRevisions = globalNow }
         val prefixes = mutableSetOf<String>()
         tournamentBefore?.let { before ->
-            tournamentNow.filter { (name, revision) -> revision > (before[name] ?: revision) }.keys
+            tournamentNow.filter { (name, revision) -> revision > before.getValue(name) }.keys
                 .mapTo(prefixes) { "tournament:$tournamentId:$it" }
         }
         globalBefore?.let { before ->
-            val changed = globalNow.filter { (name, revision) -> revision > (before[name] ?: revision) }.keys
+            val changed = globalNow.filter { (name, revision) -> revision > before.getValue(name) }.keys
             // The generated files (ID cards, ID list, EMA report) use the tournament data and the EMA players.
             val generatedFiles = "tournament:$tournamentId:players:"
             if ("tournaments" in changed) prefixes += listOf(GLOBAL_TOURNAMENTS_CACHE_KEY, generatedFiles)

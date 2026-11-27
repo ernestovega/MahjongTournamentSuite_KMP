@@ -14,8 +14,7 @@ class ScoreSheetsExportTest {
     private val presenter = PlayersPresenter(server, FakePlayerRepository(), FakePlayerAccountRepository(), Logger.withTag("test"))
     private val tournament = Tournament(id = "t1", name = "Madrid Open Riichi", isTeams = false, numPlayers = 8, numRounds = 2)
 
-    private suspend fun fileName(tournament: Tournament, perTable: Boolean): String =
-        (exportScoreSheets(presenter, tournament, perTable, emaLogo = true, saveTitle = "Save") as AppResult.Success).value.fileName
+    private suspend fun fileName(tournament: Tournament, perTable: Boolean): String = (exportScoreSheets(presenter, tournament, perTable, emaLogo = true, saveTitle = "Save") as AppResult.Success).value.fileName
 
     @Test
     fun theBlankSheetsUseTheShortNameAndTheYear() = runTest {

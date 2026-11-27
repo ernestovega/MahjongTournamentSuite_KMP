@@ -350,4 +350,19 @@ class SingleManifestPollTest {
         if (path == "/sync/manifest") globalManifestsAsked++
         jsonResponse(globalManifestJson())
     }
+
+    @Test
+    fun aPollThatSeesNewUsersMarksTheUsersAndTheProfileOld() = runTest {
+        startApp()
+        var loads = 0
+        suspend fun users() = cache.getOrLoad("user-1", GLOBAL_USERS_CACHE_KEY, RefreshMode.CACHED, revision = { 1L }) { ++loads }
+        users()
+        tournaments.getTournamentManifest("t1").value()
+
+        usersRevision++
+        clock += 15.seconds
+        tournaments.getTournamentManifest("t1").value()
+
+        assertEquals(2, users())
+    }
 }
