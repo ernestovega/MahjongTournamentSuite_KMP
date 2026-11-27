@@ -3,9 +3,14 @@ package com.etologic.mahjongtournamentsuite.player
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlin.time.Duration
@@ -127,9 +132,19 @@ internal suspend fun <T> pollForChanges(
         val mode = if (forceNext) RefreshMode.FORCE else RefreshMode.IF_CHANGED
         forceNext = false
         onResult(load(mode))
-        // Going to the background ends the wait, so the return checks at once.
-        withTimeoutOrNull(nextDelay() ?: Duration.INFINITE) {
-            isStarted.first { !it }
-        }
+        // Going to the background ends the wait, so the return checks at once. The wait counts with delay and not
+        // with withTimeout: in the Compose UI tests the test clock moves delay, while withTimeout keeps the real time.
+        val wait = nextDelay()
+        merge(
+            if (wait == null) {
+                emptyFlow()
+            } else {
+                flow {
+                    delay(wait)
+                    emit(Unit)
+                }
+            },
+            isStarted.filter { !it }.map { },
+        ).first()
     }
 }
