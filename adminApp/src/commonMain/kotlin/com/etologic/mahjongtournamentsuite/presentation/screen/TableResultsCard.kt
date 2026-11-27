@@ -94,6 +94,8 @@ internal fun TableResultsCard(
     // Names, total scores and table points share this style. The Gang of Three font is only for titles and selectors.
     val bigNumberStyle = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
 
+    // On a phone the summary (chicken hands, best hands) goes under the table, not above it.
+    val compactCard = LocalCompactLayout.current
     SectionCard(
         title = stringResource(Res.string.players_results),
         titleStyle = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
@@ -102,7 +104,7 @@ internal fun TableResultsCard(
         centerTitle = true,
         titleActionAtStart = true,
         // Without the summary there is no title action. On a phone the switch row still fills the width.
-        titleAction = if (editor.hasCompleteSeatPositions || hasHandSummary(editor, otherTablesBestHandScores)) {
+        titleAction = if (!compactCard && (editor.hasCompleteSeatPositions || hasHandSummary(editor, otherTablesBestHandScores))) {
             { HandSummaryTitleAction(editor, otherTablesBestHandScores) }
         } else {
             null
@@ -288,6 +290,11 @@ internal fun TableResultsCard(
                         GridCell(modifier = Modifier.weight(1f), last = seat == 3) { pointsCell(seat) }
                     }
                 }
+            }
+        }
+        if (compact && hasHandSummary(editor, otherTablesBestHandScores)) {
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                HandSummaryTitleAction(editor, otherTablesBestHandScores)
             }
         }
     }
