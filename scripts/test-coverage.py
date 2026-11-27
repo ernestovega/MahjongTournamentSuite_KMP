@@ -210,7 +210,7 @@ def measure_backend() -> dict:
     )
     run(["npm", "run", "build"], FUNCTIONS)
     firebase = shutil.which("firebase") or str(ROOT / "node_modules" / ".bin" / "firebase")
-    run([firebase, "emulators:exec", "--config", "../../firebase.json", "--only", "auth,firestore",
+    run([firebase, "emulators:exec", "--config", "../../firebase.json", "--only", "auth,firestore,storage",
          "--project", "demo-mts-tests", tests], FUNCTIONS)
     totals: dict[str, dict[str, list[int]]] = defaultdict(lambda: {"line": [0, 0], "branch": [0, 0]})
     part = None

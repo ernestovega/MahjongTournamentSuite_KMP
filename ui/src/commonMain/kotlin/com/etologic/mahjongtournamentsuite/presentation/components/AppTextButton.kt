@@ -5,6 +5,7 @@ import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
@@ -18,6 +19,7 @@ fun AppTextButton(
     focusRequester: FocusRequester? = null,
     colors: ButtonColors = MtsButtons.textColors(),
     contentPadding: PaddingValues = ButtonDefaults.TextButtonContentPadding,
+    shape: Shape = ButtonDefaults.textShape,
     content: @Composable () -> Unit,
 ) {
     FocusedTextButton(
@@ -26,6 +28,7 @@ fun AppTextButton(
         enabled = enabled,
         colors = colors,
         contentPadding = contentPadding,
+        shape = shape,
         focusRequester = focusRequester,
         content = { content() },
     )

@@ -46,9 +46,9 @@
     <string name="profile_public_photo">Montrer ma photo en public</string>
     <string name="profile_public_photo_info">Votre photo est visible publiquement dans les classements, les statistiques et les listes d'inscrits.\n\nSans photo à vous, celle de votre joueur EMA est utilisée.\nSans aucune des deux, aucune photo n'est affichée.\n\nDésactivez cette option pour n'afficher aucune photo, ni la vôtre ni celle de l'EMA.</string>
     <string name="photo_public_notice_title">Votre photo sera publique</string>
-    <string name="photo_public_notice_text">Votre photo sera publique : tout le monde pourra la voir dans les classements, les statistiques et les listes d'inscrits des tournois.</string>
-    <string name="photo_public_notice_hide">Vous pouvez la masquer à tout moment avec "Montrer ma photo en public" dans votre profil.</string>
-    <string name="photo_public_notice_accept">Accepter et choisir</string>
+    <string name="photo_public_notice_text">Votre photo apparaîtra dans les classements, les statistiques et les listes d'inscrits.</string>
+    <string name="photo_public_notice_hide">Si vous n'avez pas de photo à vous, celle de votre joueur EMA est utilisée (s'il en a une).\n\nVous pouvez choisir de n'en montrer aucune dans votre profil.</string>
+    <string name="photo_public_notice_accept">Accepter</string>
     <string name="photo_error_type">Choisissez une image JPEG, PNG, WebP ou GIF.</string>
     <string name="photo_error_size">Choisissez une photo de 5 Mo maximum.</string>
     <string name="photo_edit">Modifier la photo</string>
@@ -795,6 +795,4 @@ La première qui marche gagne</string>
     <string name="consent_change">Dans votre profil, à tout moment.</string>
     <string name="consent_accept">Accepter</string>
     <string name="consent_decline">Refuser</string>
-    <string name="profile_analytics">Envoyer des statistiques anonymes</string>
-    <string name="profile_analytics_info">Des données anonymes sur votre utilisation de l'application et ses erreurs, jamais votre nom, votre e-mail ni votre numéro EMA. Désactivez-le pour tout arrêter aussitôt. L'application fonctionne de la même façon.</string>
 </resources>

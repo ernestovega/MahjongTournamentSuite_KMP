@@ -354,29 +354,35 @@ internal fun HandSummaryTitleAction(editor: TableManagerEditorState, otherTables
     val bestHands = summaryBestHands(editor, otherTablesBestHandScores)
     val chickenHandCount = if (options.countChickenHands) editor.chickenHandCount else 0
     if (chickenHandCount == 0 && bestHands.isEmpty()) return
-    // Each stat is a group: icon, value and winner. The groups have the same space between them.
+    // Each stat is a group: icon, value and winner. The groups have the same space between them,
+    // and the info icon sits close to the last one.
     Row(
-        horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
+        horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (chickenHandCount > 0) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                ChickenIcon(contentDescription = stringResource(Res.string.chicken_hands))
-                Text("$chickenHandCount", style = MaterialTheme.typography.titleLarge.inTextFont())
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (chickenHandCount > 0) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    ChickenIcon(contentDescription = stringResource(Res.string.chicken_hands))
+                    Text("$chickenHandCount", style = MaterialTheme.typography.titleLarge.inTextFont())
+                }
             }
-        }
-        bestHands.forEach { (score, winnerId) ->
-            // Tied scores share the place.
-            val place = tournamentScores.count { it > score } + 1
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                BestHandIcon(place, contentDescription = stringResource(Res.string.tournament_best_hand_n, place))
-                Text("$score", style = MaterialTheme.typography.titleLarge.inTextFont())
-                winnerId?.let {
-                    Text(
-                        "#$it",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+            bestHands.forEach { (score, winnerId) ->
+                // Tied scores share the place.
+                val place = tournamentScores.count { it > score } + 1
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    BestHandIcon(place, contentDescription = stringResource(Res.string.tournament_best_hand_n, place))
+                    Text("$score", style = MaterialTheme.typography.titleLarge.inTextFont())
+                    winnerId?.let {
+                        Text(
+                            "#$it",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
         }

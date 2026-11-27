@@ -10,7 +10,14 @@ export function requireEmulator(): void {
   }
 }
 
-export type SeedTable = { roundId: number; tableId: number; version?: number; isCompleted?: boolean };
+export type SeedTable = {
+  roundId: number;
+  tableId: number;
+  version?: number;
+  isCompleted?: boolean;
+  /** Seats already taken, such as `{ playerSouthId: "1" }`. A hand can be done only when the four seats are set. */
+  seats?: Partial<Record<"playerEastId" | "playerSouthId" | "playerWestId" | "playerNorthId", string>>;
+};
 
 export function newTournamentId(): string {
   return `test-${randomUUID()}`;
@@ -51,6 +58,7 @@ export async function seedTournament(params: {
       isCompleted: table.isCompleted ?? false,
       useTotalsOnly: false,
       version: table.version ?? 0,
+      ...table.seats,
     });
     if (params.withHands === false) continue;
     const batch = db.batch();

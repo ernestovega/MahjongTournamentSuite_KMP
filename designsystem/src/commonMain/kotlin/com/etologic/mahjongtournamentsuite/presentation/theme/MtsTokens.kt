@@ -153,6 +153,8 @@ data class MtsColors(
      * level, its fill in light mode and its darker rim in dark mode, like the green header.
      */
     val adminHeader: Color,
+    /** The green of the player app header, also the fill of the button of the admin app that opens the player app. */
+    val playerHeader: Color,
     /** Text and icons on the header (top bar, tabs), green or purple. */
     val onHeader: Color,
     val onHeaderMuted: Color,
@@ -221,6 +223,7 @@ internal val LightMtsColors = MtsColors(
     firstPlaceHighlight = MedalGold,
     header = MahjongGreenDark,
     adminHeader = ExpertPurple,
+    playerHeader = MahjongGreenDark,
     onHeader = Color.White,
     onHeaderMuted = Color.White.copy(alpha = 0.85f),
     brandTitle = AppDarkGraySurface,
@@ -234,6 +237,7 @@ internal val DarkMtsColors = LightMtsColors.copy(
     changed = MahjongGreenDarker,
     header = MahjongGreenDarker,
     adminHeader = ExpertPurpleDark,
+    playerHeader = MahjongGreenDarker,
     info = Color(0xFF4D9BFF),
     brandTitle = Color.White,
 )
