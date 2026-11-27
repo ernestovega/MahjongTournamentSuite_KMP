@@ -84,12 +84,12 @@ export async function loadScoreSheetsDocument(tournamentId: string, options: Sco
   const logo = logoPath.length > 0 ? await storage.file(logoPath).download().then(([bytes]) => bytes).catch(() => null) : null;
   const name = String(tournament.get("name") ?? "").trim();
   const shortName = String(tournament.get("shortName") ?? "").trim();
-  const color = String(mainOrganizer?.primaryColor ?? DEFAULT_ORGANIZER_COLOR).trim().toUpperCase();
   return {
     tournamentName: shortName.length > 0 ? shortName : name,
     logo,
     organizerName: mainOrganizer?.name ?? name,
-    organizerColor: /^#[0-9A-F]{6}$/.test(color) ? color : DEFAULT_ORGANIZER_COLOR,
+    // The organizations already read a stored color that does not fit as the default one.
+    organizerColor: mainOrganizer?.primaryColor ?? DEFAULT_ORGANIZER_COLOR,
     chickenHands: tournament.get("countChickenHands") !== false,
     emaLogo: options.emaLogo,
     sheets: options.mode === "tables" ? scoreSheetList(roundCount, tableCount) : [],
