@@ -110,6 +110,7 @@ private val MahjongRed = Color(0xFFFA6868)
 private val ErrorTextLight = Color(0xFFC62828)
 private val ErrorTextDark = Color(0xFFFF8A80)
 private val MahjongAccent = Color(0xFFFF00A7)
+
 /** The grey of the light pages, and the tooltips of the dark theme. */
 internal val AppLightGray = Color(0xFFE9EBEE)
 
