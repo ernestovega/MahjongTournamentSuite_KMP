@@ -146,7 +146,7 @@ fun RankingStandaloneScreen(
 ) {
     val themeController = rememberScreenThemeController()
 
-    MtsTheme(useDarkTheme = themeController.isDarkTheme) {
+    MtsTheme(useDarkTheme = themeController.isDarkTheme, adminApp = true) {
         RankingStandaloneContent(
             tournamentId = tournamentId,
             clock = clock,

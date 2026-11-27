@@ -40,7 +40,7 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 
 /** The color of every tab row: the color of the top bar. */
 @Composable
-fun mtsTabRowColor(): Color = MaterialTheme.colorScheme.primaryContainer
+fun mtsTabRowColor(): Color = MtsTheme.colors.header
 
 /** The color of the text, the icons and the indicator of a tab row: the color of the title of the top bar. */
 @Composable

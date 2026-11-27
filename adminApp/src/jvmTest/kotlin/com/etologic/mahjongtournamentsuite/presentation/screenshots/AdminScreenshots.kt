@@ -63,7 +63,7 @@ internal fun adminScreenshots(
             LocalAppLogoOnDark provides painterResource(Res.drawable.app_logo_dark),
             LocalAdaptiveTopBar provides true,
         ) {
-            MtsTheme(useDarkTheme = variant.dark) {
+            MtsTheme(useDarkTheme = variant.dark, adminApp = true) {
                 ProvideCompactLayout {
                     // A real NavHost, so a screen that reads its back stack works. Screenshots never navigate.
                     val navController = rememberNavController()
