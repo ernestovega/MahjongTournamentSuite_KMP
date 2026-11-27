@@ -366,7 +366,8 @@ private fun RankingCard(row: RankingRow, onPlayerClick: (Int) -> Unit, narrow: B
         else -> null
     }
     Card(
-        if (onClick != null) Modifier.fillMaxWidth().clickable(onClick = onClick) else Modifier.fillMaxWidth(),
+        // The ripple and the hover follow the round corners of the card.
+        if (onClick != null) Modifier.fillMaxWidth().clip(CardDefaults.shape).clickable(onClick = onClick) else Modifier.fillMaxWidth(),
         border = if (row.mine) BorderStroke(2.dp, colors.primary) else null,
         colors = CardDefaults.cardColors(
             // Gold, silver and bronze for the first three places, softened so the text stays readable.

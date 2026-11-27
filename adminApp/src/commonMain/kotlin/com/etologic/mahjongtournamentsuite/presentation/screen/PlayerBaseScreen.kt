@@ -1168,6 +1168,7 @@ private fun PlayerPhotoPreview(
             FocusHighlightContainer(
                 modifier = Modifier,
                 interactionSource = interactionSource,
+                lightsUpContent = true,
             ) {
                 Box(
                     modifier = Modifier

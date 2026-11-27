@@ -418,7 +418,7 @@ private fun TableChip(
     modifier: Modifier = Modifier,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    FocusHighlightContainer(modifier = Modifier, interactionSource = interactionSource) {
+    FocusHighlightContainer(modifier = Modifier, interactionSource = interactionSource, lightsUpContent = true) {
         Surface(
             modifier = modifier
                 .alpha(if (loaded) 1f else 0.38f)

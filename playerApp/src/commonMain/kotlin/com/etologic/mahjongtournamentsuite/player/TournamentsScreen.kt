@@ -3,7 +3,6 @@ package com.etologic.mahjongtournamentsuite.player
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -540,7 +539,8 @@ internal fun TournamentCard(
     val dates = datesOf(tournament)
     val hasCity = tournament.hostCity.isNotBlank() || tournament.hostCountry.isNotBlank()
     Card(
-        Modifier.fillMaxWidth().clickable(onClick = onClick),
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         // No border (Ernesto, 20-nov): the status and the Open button keep the color of the status.

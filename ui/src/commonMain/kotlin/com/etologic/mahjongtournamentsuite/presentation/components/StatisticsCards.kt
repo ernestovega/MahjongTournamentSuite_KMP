@@ -142,25 +142,35 @@ fun StatCard(
         // The color is opaque, so the shadow does not show through the card.
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f).compositeOver(MaterialTheme.colorScheme.surface),
     ) {
-        Column(Modifier.padding(MtsTheme.spacing.lg), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            // A card that does not fold shows its title at the top of the card.
-            if (title != null && onToggle == null) CardTitle(title, Modifier.padding(top = 4.dp), info)
-            if (title != null && onToggle != null) {
-                run {
-                    Row(Modifier.fillMaxWidth().clickable(onClick = onToggle), verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
-                            CardTitle(title, info = info, bottomGap = if (summary != null) MtsTheme.spacing.xs else 12.dp)
-                            summary?.invoke()
-                        }
-                        Icon(
-                            if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                            contentDescription = stringResource(if (expanded) Res.string.card_fold else Res.string.card_unfold),
-                        )
+        if (title != null && onToggle != null) {
+            // The title of a card that folds is a button as wide as the card. Its hover and its ripple reach the sides
+            // and the top of the card, with the margins inside it, so no smaller box lights up inside the card.
+            Column {
+                Row(
+                    Modifier.fillMaxWidth().clickable(onClick = onToggle).padding(MtsTheme.spacing.lg),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        CardTitle(title, info = info, bottomGap = if (summary != null) MtsTheme.spacing.xs else 12.dp)
+                        summary?.invoke()
                     }
+                    Icon(
+                        if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = stringResource(if (expanded) Res.string.card_fold else Res.string.card_unfold),
+                    )
+                }
+                AnimatedVisibility(expanded) {
+                    Column(
+                        Modifier.padding(start = MtsTheme.spacing.lg, end = MtsTheme.spacing.lg, bottom = MtsTheme.spacing.lg),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ) { content() }
                 }
             }
-            AnimatedVisibility(expanded) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) { content() }
+        } else {
+            Column(Modifier.padding(MtsTheme.spacing.lg), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                // A card that does not fold shows its title at the top of the card.
+                if (title != null) CardTitle(title, Modifier.padding(top = 4.dp), info)
+                content()
             }
         }
     }
