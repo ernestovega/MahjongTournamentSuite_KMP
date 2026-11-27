@@ -150,18 +150,11 @@ class GenerateTournamentScheduleBruteForceParallelUseCase {
                 team = if (isTeams) p.team else 0,
             )
         }
-        val domainTables = generateTables(
-            tablePlayers = tablePlayers,
-            numRounds = numRounds,
-            numTablesPerRound = numTablesPerRound,
-        )
-        if (domainTables.isEmpty()) return@coroutineScope null
-
         TournamentScheduleCalcResult(
             triesUsed = triesUsed,
             randomSeed = randomSeed,
             players = domainPlayers,
-            tables = domainTables,
+            tables = generateTables(tablePlayers),
         )
     }
 }
@@ -179,14 +172,9 @@ private data class TablePlayer(
 )
 
 private fun generatePlayers(numPlayers: Int): List<Player> {
+    // Players 1 to 4 are team 1, 5 to 8 team 2, and so on.
     val players = ArrayList<Player>(numPlayers)
-    for (i in 1..(numPlayers / 4)) {
-        val teamId = i
-        for (j in 1..4) {
-            val playerId = (4 * i) - (4 - j)
-            players.add(Player(id = playerId, team = teamId))
-        }
-    }
+    (1..numPlayers).forEach { id -> players.add(Player(id = id, team = (id - 1) / 4 + 1)) }
     return players
 }
 
@@ -201,10 +189,11 @@ private fun attemptGenerateTournament(
     val allPlayerIds = IntArray(numPlayers) { it + 1 }
     val tablePlayers = ArrayList<TablePlayer>(numRounds * numTablesPerRound * 4)
 
-    for (currentRound in 1..numRounds) {
+    // The draw has at least one round of one table, so these ranges are never empty.
+    (1..numRounds).forEach { currentRound ->
         val playersNotUsedThisRound = allPlayerIds.toMutableList()
 
-        for (currentTable in 1..numTablesPerRound) {
+        (1..numTablesPerRound).forEach { currentTable ->
             for (currentSeat in 1..4) {
                 val chosenId = choosePlayerForSeat(
                     playersNotUsedThisRound = playersNotUsedThisRound,
@@ -294,8 +283,7 @@ private fun getRivals(
             tablesWhereChosenPlayed.add(tp.round to tp.table)
         }
     }
-    if (tablesWhereChosenPlayed.isEmpty()) return BooleanArray(numPlayers + 1) { false }
-
+    // From round 2 on, everyone played every round before, so the list is never empty.
     val rivals = BooleanArray(numPlayers + 1) { false }
     for (tp in tablePlayers) {
         if (tp.round >= currentRound) continue
@@ -308,36 +296,16 @@ private fun getRivals(
     return rivals
 }
 
-private fun generateTables(
-    tablePlayers: List<TablePlayer>,
-    numRounds: Int,
-    numTablesPerRound: Int,
-): List<TournamentTable> {
-    val tables = ArrayList<TournamentTable>(
-        numRounds * numTablesPerRound,
-    )
-    val playersByTable = tablePlayers.groupBy { it.round to it.table }
-
-    for (currentRound in 1..numRounds) {
-        for (currentTable in 1..numTablesPerRound) {
-            val players = playersByTable[currentRound to currentTable]
-                ?.sortedBy { it.seat }
-                ?.map { it.playerId }
-
-            if (players == null || players.size != 4) return emptyList()
-
-            tables.add(
-                TournamentTable(
-                    roundId = currentRound,
-                    tableId = currentTable,
-                    playerIds = players,
-                    isCompleted = false,
-                    useTotalsOnly = false,
-                    hasProgress = false,
-                ),
-            )
-        }
+/** The tables of the draw, by round and table, each with its 4 players by seat. Every table has its 4 seats. */
+private fun generateTables(tablePlayers: List<TablePlayer>): List<TournamentTable> = tablePlayers.groupBy { it.round to it.table }.entries
+    .sortedWith(compareBy({ it.key.first }, { it.key.second }))
+    .map { (key, seats) ->
+        TournamentTable(
+            roundId = key.first,
+            tableId = key.second,
+            playerIds = seats.sortedBy { it.seat }.map { it.playerId },
+            isCompleted = false,
+            useTotalsOnly = false,
+            hasProgress = false,
+        )
     }
-
-    return tables
-}
