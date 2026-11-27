@@ -66,9 +66,8 @@ class PlayersPresenter(
         .trackAction(telemetry, TelemetryAction.TABLE_QR_EXPORTED)
 
     /** The PDF with the score sheets to print (docs/score-sheets.md). */
-    suspend fun generateScoreSheets(tournamentId: String, perTable: Boolean, emaLogo: Boolean): AppResult<ByteArray> =
-        tournamentRepository.generateScoreSheets(tournamentId, perTable, emaLogo)
-            .trackAction(telemetry, TelemetryAction.SCORE_SHEETS_EXPORTED)
+    suspend fun generateScoreSheets(tournamentId: String, perTable: Boolean, emaLogo: Boolean): AppResult<ByteArray> = tournamentRepository.generateScoreSheets(tournamentId, perTable, emaLogo)
+        .trackAction(telemetry, TelemetryAction.SCORE_SHEETS_EXPORTED)
 
     /** Invites the players with no account and resets the password of the others. */
     /** Sets or clears the pending email of slots. */

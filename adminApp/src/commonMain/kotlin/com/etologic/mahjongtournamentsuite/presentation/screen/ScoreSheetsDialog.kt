@@ -30,7 +30,6 @@ import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.generatedFileName
-import kotlin.time.Clock
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.create_pdf
@@ -47,6 +46,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.score_sheets_tables_i
 import mahjongtournamentsuite.adminapp.generated.resources.score_sheets_title
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import kotlin.time.Clock
 
 /**
  * The dialog "Score sheets" (docs/score-sheets.md), in the "More" menu of the tournament: a PDF of A4 sheets to fill in
