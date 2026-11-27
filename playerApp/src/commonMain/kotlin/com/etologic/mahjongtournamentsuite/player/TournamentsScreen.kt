@@ -762,7 +762,7 @@ internal fun rememberTournamentView(
 private const val STALE_AFTER_FAILURES = 3
 
 /** The age as plain text, for example "45 seconds", "1 minute" or "2 hours". */
-private fun Duration.toAgeText(): UiText {
+internal fun Duration.toAgeText(): UiText {
     val seconds = inWholeSeconds
     return when {
         seconds < 60 -> UiText.Plural(Res.plurals.age_seconds, seconds.toInt(), listOf(seconds))
