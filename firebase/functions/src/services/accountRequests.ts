@@ -109,7 +109,7 @@ export async function resolveAccountRequest(id: string, approve: boolean, resolv
   const ref = db.doc(`${COLLECTION}/${id}`);
   const snapshot = await ref.get();
   if (!snapshot.exists) throw notFound("Request not found");
-  const request = toRequest(id, snapshot.data() ?? {});
+  const request = toRequest(id, snapshot.data() as FirebaseFirestore.DocumentData);
   if (request.status !== "PENDING") throw conflict("The request is already resolved", { code: "REQUEST_RESOLVED" });
   await ref.update({ status: approve ? "APPROVED" : "REJECTED", resolvedByUid, resolvedAt: FieldValue.serverTimestamp() });
   await bumpGlobalDataVersion("users");
