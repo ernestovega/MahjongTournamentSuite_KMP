@@ -1132,8 +1132,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             }
             log("round $round: table $table is open again")
         }
-        shell("input keyevent KEYCODE_BACK")
-        c.waitForText("Players & results", timeoutMs = 60_000)
+        backToTheTournament()
         return stop != null
     }
 
@@ -1722,8 +1721,8 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             c.waitForNoText("Open tables in ended rounds", timeoutMs = 120_000)
             log("the organizer closed the open tables of the ended rounds")
         }
-        shell("input keyevent KEYCODE_BACK")
-        c.waitForText("Players & results", timeoutMs = 60_000)
+        // After the Timer window closes the focus can stay on the launcher, which takes a back key of the shell.
+        backToTheTournament()
     }
 
     private companion object {
