@@ -1242,4 +1242,15 @@ Cambia las plazas en Inscripciones.</string>
         <item quantity="one">%1$d país</item>
         <item quantity="other">%1$d países</item>
     </plurals>
+    <string name="score_sheets_title">Hojas de puntuación</string>
+    <string name="score_sheets_info">Hojas para imprimir en A4 y rellenar en las mesas. Siempre van en inglés.</string>
+    <string name="score_sheets_blank">Vacía</string>
+    <string name="score_sheets_blank_info">Una hoja para fotocopiar las veces que haga falta.</string>
+    <string name="score_sheets_tables">Con ronda y mesa</string>
+    <string name="score_sheets_tables_info">Una hoja por cada mesa de cada ronda, con su ronda y su mesa escritas (%1$d hojas).</string>
+    <string name="score_sheets_no_tables">El torneo aún no tiene mesas.</string>
+    <string name="score_sheets_ema_logo">Logo de la EMA</string>
+    <string name="score_sheets_chicken_on">Lleva la columna de chicken hand, porque el torneo las cuenta.</string>
+    <string name="score_sheets_chicken_off">No lleva la columna de chicken hand, porque el torneo no las cuenta.</string>
+    <string name="score_sheets_save">Guardar las hojas de puntuación</string>
 </resources>

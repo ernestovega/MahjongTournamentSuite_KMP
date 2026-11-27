@@ -1296,4 +1296,15 @@
         <item quantity="many">%1$d стран</item>
         <item quantity="other">%1$d страны</item>
     </plurals>
+    <string name="score_sheets_title">Листы записи</string>
+    <string name="score_sheets_info">Листы для печати на A4 и заполнения за столами. Всегда на английском.</string>
+    <string name="score_sheets_blank">Пустой</string>
+    <string name="score_sheets_blank_info">Один лист, чтобы копировать сколько нужно.</string>
+    <string name="score_sheets_tables">С раундом и столом</string>
+    <string name="score_sheets_tables_info">Лист для каждого стола каждого раунда, с номером раунда и стола (листов: %1$d).</string>
+    <string name="score_sheets_no_tables">У турнира пока нет столов.</string>
+    <string name="score_sheets_ema_logo">Логотип EMA</string>
+    <string name="score_sheets_chicken_on">Есть столбец для чикен-хэндов: турнир их считает.</string>
+    <string name="score_sheets_chicken_off">Нет столбца для чикен-хэндов: турнир их не считает.</string>
+    <string name="score_sheets_save">Сохранить листы записи</string>
 </resources>

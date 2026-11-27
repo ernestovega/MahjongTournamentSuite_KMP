@@ -1242,4 +1242,15 @@ Wijzig de plaatsen bij Inschrijvingen.</string>
         <item quantity="one">%1$d land</item>
         <item quantity="other">%1$d landen</item>
     </plurals>
+    <string name="score_sheets_title">Scorebladen</string>
+    <string name="score_sheets_info">Bladen om op A4 te printen en aan de tafels in te vullen. Ze zijn altijd in het Engels.</string>
+    <string name="score_sheets_blank">Leeg</string>
+    <string name="score_sheets_blank_info">Eén blad om zo vaak als nodig te kopiëren.</string>
+    <string name="score_sheets_tables">Met ronde en tafel</string>
+    <string name="score_sheets_tables_info">Eén blad voor elke tafel van elke ronde, met de ronde en de tafel ingevuld (%1$d bladen).</string>
+    <string name="score_sheets_no_tables">Het toernooi heeft nog geen tafels.</string>
+    <string name="score_sheets_ema_logo">EMA-logo</string>
+    <string name="score_sheets_chicken_on">Het heeft een kolom voor chicken hands, omdat het toernooi ze telt.</string>
+    <string name="score_sheets_chicken_off">Het heeft geen kolom voor chicken hands, omdat het toernooi ze niet telt.</string>
+    <string name="score_sheets_save">Scorebladen opslaan</string>
 </resources>

@@ -91,6 +91,14 @@ interface TournamentRepository {
     suspend fun generateTableQrCodes(tournamentId: String, perSheet: Int): AppResult<ByteArray> =
         AppResult.Failure(AppError.Unexpected("The QR codes of the tables are not available"))
 
+    /**
+     * A PDF with the score sheets to print, on A4: one blank sheet, or with [perTable] one sheet for each table of each
+     * round with its round and table. [emaLogo] adds the logo of the EMA beside the one of the organizer. See
+     * docs/score-sheets.md.
+     */
+    suspend fun generateScoreSheets(tournamentId: String, perTable: Boolean, emaLogo: Boolean): AppResult<ByteArray> =
+        AppResult.Failure(AppError.Unexpected("The score sheets are not available"))
+
     suspend fun generateEmaReport(
         tournamentId: String,
         rankings: List<PlayerRanking>,

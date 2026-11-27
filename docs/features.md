@@ -119,6 +119,7 @@ Tabs: **Tables · Ranking · Players · Teams** (team tournaments only) **· Sta
 - **«Table N · Round R» reminder** when you open the app, from 10 minutes before the round: «Go to my table» or «Later». It says how long until the start or since the gong, or «Waiting for the starting gong».
 - **Floating «Go to my table» button** on every screen while your round is in play.
 - **Tournament QR code**: one QR code, in the venue or on the tables, that opens «My tables» and your table in play, or the next one.
+- **Score sheets**: a PDF of A4 sheets to fill in at the tables, blank or one for each table of each round with its round and table written in. The chicken hand column follows the tournament, the last column is a «Sum 0» box, the logo of the main organizer always and the EMA logo optionally. See docs/score-sheets.md.
 
 ### 4.7 Statistics (all public)
 
@@ -195,7 +196,7 @@ Tabs: **Tables · Ranking · Players · Teams** (team tournaments only) **· Sta
 ### 5.5 During the tournament
 
 - **Round editor**: round › table, with players, seats, points and the 16 hands (winner, discard, value, «Done»), penalties and manual totals.
-- **Top bar**: Timer, Ranking, QR and Round control during the rounds; Players, Tables IDs, Stats, EMA report and Activity in a **More** menu.
+- **Top bar**: Timer, Ranking, QR and Round control during the rounds; Players, Tables IDs, Score sheets, Stats, EMA report and Activity in a **More** menu.
 - **Several editors at once**: the server always wins. If someone else saved first, a dialog says so and lists what you had typed. Before saving, it warns about hands not marked as done.
 - **Tables**: all of them, with their status and filters.
 - **Round clock**

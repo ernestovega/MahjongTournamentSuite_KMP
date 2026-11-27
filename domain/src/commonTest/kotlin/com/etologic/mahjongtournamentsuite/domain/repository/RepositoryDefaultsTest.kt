@@ -41,6 +41,7 @@ class RepositoryDefaultsTest {
         val request = PlayerCountChangeRequest("t1", numTries = 1, players = emptyList(), tables = emptyList())
 
         assertIs<AppResult.Failure>(repository.generateTableQrCodes("t1", perSheet = 6))
+        assertIs<AppResult.Failure>(repository.generateScoreSheets("t1", perTable = false, emaLogo = true))
         assertIs<AppResult.Failure>(repository.changePlayerCount(request))
         assertIs<AppResult.Failure>(repository.resetTable("t1", 1, 2))
         repository.prefetchRevisions("t1")

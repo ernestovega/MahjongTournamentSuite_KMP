@@ -516,6 +516,20 @@ class FunctionsBackendApi(
         return response.body()
     }
 
+    /** The PDF with the score sheets: one blank, or one for each table of each round ([perTable]). Always in English. */
+    suspend fun generateScoreSheets(idToken: String, tournamentId: String, perTable: Boolean, emaLogo: Boolean): ByteArray {
+        val mode = if (perTable) "tables" else "blank"
+        val response = httpClient.get(longUrl("/tournaments/$tournamentId/score-sheets?mode=$mode&ema=$emaLogo")) {
+            header(HttpHeaders.Authorization, "Bearer $idToken")
+            header(HttpHeaders.Accept, "application/pdf")
+            timeout { requestTimeoutMillis = 180_000 }
+        }
+        if (!response.status.isSuccess()) {
+            throw BackendHttpException(response.status, response.bodyAsText())
+        }
+        return response.body()
+    }
+
     suspend fun generateTournamentIdList(
         idToken: String,
         tournamentId: String,

@@ -1242,4 +1242,15 @@ Antalet spelare kan bara ändras före den första given.</string>
         <item quantity="one">%1$d land</item>
         <item quantity="other">%1$d länder</item>
     </plurals>
+    <string name="score_sheets_title">Poängblad</string>
+    <string name="score_sheets_info">Blad att skriva ut på A4 och fylla i vid borden. De är alltid på engelska.</string>
+    <string name="score_sheets_blank">Tomt</string>
+    <string name="score_sheets_blank_info">Ett blad att kopiera så många gånger som behövs.</string>
+    <string name="score_sheets_tables">Med omgång och bord</string>
+    <string name="score_sheets_tables_info">Ett blad för varje bord i varje omgång, med omgång och bord ifyllda (%1$d blad).</string>
+    <string name="score_sheets_no_tables">Turneringen har inga bord än.</string>
+    <string name="score_sheets_ema_logo">EMA-logga</string>
+    <string name="score_sheets_chicken_on">Det har en kolumn för chicken hands, eftersom turneringen räknar dem.</string>
+    <string name="score_sheets_chicken_off">Det har ingen kolumn för chicken hands, eftersom turneringen inte räknar dem.</string>
+    <string name="score_sheets_save">Spara poängbladen</string>
 </resources>
