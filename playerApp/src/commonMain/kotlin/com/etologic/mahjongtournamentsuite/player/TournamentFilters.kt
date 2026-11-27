@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.player
 
-import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -12,7 +11,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.FilterAltOff
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +25,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
@@ -45,6 +44,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.scope_my_tournaments
 import org.jetbrains.compose.resources.stringResource
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsFilterChip as FilterChip
 
 /**
  * The filters of the tournament list. They combine: a tournament shows when it passes all of them.

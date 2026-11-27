@@ -1,7 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import androidx.compose.ui.platform.testTag
-import mahjongtournamentsuite.adminapp.generated.resources.pc_title
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,7 +17,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PrimaryScrollableTabRow
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
@@ -84,6 +82,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.match_duration_invali
 import mahjongtournamentsuite.adminapp.generated.resources.match_extra_invalid
 import mahjongtournamentsuite.adminapp.generated.resources.max_10_characters
 import mahjongtournamentsuite.adminapp.generated.resources.no
+import mahjongtournamentsuite.adminapp.generated.resources.pc_title
 import mahjongtournamentsuite.adminapp.generated.resources.players
 import mahjongtournamentsuite.adminapp.generated.resources.public_tournament
 import mahjongtournamentsuite.adminapp.generated.resources.public_tournament_description
@@ -115,6 +114,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsTextTab as Tab
 
 private enum class TournamentEditField {
     NAME,

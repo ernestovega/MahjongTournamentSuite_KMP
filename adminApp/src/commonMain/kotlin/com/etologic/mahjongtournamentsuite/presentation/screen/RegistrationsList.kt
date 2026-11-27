@@ -27,7 +27,6 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -85,6 +84,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.reg_shared_email
 import mahjongtournamentsuite.adminapp.generated.resources.search
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsFilterChip as FilterChip
 
 /**
  * The search with Add a person beside it, and one chip per list with the number of people that match the search. On a
