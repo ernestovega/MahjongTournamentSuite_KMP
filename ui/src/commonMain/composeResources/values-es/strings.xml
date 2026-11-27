@@ -783,7 +783,7 @@ Gana el primero que sale bien</string>
     <!-- Sign-in of the web: the page of the apps -->
     <string name="sign_in_get_the_app">Descargar la app</string>
     <string name="consent_title">Analítica anónima</string>
-    <string name="consent_message">¿Puede la app enviar datos anónimos de uso y de errores? Nos ayudan a mejorarla. Es opcional: si lo rechazas, la app funciona igual.</string>
+    <string name="consent_message">¿Nos ayudas a mejorar la app? Solo envía datos anónimos de uso y de errores.</string>
     <string name="consent_more_details">Más detalles</string>
     <string name="consent_why_title">Por qué</string>
     <string name="consent_why">Para encontrar errores y ver qué partes de la app se usan, y así saber qué arreglar y mejorar.</string>
