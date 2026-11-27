@@ -192,7 +192,8 @@ The web E2E tests (`e2e/web`) are in the notes.
 | Feature | Covered by | Gap |
 | --- | --- | --- |
 | Browser back and forward | `BrowserHistoryTest`, `BrowserHistoryUiTest` | Not in a real browser |
-| Back leaves the app only from the first start tab (web and Android) | `BackLayersUiTest`, E2E `PlayerHomeTest` | Not in a real browser |
+| Back leaves the app only from the first start tab, and a tournament only from its first tab (web, Android, iOS) | `BackLayersUiTest`, E2E `PlayerHomeTest`, `PlayerTournamentTest` | Not in a real browser |
+| Back closes only the open dialog (web, Android, iOS) | `BackLayersUiTest`, `DialogBackCoverageTest` (every dialog has the web back) | Not in a real browser |
 | Restore the last screen after a reload | ✅ | `RoutePersistenceUiTest` in both apps (25 Nov) |
 | App Links on Android | `SitePagesLinkTest` (which pages go to the browser) | No instrumented test of the intent filters |
 | Keyboard support on desktop | `EntryFocusAndScrollUiTest`, `KeyboardFocus` 78 % | |

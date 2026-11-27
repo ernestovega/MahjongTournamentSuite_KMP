@@ -30,19 +30,26 @@ class BackLayersUiTest {
     private fun ComposeUiTest.setApp(history: FakeBrowserHistory, layers: BackLayers) {
         setContent {
             val navController = rememberNavController()
+            // A notice over every screen, outside the NavHost, like the reminder of the table of the player.
+            var notice by rememberSaveable { mutableIntStateOf(0) }
             NavHost(navController, startDestination = "splash") {
                 composable("splash") {
                     LaunchedEffect(Unit) { navController.navigate("home") { popUpTo("splash") { inclusive = true } } }
                 }
                 composable("home") {
                     var tab by rememberSaveable { mutableIntStateOf(0) }
+                    var dialog by rememberSaveable { mutableIntStateOf(0) }
                     BackLayerEffect(enabled = tab != 0, onBack = { tab = 0 }, layers = layers)
+                    // Like DialogBackHandler on the web, next to the dialog.
+                    if (dialog == 1) BackLayerEffect(enabled = true, onBack = { dialog = 0 }, layers = layers)
                     Column {
                         Text("Tab $tab")
                         Text("Tab one", Modifier.clickable { tab = 1 })
                         Text("Tab two", Modifier.clickable { tab = 2 })
                         Text("First tab", Modifier.clickable { tab = 0 })
                         Text("Open detail", Modifier.clickable { navController.navigate("detail") })
+                        Text("Open dialog", Modifier.clickable { dialog = 1 })
+                        if (dialog == 1) Text("Dialog open")
                     }
                 }
                 composable("detail") {
@@ -52,8 +59,13 @@ class BackLayersUiTest {
                     Column {
                         Text("Detail")
                         Text("Work", Modifier.clickable { working = 1 })
+                        Text("Show notice", Modifier.clickable { notice = 1 })
                     }
                 }
+            }
+            if (notice == 1) {
+                BackLayerEffect(enabled = true, onBack = { notice = 0 }, layers = layers)
+                Text("Notice")
             }
             BrowserHistory(navController, history, layers)
         }
@@ -146,5 +158,38 @@ class BackLayersUiTest {
         waitForIdle()
         onNodeWithText("Detail").assertIsDisplayed()
         assertEquals(listOf("home", "detail", "~back1"), history.screens()[history.index])
+    }
+
+    @Test
+    fun theBrowserBackClosesOnlyTheDialog() = runComposeUiTest {
+        val history = FakeBrowserHistory()
+        setApp(history, BackLayers())
+        onNodeWithText("Tab two").performClick()
+        onNodeWithText("Open dialog").performClick()
+        waitForIdle()
+        assertEquals(listOf("home", "~back1", "~back2"), history.screens().last())
+
+        browser { history.back() }
+        onNodeWithText("Dialog open").assertDoesNotExist()
+        onNodeWithText("Tab 2").assertIsDisplayed()
+
+        browser { history.back() }
+        onNodeWithText("Tab 0").assertIsDisplayed()
+        assertEquals(0, history.index)
+    }
+
+    @Test
+    fun aDialogOutsideTheScreensGoesOverTheTopScreen() = runComposeUiTest {
+        val history = FakeBrowserHistory()
+        setApp(history, BackLayers())
+        onNodeWithText("Open detail").performClick()
+        onNodeWithText("Show notice").performClick()
+        waitForIdle()
+        assertEquals(listOf("home", "detail", "~back1"), history.screens().last())
+
+        browser { history.back() }
+        onNodeWithText("Notice").assertDoesNotExist()
+        onNodeWithText("Detail").assertIsDisplayed()
+        assertEquals(1, history.index)
     }
 }

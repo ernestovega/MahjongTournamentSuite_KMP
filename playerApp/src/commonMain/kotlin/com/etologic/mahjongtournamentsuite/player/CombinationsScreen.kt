@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.player
 
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
+import com.etologic.mahjongtournamentsuite.presentation.components.DialogBackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -357,6 +358,7 @@ internal fun CreditsDialog(onDismiss: () -> Unit) {
     TrackedDialog("CombinationsCredits") {
         // A basic dialog and not an AlertDialog, whose fixed paddings around the text and the buttons are larger.
         // It keeps the platform width of an AlertDialog; every line, the Close button and the bottom edge are 16 dp apart.
+        DialogBackHandler(onDismiss = onDismiss)
         BasicAlertDialog(onDismissRequest = onDismiss) {
             Surface(shape = AlertDialogDefaults.shape, color = AlertDialogDefaults.containerColor, tonalElevation = AlertDialogDefaults.TonalElevation) {
                 // No 48 dp touch target around the two compact buttons, so that their gaps look like the others.
@@ -624,6 +626,7 @@ private fun CombinationExampleView(example: CombinationExample) {
 internal fun CombinationDialog(combination: Combination, onDismiss: () -> Unit) {
     val paragraphs = stringResource(combination.detail).split("\n\n").map { it.trim() }.filter { it.isNotEmpty() }
     TrackedDialog("Combination") {
+        DialogBackHandler(onDismiss = onDismiss)
         Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
             Surface(
                 modifier = Modifier.padding(16.dp).widthIn(max = DialogMaxWidth).fillMaxWidth().testTag(COMBINATION_DIALOG_TAG),
