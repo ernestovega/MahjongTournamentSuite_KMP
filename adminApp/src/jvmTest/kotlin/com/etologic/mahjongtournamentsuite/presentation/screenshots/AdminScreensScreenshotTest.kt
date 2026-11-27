@@ -286,7 +286,15 @@ class AdminScreensScreenshotTest {
     fun errors() = adminScreenshots("errors") { nav -> ErrorsScreen(nav) }
 
     @Test
-    fun timer() = adminScreenshots("timer", ready = { waitForText("2:00:00") }) { TimerStandaloneScreen(ONGOING, initialRound = 3) }
+    fun timer() = adminScreenshots(
+        "timer",
+        ready = {
+            waitForText("2:00:00")
+            // The tournament, and with it the EMA logo, loads in the background.
+            Thread.sleep(1_500)
+            waitForIdle()
+        },
+    ) { TimerStandaloneScreen(ONGOING, initialRound = 3) }
 
     @Test
     fun timerRunning() = adminScreenshots("timer-running", ready = { waitForText("1:30:00") }) {
@@ -363,7 +371,15 @@ class AdminScreensScreenshotTest {
     ) { RankingStandaloneScreen(ONGOING, clock = FixedClock) }
 
     @Test
-    fun rankingStandalone() = adminScreenshots("ranking-standalone", ready = { waitForText("LUCÍA MARTÍN", substring = true) }) {
+    fun rankingStandalone() = adminScreenshots(
+        "ranking-standalone",
+        ready = {
+            waitForText("LUCÍA MARTÍN", substring = true)
+            // The EMA logo loads in the background.
+            Thread.sleep(1_500)
+            waitForIdle()
+        },
+    ) {
         RankingStandaloneScreen(ONGOING, clock = FixedClock)
     }
 }
