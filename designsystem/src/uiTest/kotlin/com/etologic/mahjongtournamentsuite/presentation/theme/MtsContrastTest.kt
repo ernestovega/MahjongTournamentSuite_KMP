@@ -3,6 +3,7 @@ package com.etologic.mahjongtournamentsuite.presentation.theme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.runComposeUiTest
@@ -49,6 +50,10 @@ class MtsContrastTest {
         "error text on card" to Triple(s.error, s.surfaceContainerHighest, 4.5),
         "outline on surface" to Triple(s.outline, s.surface, 3.0),
         "outline on card" to Triple(s.outline, s.surfaceContainerHighest, 3.0),
+        // The title of the top bar is large text and its icons are graphics: 3:1 on the green and the purple header.
+        "onHeader on player header" to Triple(c.onHeader, c.header, 3.0),
+        "onHeader on admin header" to Triple(c.onHeader, c.adminHeader, 3.0),
+        "muted icons on admin header" to Triple(c.onHeaderMuted.compositeOver(c.adminHeader), c.adminHeader, 3.0),
     )
 
     private fun gaps(dark: Boolean): Map<String, Double> = themeOf(dark).let { (scheme, colors) -> pairs(scheme, colors) }

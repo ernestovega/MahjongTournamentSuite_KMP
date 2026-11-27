@@ -1,6 +1,8 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -14,12 +16,16 @@ fun AppTextButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     focusRequester: FocusRequester? = null,
+    colors: ButtonColors = MtsButtons.textColors(),
+    contentPadding: PaddingValues = ButtonDefaults.TextButtonContentPadding,
     content: @Composable () -> Unit,
 ) {
     FocusedTextButton(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
+        colors = colors,
+        contentPadding = contentPadding,
         focusRequester = focusRequester,
         content = { content() },
     )

@@ -19,6 +19,8 @@ import androidx.compose.ui.text.TextStyle
 @Composable
 fun MtsTheme(
     useDarkTheme: Boolean = isSystemInDarkTheme(),
+    /** True in the admin app: its header (top bar and tabs) is purple instead of green. See [MtsColors.header]. */
+    adminApp: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val fontFamily = GangOfThreeFontFamily()
@@ -40,7 +42,9 @@ fun MtsTheme(
         shapes = MtsMaterialShapes,
     ) {
         CompositionLocalProvider(
-            LocalMtsColors provides if (useDarkTheme) DarkMtsColors else LightMtsColors,
+            LocalMtsColors provides (if (useDarkTheme) DarkMtsColors else LightMtsColors).let { colors ->
+                if (adminApp) colors.copy(header = colors.adminHeader) else colors
+            },
             LocalMtsTypography provides mtsTypography,
             LocalMtsWindowWidth provides windowWidth,
             LocalRippleConfiguration provides MtsRippleConfiguration,
