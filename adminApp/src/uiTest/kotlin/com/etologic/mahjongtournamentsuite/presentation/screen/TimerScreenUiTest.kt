@@ -1,12 +1,17 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.runComposeUiTest
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.ConflictCode
@@ -258,6 +263,12 @@ class TimerScreenUiTest {
         mainClock.advanceTimeBy(300)
         waitForIdle()
         onNodeWithText("When did the round start?").assertExists()
+
+        onNode(hasSetTextAction()).performTextReplacement("10")
+        onNode(hasSetTextAction()).performKeyInput { pressKey(Key.Enter) }
+        mainClock.advanceTimeBy(500)
+        waitForIdle()
+        onNodeWithText("When did the round start?").assertDoesNotExist()
     }
 
     @Test
