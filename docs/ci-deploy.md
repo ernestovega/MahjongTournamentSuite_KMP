@@ -23,7 +23,7 @@ The workflow `.github/workflows/firebase.yml` (shown in GitHub as **Deploy · Pr
   - **Functions tests**: the unit tests of the functions.
   - **Functions integration tests**: the integration tests on the Firebase Auth and Firestore emulators.
   - **Kotlin tests**: ktlint and the tests of all modules.
-  - **Scripts and diagnostics tests**: the Node and Python tests of `scripts/`, the check that every language has the same texts (`scripts/check-localization.py`) and the start diagnostics in Chrome.
+  - **Repository scripts, translations and web start tests**: one step each for the Node tests of `scripts/` (recovery, game day, smoke), the tests of `scripts/versions.py`, the check that every language has the same texts (`scripts/check-localization.py`) and the start diagnostics of the Player web app.
   - **Build web apps**: both Wasm web apps.
 
   The UI tests do not run here until the apps are in production. Run them by hand: see [Instrumented UI tests](instrumented-ui-tests.md).

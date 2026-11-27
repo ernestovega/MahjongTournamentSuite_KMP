@@ -40,7 +40,7 @@ production data.
   password reset email) and the EMA players of `firebase/functions/src/scripts/stagingPlayers.ts`
   (the people registered for the next tournament, plus fictitious 9999xxxx numbers). The players marked `byHand` are left for the rehearsal, which creates them in Player base.
 
-- Action `tournaments`: the tournaments of the production seed (`seed:production-tournaments`, see
+- Action `tournaments`: the tournaments of the production seed (`seed:tournaments -- --target=staging --set=production`, see
   [testing-tournament-scenarios.md](testing-tournament-scenarios.md)), with players from the EMA registry of staging,
   and then the statistics rebuilt. Run it after the copy of the EMA registry (below), so the players match production.
   It writes only those tournament ids and their organizations, and no accounts: the testers' accounts are linked only

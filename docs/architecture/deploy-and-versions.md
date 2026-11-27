@@ -6,7 +6,7 @@
 |---|---|---|---|
 | **Production** | Firebase project `mahjong-tournament-suite` | Real | The published apps |
 | **Staging** | Firebase project `mts---staging` (web https://mts---staging.web.app, Android app «MTS Staging») | Test data only | Rehearse a whole tournament before a release, with real devices, emulators and bots. See [staging.md](../staging.md) |
-| **Local tests** | The real API on the Auth and Firestore emulators (`npm run test-env:backend`), at `http://localhost:5055/api` | Fake, made again on every start | Try the webs without touching production. See [test-environment.md](../test-environment.md) |
+| **Local tests** | The real API on the Auth and Firestore emulators (`npm run e2e:backend`), at `http://localhost:5055/api` | Fake, made again on every start | Try the webs without touching production. See [test-environment.md](../test-environment.md) |
 | **E2E tests** | The same local backend (`npm run e2e:backend`); the Android emulator reaches the Mac through `10.0.2.2` | Fake | Instrumented tests on Android emulators (Mac or GitHub Actions) |
 | **Integration tests** | Emulators, project `demo-mts-tests` | Fake | `npm run test:integration` |
 

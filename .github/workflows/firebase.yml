@@ -133,7 +133,7 @@ jobs:
           :androidApp:testDebugUnitTest
 
   scripts:
-    name: Scripts and diagnostics tests
+    name: Repository scripts, translations and web start tests
     if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main') || (github.event_name == 'push' && vars.PROD_DEPLOY_GATE == 'on') || github.event_name == 'schedule'
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -144,14 +144,23 @@ jobs:
         with:
           node-version: 22
 
-      - name: Test scripts and start diagnostics
-        run: |
-          node --test scripts/recovery.test.mjs
-          node --test scripts/rehearsal/test/*.test.mjs
-          node --test scripts/smoke/test/*.test.mjs
-          python3 -m unittest discover -s scripts -p "*_test.py"
-          python3 scripts/check-localization.py
-          node --test playerApp/diagnostics-test/*.test.mjs
+      - name: Test the recovery script of the web apps (scripts/recovery.test.mjs)
+        run: node --test scripts/recovery.test.mjs
+
+      - name: Test the game day scripts (scripts/rehearsal)
+        run: node --test scripts/rehearsal/test/*.test.mjs
+
+      - name: Test the smoke test (scripts/smoke)
+        run: node --test scripts/smoke/test/*.test.mjs
+
+      - name: Test the version script (scripts/versions_test.py)
+        run: python3 -m unittest discover -s scripts -p "*_test.py"
+
+      - name: Check that every language has the same texts (scripts/check-localization.py)
+        run: python3 scripts/check-localization.py
+
+      - name: Test the start diagnostics of the Player web app (playerApp/diagnostics-test)
+        run: node --test playerApp/diagnostics-test/*.test.mjs
 
   web:
     name: Build web apps

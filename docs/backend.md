@@ -119,7 +119,7 @@ Read routes of a tournament (`/tournaments/:id/...`) use `requireTournamentEdito
 
 - The API loads the heavy libraries (ExcelJS, JSZip, sharp, PDFKit, nodemailer) on their first use, through `services/lazyModules.ts`. A new instance starts in about half the time and with about 55 MB less memory. Import these libraries only as types at the top of a file.
 - Each table document keeps a copy of its 16 hands in `handsCopy` (`{ version, hands }`). `tables-with-hands` (all, per round and per table) uses the copy when its version is the version of the table, so it reads one document per table instead of 17. The hand documents stay the source of every write; the save, the reset and the creation write the copy in the same transaction. A writer that changes hands without the copy must raise the version of the table: the reads then fall back to the hand documents. The integrity check reports a copy that differs from the hands (`counters.handsCopy`).
-- Tables stored before the copy existed get it at their next save, or with `npm run backfill:hands-copy` (preview) and `npm run backfill:hands-copy:apply` in `firebase/functions`. Without the copy, the API reads the hands by document id (`1` to `16` of each table) in batch calls of up to 500 documents.
+- Tables stored before the copy existed get it at their next save (every stored table already has it since 13-nov-2026). Without the copy, the API reads the hands by document id (`1` to `16` of each table) in batch calls of up to 500 documents.
 - Firebase Hosting serves the web files with `Cache-Control: no-cache`. The browser asks every time and gets `304 Not Modified` when the file did not change, so a reload does not download the app again and a new deploy is still seen at once.
 
 ## Firestore data model
