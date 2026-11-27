@@ -80,7 +80,7 @@ class ProfilePhotoVisibilityUiTest {
         onNodeWithText("Your photo will be public").assertExists()
         onNodeWithText("everyone can see it", substring = true).assertExists()
         onNodeWithText("Show my photo publicly\" in your profile", substring = true).assertExists()
-        onNodeWithText("Accept and choose").assertExists()
+        onNodeWithText("Accept").assertExists()
         onNodeWithText("Cancel").performClick()
         onNodeWithText("Your photo will be public").assertDoesNotExist()
     }

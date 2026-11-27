@@ -48,7 +48,7 @@
     <string name="photo_public_notice_title">Your photo will be public</string>
     <string name="photo_public_notice_text">Your photo will be public: everyone can see it in rankings, statistics and registration lists of the tournaments.</string>
     <string name="photo_public_notice_hide">You can hide it at any time with "Show my photo publicly" in your profile.</string>
-    <string name="photo_public_notice_accept">Accept and choose</string>
+    <string name="photo_public_notice_accept">Accept</string>
     <string name="photo_error_type">Choose a JPEG, PNG, WebP, or GIF image.</string>
     <string name="photo_error_size">Choose a photo that is 5 MB or smaller.</string>
     <string name="photo_edit">Edit photo</string>

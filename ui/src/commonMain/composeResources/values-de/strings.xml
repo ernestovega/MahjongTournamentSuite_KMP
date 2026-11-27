@@ -47,7 +47,7 @@
     <string name="photo_public_notice_title">Dein Foto wird öffentlich</string>
     <string name="photo_public_notice_text">Dein Foto wird öffentlich: Alle können es in Ranglisten, Statistiken und Anmeldelisten der Turniere sehen.</string>
     <string name="photo_public_notice_hide">Du kannst es jederzeit mit "Mein Foto öffentlich zeigen" in deinem Profil ausblenden.</string>
-    <string name="photo_public_notice_accept">Akzeptieren und wählen</string>
+    <string name="photo_public_notice_accept">Akzeptieren</string>
     <string name="photo_error_type">Wähle ein JPEG-, PNG-, WebP- oder GIF-Bild.</string>
     <string name="photo_error_size">Wähle ein Foto mit höchstens 5 MB.</string>
     <string name="photo_edit">Foto bearbeiten</string>
