@@ -28,7 +28,7 @@ export type RoundClocksAnswer = { roundClocks: RoundClockView[]; roundControls: 
 export async function getRoundClocks(tournamentId: string, nowMs: number = Date.now()): Promise<RoundClocksAnswer> {
   const snapshot = await db.doc(`tournaments/${tournamentId}`).get();
   if (!snapshot.exists) throw notFound("Tournament not found");
-  const data = snapshot.data() ?? {};
+  const data = snapshot.data() as FirebaseFirestore.DocumentData;
   return { roundClocks: roundClockViews(data), roundControls: roundControlViews(data), serverNowMs: nowMs };
 }
 
@@ -68,7 +68,7 @@ async function closePreviousRoundBeforePlay(params: {
   if (params.roundId <= 1) return;
   const snapshot = await db.doc(`tournaments/${params.tournamentId}`).get();
   if (!snapshot.exists) throw notFound("Tournament not found");
-  const tournament = snapshot.data() ?? {};
+  const tournament = snapshot.data() as FirebaseFirestore.DocumentData;
   // Play twice changes nothing, so a round that already started is never refused. An unknown round or a completed
   // tournament gets its own refusal from the clock.
   if (readStoredRoundClocks(tournament).has(params.roundId)) return;
@@ -135,7 +135,7 @@ export async function updateRoundClock(params: {
   const result = await db.runTransaction(async (transaction) => {
     const snapshot = await transaction.get(ref);
     if (!snapshot.exists) throw notFound("Tournament not found");
-    const tournament = snapshot.data() ?? {};
+    const tournament = snapshot.data() as FirebaseFirestore.DocumentData;
     if (tournament.isCompleted === true) throw conflict("This tournament is completed", { code: "TOURNAMENT_COMPLETED" });
     const numRounds = Number(tournament.numRounds ?? 0);
     if (params.roundId < 1 || params.roundId > numRounds) throw notFound("Round not found");
@@ -197,7 +197,7 @@ export async function updateRoundControl(params: {
   await db.runTransaction(async (transaction) => {
     const snapshot = await transaction.get(ref);
     if (!snapshot.exists) throw notFound("Tournament not found");
-    const data = snapshot.data() ?? {};
+    const data = snapshot.data() as FirebaseFirestore.DocumentData;
     // A completed tournament takes a control too: the close of the last round completes the tournament by itself,
     // and opening its tables again is exactly what an admin may need.
     const numRounds = Number(data.numRounds ?? 0);

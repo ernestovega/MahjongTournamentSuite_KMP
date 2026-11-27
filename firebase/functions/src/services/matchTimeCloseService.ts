@@ -60,14 +60,14 @@ export async function closeRoundTables(tournamentId: string, roundId: number, no
   const result: CloseExpiredResult = { tournaments: 0, closed: 0 };
   const tournament = await db.doc(`tournaments/${tournamentId}`).get();
   if (!tournament.exists || tournament.get("isCompleted") === true) return result;
-  if (!overRounds(tournament.data() ?? {}, nowMs).includes(roundId)) return result;
+  if (!overRounds(tournament.data() as FirebaseFirestore.DocumentData, nowMs).includes(roundId)) return result;
   const started = await tournament.ref.collection("tables")
     .where("roundId", "==", roundId)
     .where("isCompleted", "==", false)
     .where("hasProgress", "==", true)
     .get();
   // A table whose hand entry an admin opened by hand stays open: its players go on after the time.
-  const data = tournament.data() ?? {};
+  const data = tournament.data() as FirebaseFirestore.DocumentData;
   const candidates = started.docs.filter((doc) =>
     doc.get("matchTimeChecked") !== true && manualHands(data, roundId, Number(doc.get("tableId"))) !== "open");
   if (candidates.length === 0) return result;

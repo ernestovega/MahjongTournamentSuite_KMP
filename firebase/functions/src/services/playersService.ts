@@ -282,7 +282,7 @@ export async function updatePlayerPhoto(params: {
   await ref.update({ photoUrl, updatedAt: FieldValue.serverTimestamp() });
   const updated = await ref.get();
   await bumpGlobalDataVersion("emaPlayers");
-  return toPlayer(params.emaId, updated.data() ?? {});
+  return toPlayer(params.emaId, updated.data() as FirebaseFirestore.DocumentData);
 }
 
 export async function playerExists(emaId: string): Promise<boolean> {

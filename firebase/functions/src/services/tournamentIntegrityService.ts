@@ -39,7 +39,7 @@ export async function runTournamentIntegrityCheck(tournamentId: string): Promise
   }
 
   return checkTournamentIntegrity(tournamentId, {
-    tournament: tournament.data() ?? {},
+    tournament: tournament.data() as FirebaseFirestore.DocumentData,
     players: players.docs.map((doc) => ({ id: doc.id, data: doc.data() })),
     teams: teams.docs.map((doc) => ({ id: doc.id, data: doc.data() })),
     rounds: rounds.docs.map((doc) => ({ id: doc.id, data: doc.data() })),

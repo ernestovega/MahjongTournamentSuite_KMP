@@ -224,7 +224,7 @@ export async function loadTournament(tournamentId: string): Promise<TournamentFo
     timeZone: typeof snapshot.get("timeZone") === "string" ? String(snapshot.get("timeZone")) : null,
     drawPending: snapshot.get("drawPending") === true,
     settings,
-    data: snapshot.data() ?? {},
+    data: snapshot.data() as FirebaseFirestore.DocumentData,
   };
 }
 
@@ -294,7 +294,7 @@ export async function photosOf(emaIds: string[]): Promise<Map<string, string>> {
   for (let start = 0; start < withoutAccountPhoto.length; start += 300) {
     const chunk = withoutAccountPhoto.slice(start, start + 300);
     (await db.getAll(...chunk.map((emaId) => db.doc(`${EMA_PLAYER_REGISTRY_COLLECTION}/${emaId}`)))).forEach((snapshot, index) => {
-      const url = snapshot.exists ? toPlayer(chunk[index], snapshot.data() ?? {}).photoUrl : null;
+      const url = snapshot.exists ? toPlayer(chunk[index], snapshot.data() as FirebaseFirestore.DocumentData).photoUrl : null;
       if (url) emaPhotos.set(chunk[index], url);
     });
   }
@@ -387,7 +387,7 @@ export async function adminRegistrations(tournamentId: string): Promise<{
         source: registration.source,
         registeredAt: new Date(registration.order || (created instanceof Timestamp ? created.toMillis() : 0)).toISOString(),
         hasAccount: accounts.has(registration.emaId),
-        sharedEmail: registration.email !== "" && (emailCount.get(registration.email) ?? 0) > 1,
+        sharedEmail: registration.email !== "" && emailCount.get(registration.email)! > 1,
         problems: registration.problems,
         fileEmaId: registration.fileEmaId,
       };
@@ -416,7 +416,7 @@ export async function registryPerson(emaIdValue: unknown): Promise<RegistryPerso
   const emaId = validateEmaId(emaIdValue);
   const snapshot = await db.doc(`${EMA_PLAYER_REGISTRY_COLLECTION}/${emaId}`).get();
   if (!snapshot.exists) throw missing("EMA player not found", { code: "EMA_NOT_FOUND" });
-  const player = toPlayer(emaId, snapshot.data() ?? {});
+  const player = toPlayer(emaId, snapshot.data() as FirebaseFirestore.DocumentData);
   if (player.disabled) throw missing("EMA player not found", { code: "EMA_NOT_FOUND" });
   return { emaId, name: `${player.firstName} ${player.lastName}`.trim(), country: player.country };
 }
@@ -1015,7 +1015,7 @@ async function changeEmaNumber(tournament: TournamentForRegistrations, id: strin
   const [oldDoc, taken] = await Promise.all([oldRef.get(), newRef.get()]);
   if (!oldDoc.exists) throw missing("Registration not found", { code: "REGISTRATION_NOT_FOUND" });
   if (taken.exists) throw conflict("This EMA number is already registered", { code: "ALREADY_REGISTERED" });
-  const { fileEmaId: _fileEmaId, importFood: _importFood, ...data } = oldDoc.data() ?? {};
+  const { fileEmaId: _fileEmaId, importFood: _importFood, ...data } = oldDoc.data() as FirebaseFirestore.DocumentData;
   const problems = toStored(oldDoc).problems.filter((problem) => !EMA_PROBLEMS.includes(problem));
   const food = typeof _importFood === "string" ? _importFood : "";
   const batch = db.batch();
@@ -1209,7 +1209,7 @@ export async function importRegistrations(params: {
   });
   const rows: ImportRow[] = formRows.map((row) => {
     const snapshot = registry.get(row.emaId);
-    const player = snapshot?.exists ? toPlayer(row.emaId, snapshot.data() ?? {}) : null;
+    const player = snapshot?.exists ? toPlayer(row.emaId, snapshot.data() as FirebaseFirestore.DocumentData) : null;
     const problems = [...row.problems];
     if (problems.length === 0 && (player == null || player.disabled)) problems.push("EMA_NOT_FOUND");
     return {
@@ -1217,7 +1217,7 @@ export async function importRegistrations(params: {
       problems,
       registryName: player == null ? null : `${player.firstName} ${player.lastName}`.trim(),
       registryCountry: player?.country ?? null,
-      sharedEmail: row.email !== "" && (emailCount.get(row.email) ?? 0) > 1,
+      sharedEmail: row.email !== "" && emailCount.get(row.email)! > 1,
     };
   });
   const replaced = current.size;

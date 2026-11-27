@@ -569,9 +569,9 @@ export async function updateTournamentSettings(params: {
   const after = await ref.get();
   // A new match duration moves the end of a running round.
   const nowMs = Date.now();
-  await scheduleRoundCloses(params.tournamentId, after.data() ?? {}, nowMs);
+  await scheduleRoundCloses(params.tournamentId, after.data() as FirebaseFirestore.DocumentData, nowMs);
   // A shorter match can end a running round at once. No task runs for an end that is past.
-  await closeRoundsEndedByChange({ tournamentId: params.tournamentId, before: before.data() ?? {}, after: after.data() ?? {}, nowMs });
+  await closeRoundsEndedByChange({ tournamentId: params.tournamentId, before: before.data() as FirebaseFirestore.DocumentData, after: after.data() as FirebaseFirestore.DocumentData, nowMs });
   return mapTournamentDoc(after);
 }
 

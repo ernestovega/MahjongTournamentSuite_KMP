@@ -298,7 +298,7 @@ export async function refreshTableStats(tournamentId: string, tableDocument: str
   const tableRef = db.collection("tournaments").doc(tournamentId).collection("tables").doc(tableDocument);
   await db.runTransaction(async (transaction) => {
     const [tableSnapshot, handsSnapshot] = await Promise.all([transaction.get(tableRef), transaction.get(tableRef.collection("hands"))]);
-    const data = tableSnapshot.exists ? (tableSnapshot.data() ?? {}) : null;
+    const data = tableSnapshot.exists ? tableSnapshot.data() as FirebaseFirestore.DocumentData : null;
     const [roundId, tableId] = tableDocument.split("_").map(Number);
     const plan = await prepareTableStats(transaction, {
       tournamentId,

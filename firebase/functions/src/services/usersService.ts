@@ -90,7 +90,7 @@ async function resolvePhoto(ownPhoto: unknown, emaId: string | null): Promise<{ 
   if (typeof ownPhoto === "string" && ownPhoto.length > 0) return { photoUrl: ownPhoto, hasOwnPhoto: true };
   if (emaId == null) return { photoUrl: null, hasOwnPhoto: false };
   const player = await db.doc(`${EMA_PLAYER_REGISTRY_COLLECTION}/${emaId}`).get();
-  return { photoUrl: player.exists ? toPlayer(emaId, player.data() ?? {}).photoUrl : null, hasOwnPhoto: false };
+  return { photoUrl: player.exists ? toPlayer(emaId, player.data() as FirebaseFirestore.DocumentData).photoUrl : null, hasOwnPhoto: false };
 }
 
 /** Saves the own photo of a user. A user has one photo only. A new photo replaces the old one. */
@@ -212,7 +212,7 @@ async function loadEmaPhotos(emaIds: Array<string | null>): Promise<Map<string, 
   const photos = new Map<string, string | null>();
   if (ids.length === 0) return photos;
   const snaps = await db.getAll(...ids.map((id) => db.doc(`${EMA_PLAYER_REGISTRY_COLLECTION}/${id}`)));
-  snaps.forEach((snap, index) => photos.set(ids[index], snap.exists ? toPlayer(ids[index], snap.data() ?? {}).photoUrl : null));
+  snaps.forEach((snap, index) => photos.set(ids[index], snap.exists ? toPlayer(ids[index], snap.data() as FirebaseFirestore.DocumentData).photoUrl : null));
   return photos;
 }
 

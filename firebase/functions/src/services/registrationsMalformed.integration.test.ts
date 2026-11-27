@@ -55,6 +55,23 @@ describe("registrations with malformed documents", () => {
   });
   after(() => setMailTransportForTests(null));
 
+  it("tells a removed person to write to a dash when the tournament has no contact, and refuses a request without email", async () => {
+    await registrations.doc("07660009").set({ status: "CONFIRMED", order: 1, email: "gone@example.test", language: "en" });
+    const sent: string[] = [];
+    setMailTransportForTests(async (mail) => { sent.push(mail.text); });
+    try {
+      await adminRemoveRegistration({ tournamentId, emaId: "07660009" });
+    } finally {
+      setMailTransportForTests(async () => {});
+    }
+    assert.equal(sent.length, 1);
+    assert.match(sent[0], /—/);
+    await assert.rejects(
+      requestWithoutEmaNumber({ tournamentId, name: "Ana Ruiz", country: "ES", email: undefined, message: "" }),
+      refusedWith("INVALID_EMAIL"),
+    );
+  });
+
   it("lists registrations and teams without their fields", async () => {
     await registrations.doc("07660001").set({ status: "CONFIRMED", language: "xx", createdAt: Timestamp.fromMillis(86_400_000) });
     await registrations.doc("07660002").set({ status: "WAITING", order: 0 });
