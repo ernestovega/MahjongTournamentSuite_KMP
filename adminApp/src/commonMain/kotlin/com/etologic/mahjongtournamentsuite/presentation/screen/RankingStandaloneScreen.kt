@@ -302,11 +302,10 @@ private fun RankingStandaloneContent(
                     }
                     snapshot?.tournament?.let { tournament ->
                         // The logo of the main organizer, when it has one, in the empty corner over the controls.
-                        val organizer = tournament.organizers.firstOrNull()
-                        val logoUrl = organizer?.logoUrl?.takeIf { it.isNotBlank() } ?: tournament.associationLogoUrl?.takeIf { it.isNotBlank() }
+                        val logoUrl = tournament.mainOrganizerLogo()
                         if (logoUrl != null) {
                             OrganizationLogo(
-                                name = organizer?.name ?: tournament.name,
+                                name = tournament.mainOrganizerName(),
                                 logoUrl = logoUrl,
                                 primaryColor = tournament.primaryColor,
                                 size = if (compact) COMPACT_LOGO_SIZE else LOGO_SIZE,

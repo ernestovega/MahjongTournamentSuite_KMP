@@ -67,9 +67,11 @@ import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepositor
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.GongIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
+import com.etologic.mahjongtournamentsuite.presentation.components.OrganizationLogo
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.organizationColor
@@ -146,11 +148,30 @@ fun TimerStandaloneScreen(
                         themePreference = themeController.preference,
                         onToggleTheme = themeController.onTogglePreference,
                     )
+                    // The logo of the main organizer, when it has one: at the top left on a wide screen, and at the
+                    // bottom left on a phone, where the round and its buttons fill the top.
+                    state.tournament?.let { tournament ->
+                        val logoUrl = tournament.mainOrganizerLogo() ?: return@let
+                        val compact = LocalCompactLayout.current
+                        OrganizationLogo(
+                            name = tournament.mainOrganizerName(),
+                            logoUrl = logoUrl,
+                            primaryColor = tournament.primaryColor,
+                            size = if (compact) TIMER_COMPACT_LOGO_SIZE else TIMER_LOGO_SIZE,
+                            modifier = Modifier
+                                .align(if (compact) Alignment.BottomStart else Alignment.TopStart)
+                                .padding(if (compact) 16.dp else 24.dp),
+                        )
+                    }
                 }
             }
         }
     }
 }
+
+/** The logo of the main organizer: big on a wide screen, small on a phone. */
+private val TIMER_LOGO_SIZE = 120.dp
+private val TIMER_COMPACT_LOGO_SIZE = 44.dp
 
 /** Below this width the buttons of the Timer go in a row under the gong, so they never cover it. */
 private val STACKED_CONTROLS_MAX_WIDTH = 600.dp

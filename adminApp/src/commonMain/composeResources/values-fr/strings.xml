@@ -1242,4 +1242,5 @@ Change les places dans Inscriptions.</string>
         <item quantity="one">%1$d pays</item>
         <item quantity="other">%1$d pays</item>
     </plurals>
+    <string name="projection_logo_show_while_running">Afficher en cours</string>
 </resources>

@@ -1242,4 +1242,5 @@ Cambia las plazas en Inscripciones.</string>
         <item quantity="one">%1$d país</item>
         <item quantity="other">%1$d países</item>
     </plurals>
+    <string name="projection_logo_show_while_running">Mostrar en marcha</string>
 </resources>

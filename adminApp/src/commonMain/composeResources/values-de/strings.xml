@@ -1242,4 +1242,5 @@ Die Spielerzahl kann sich nur vor der ersten Hand ändern.</string>
         <item quantity="one">%1$d Land</item>
         <item quantity="other">%1$d Länder</item>
     </plurals>
+    <string name="projection_logo_show_while_running">Beim Laufen zeigen</string>
 </resources>

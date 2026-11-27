@@ -1242,4 +1242,5 @@ Change the places in Registrations.</string>
         <item quantity="one">%1$d country</item>
         <item quantity="other">%1$d countries</item>
     </plurals>
+    <string name="projection_logo_show_while_running">Show while running</string>
 </resources>

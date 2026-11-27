@@ -1242,4 +1242,5 @@ Wijzig de plaatsen bij Inschrijvingen.</string>
         <item quantity="one">%1$d land</item>
         <item quantity="other">%1$d landen</item>
     </plurals>
+    <string name="projection_logo_show_while_running">Tonen tijdens lopen</string>
 </resources>

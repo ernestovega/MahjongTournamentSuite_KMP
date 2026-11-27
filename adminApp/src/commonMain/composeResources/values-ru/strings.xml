@@ -1296,4 +1296,5 @@
         <item quantity="many">%1$d стран</item>
         <item quantity="other">%1$d страны</item>
     </plurals>
+    <string name="projection_logo_show_while_running">Показывать во время показа</string>
 </resources>

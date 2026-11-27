@@ -301,13 +301,18 @@ class AdminScreensScreenshotTest {
     @Test
     fun timerIndependent() = adminScreenshots("timer-independent") { TimerStandaloneScreen(null) }
 
-    /** The Timer of a tournament shows the color of its main organizer, here a yellow that needs dark text. */
+    /** The Timer of a tournament shows the logo and the color of its main organizer, here a yellow that needs dark text. */
     @Test
     fun timerBranded() = adminScreenshots(
         "timer-branded",
-        modules = { adminModules(tournaments = BrandedTournamentRepository("#F9A825")) },
+        modules = { adminModules(tournaments = BrandedTournamentRepository("#F9A825", fakeClubLogo)) },
         variants = brandedVariants,
-        ready = { waitForText("2:00:00") },
+        ready = {
+            waitForText("2:00:00")
+            // The logo loads from disk in the background.
+            Thread.sleep(1_500)
+            waitForIdle()
+        },
     ) { TimerStandaloneScreen(ONGOING, initialRound = 3) }
 
     /** The projected ranking, playing, with the logo of the main organizer of the tournament in the corner. */
