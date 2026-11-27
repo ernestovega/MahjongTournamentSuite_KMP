@@ -179,6 +179,19 @@ function drawCurvedText(
   });
 }
 
+/**
+ * The logo, read once for every card. A logo file in a format that PDFKit does not read, such as an old WebP logo,
+ * gives cards without a logo instead of no cards.
+ */
+function openLogo(doc: PDFKit.PDFDocument, logo: Buffer | null | undefined): PDFKit.Mixins.ImageSrc | null {
+  if (logo == null) return null;
+  try {
+    return (doc as unknown as { openImage(src: Buffer): PDFKit.Mixins.ImageSrc }).openImage(logo);
+  } catch (_error) {
+    return null;
+  }
+}
+
 function drawCenteredText(
   doc: PDFKit.PDFDocument,
   text: string,
@@ -270,19 +283,14 @@ function drawFront(
   if (associationLogo != null) {
     const logoRadius = 32.5;
     doc.circle(LOGO_CENTER_X, LOGO_CENTER_Y, LOGO_WHITE_RADIUS).fill("#FFFFFF");
-    try {
-      doc.save();
-      doc.circle(LOGO_CENTER_X, LOGO_CENTER_Y, logoRadius).clip();
-      doc.image(associationLogo, LOGO_CENTER_X - logoRadius, LOGO_CENTER_Y - logoRadius, {
-        cover: [logoRadius * 2, logoRadius * 2],
-        align: "center",
-        valign: "center",
-      });
-      doc.restore();
-    } catch (_error) {
-      doc.restore();
-      // Keep the card usable if an old logo file has an unsupported format.
-    }
+    doc.save();
+    doc.circle(LOGO_CENTER_X, LOGO_CENTER_Y, logoRadius).clip();
+    doc.image(associationLogo, LOGO_CENTER_X - logoRadius, LOGO_CENTER_Y - logoRadius, {
+      cover: [logoRadius * 2, logoRadius * 2],
+      align: "center",
+      valign: "center",
+    });
+    doc.restore();
   }
 
   const tournamentNameFontSize = model.tournamentShortName.length > 8 ? 22 : 27;
@@ -621,9 +629,7 @@ export async function buildIdCardsPdf(model: IdCardsDocument, sheet?: IdCardShee
     doc.on("error", reject);
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.registerFont("CardApp", appFontPath);
-    const reusableLogo = model.associationLogo == null
-      ? null
-      : (doc as unknown as { openImage(src: Buffer): PDFKit.Mixins.ImageSrc }).openImage(model.associationLogo);
+    const reusableLogo = openLogo(doc, model.associationLogo);
 
     if (sheet != null && grid != null) {
       const perSheet = grid.columns * grid.rows;

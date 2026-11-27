@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { after, before, describe, it, mock } from "node:test";
 
+import { db } from "../firebase";
 import * as roundClockService from "../services/roundClockService";
 import { seedOrganization, seedTournament } from "../testing/firestoreFixtures";
 import { createAccount, requireAuthEmulator, startServer, type TestAccount, type TestServer } from "../testing/authFixtures";
@@ -86,5 +87,12 @@ describe("route edges", () => {
     const removed = await server.request("DELETE", `/tournaments/${tournamentId}/members/${admin.uid}`, { token: admin.token });
     assert.equal(removed.status, 400);
     assert.match(String((removed.body as { message?: string }).message), /Super admins cannot be removed/);
+  });
+
+  it("refuses the score sheets of the tables of a tournament without tables", async () => {
+    const empty = await seedTournament({ tables: [] });
+    await db.doc(`tournaments/${empty}`).update({ numPlayers: 0 });
+    const response = await server.request("GET", `/tournaments/${empty}/score-sheets?mode=tables`, { token: admin.token });
+    assert.equal(response.status, 409);
   });
 });

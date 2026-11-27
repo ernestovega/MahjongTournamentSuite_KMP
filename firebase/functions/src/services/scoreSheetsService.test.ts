@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import test from "node:test";
 
 import {
@@ -73,4 +75,10 @@ test("the sheet is made without chicken hands, without the EMA, with a bad logo 
     const pdf = await buildScoreSheetsPdf(model({ ...changes, sheets: [{ round: 1, table: 1 }] }));
     assert.equal(pageCount(pdf), 1, JSON.stringify(changes));
   }
+});
+
+test("the sheet draws a logo that pdfkit reads, and the smallest title size for a name that never fits", async () => {
+  const logo = readFileSync(join(__dirname, "../assets/logo_ema.png"));
+  const pdf = await buildScoreSheetsPdf(model({ logo, tournamentName: "X".repeat(300) }));
+  assert.equal(pageCount(pdf), 1);
 });

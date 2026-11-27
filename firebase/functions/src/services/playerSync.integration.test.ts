@@ -133,4 +133,66 @@ describe("EMA player registry sync", () => {
     assert.match(String(photo?.etag), /^"[0-9a-f]{64}"$/);
     assert.match(String((await registry("99000004")).get("photoUrl")), /playerPhotos%2F99000004\.jpg/);
   });
+
+  it("stops the run on a local copy that misses a photo or a page", async () => {
+    await page("Tournament/Tournaments_2025.html", `<a href="TR_9902.html">y</a> <a href="TR_9903.html">z</a> <a href="TR_9904.html">w</a> <a href="TR_9905.html">v</a>`);
+    await page("Tournament/TR_9905.html", row("99000005", "LOST", "LIA", "ESP"));
+    await page("Players/99000005.html", `<html><img src="photo/99000005.jpg"/></html>`);
+    // The photo file is not in the copy.
+    await assert.rejects(runEmaPlayerRegistrySync("incremental"), /ENOENT/);
+    // Nor is the page of a new tournament.
+    await page("Tournament/Tournaments_2025.html", `<a href="TR_9902.html">y</a> <a href="TR_9906.html">u</a>`);
+    await assert.rejects(runEmaPlayerRegistrySync("incremental"), /ENOENT/);
+    await page("Tournament/Tournaments_2025.html", `<a href="TR_9902.html">y</a> <a href="TR_9903.html">z</a> <a href="TR_9904.html">w</a>`);
+  });
+
+  it("stops the run on a photo that the EMA site refuses or that is no image, and stores a new photo with its type", async () => {
+    const local = source;
+    delete process.env.EMA_LOCAL_SOURCE_DIR;
+    let photo: Response = new Response("down", { status: 500 });
+    const fetching = mock.method(globalThis, "fetch", async (url: string) => {
+      const path = new URL(url).pathname;
+      if (path.endsWith("/Players/photo/99000007.png")) return photo;
+      if (path.endsWith("/Tournament/Tournaments_2025.html")) return new Response(`<a href="TR_9907.html">t</a>`, { status: 200 });
+      if (path.endsWith("/Tournament/TR_9907.html")) return new Response(row("99000007", "NET", "NOA", "ESP"), { status: 200 });
+      if (path.endsWith("/Players/99000007.html")) return new Response(`<html><img src="photo/99000007.png"/></html>`, { status: 200 });
+      try {
+        return new Response(await readFile(join(local, path), "utf8"), { status: 200 });
+      } catch {
+        return new Response("missing", { status: 404 });
+      }
+    });
+    try {
+      await assert.rejects(runEmaPlayerRegistrySync("incremental"), /EMA photo request failed \(500\): 99000007/);
+      photo = new Response("<html/>", { status: 200, headers: { "content-type": "text/html" } });
+      await assert.rejects(runEmaPlayerRegistrySync("incremental"), /EMA photo is not an image: 99000007/);
+      photo = new Response("png bytes", { status: 200, headers: { "content-type": "image/png", etag: "\"v1\"" } });
+      await runEmaPlayerRegistrySync("incremental");
+    } finally {
+      fetching.mock.restore();
+      process.env.EMA_LOCAL_SOURCE_DIR = local;
+    }
+    const stored = await registry("99000007");
+    assert.equal(stored.get("photoSourceEtag"), "\"v1\"");
+    assert.match(String(stored.get("photoUrl")), /playerPhotos%2F99000007\.jpg/);
+  });
+
+  it("marks more than 500 new tournament pages in several batches", async () => {
+    const local = source;
+    delete process.env.EMA_LOCAL_SOURCE_DIR;
+    const links = Array.from({ length: 501 }, (_, index) => `<a href="TR_${80000 + index}.html">t</a>`).join(" ");
+    const fetching = mock.method(globalThis, "fetch", async (url: string) => {
+      const path = new URL(url).pathname;
+      if (path.endsWith("/Tournament/Tournaments_all.html")) return new Response(links, { status: 200 });
+      return new Response("", { status: 200 });
+    });
+    try {
+      await runEmaPlayerRegistrySync("incremental");
+    } finally {
+      fetching.mock.restore();
+      process.env.EMA_LOCAL_SOURCE_DIR = local;
+    }
+    assert.ok((await db.collection("emaRankingTournamentResultIndex").doc("TR_80000.html").get()).exists);
+    assert.ok((await db.collection("emaRankingTournamentResultIndex").doc("TR_80500.html").get()).exists);
+  });
 });

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import test, { mock } from "node:test";
 
 import {
   buildIdCardBackRows,
@@ -8,6 +8,7 @@ import {
   CARD_HEIGHT,
   CARD_WIDTH,
   flagOrPlaceholderSvg,
+  flagSvgFor,
   GUEST_FLAG_SVG,
   idCardExtraCards,
   idCardSheetCardOrigin,
@@ -281,5 +282,45 @@ test("cards never overlap and every back sits behind its front in all sheet layo
     }
     assert.equal(frontCells.size, count, `front overlap ${label}`);
     assert.equal(backCells.size, count, `back overlap ${label}`);
+  }
+});
+
+test("a two-letter code without a flag file has no flag", () => {
+  assert.equal(flagSvgFor("ZZ"), null);
+  assert.equal(flagSvgFor("ZZ"), null, "the missing file is remembered");
+});
+
+test("a back number without ink is drawn from the left edge of its box", async () => {
+  // Synthetic: a blank number, so the font measures no ink to center.
+  const pdf = await buildIdCardsPdf({
+    tournamentShortName: "6th MMC", year: "2026", primaryColor: "#7C3AED", numberOfRounds: 1, roundSchedules: [],
+    players: [{ playerId: " " as unknown as number, name: "ANA RUIZ", country: "Spain", countryCode: "ESP", teamName: null, tableNumbers: [1] }],
+  });
+  assert.equal(pdf.subarray(0, 5).toString("ascii"), "%PDF-");
+});
+
+test("a proof reads the logo from Firebase Storage, and keeps a usable card when the logo is no image", async () => {
+  const asked: string[] = [];
+  const fetching = mock.method(globalThis, "fetch", async (url: URL) => {
+    asked.push(String(url));
+    return String(url).includes("missing") ? new Response("gone", { status: 404 }) : new Response("not an image", { status: 200 });
+  });
+  try {
+    for (const associationLogoUrl of [
+      "https://firebasestorage.googleapis.com/v0/b/x/o/logo.png",
+      "https://storage.googleapis.com/x/missing.png",
+      "https://example.com/logo.png",
+    ]) {
+      const pdf = await buildIdCardProofPdf({ shortName: "6th MMC", year: "2026", primaryColor: "#02B16B", associationLogoUrl });
+      assert.equal(pdf.subarray(0, 5).toString("ascii"), "%PDF-");
+    }
+    // Only the Storage hosts are asked.
+    assert.equal(asked.length, 2);
+    const fromData = await buildIdCardProofPdf({
+      shortName: "6th MMC", year: "2026", primaryColor: "#02B16B", associationLogoDataBase64: Buffer.from("not an image").toString("base64"),
+    });
+    assert.equal(fromData.subarray(0, 5).toString("ascii"), "%PDF-");
+  } finally {
+    fetching.mock.restore();
   }
 });
