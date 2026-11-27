@@ -73,21 +73,21 @@ class PhotoEditorUiTest {
         clock += 1.seconds
         onNodeWithText("Edit photo").performClick()
         clock += 1.seconds
-        onNodeWithText("Accept and choose").performClick()
+        onNodeWithText("Accept").performClick()
         waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Choose a JPEG, PNG, WebP, or GIF image.").fetchSemanticsNodes().isNotEmpty() }
 
         next = SelectedImage("big.png", "image/png", ByteArray(5 * 1024 * 1024 + 1))
         clock += 1.seconds
         onNodeWithText("Edit photo").performClick()
         clock += 1.seconds
-        onNodeWithText("Accept and choose").performClick()
+        onNodeWithText("Accept").performClick()
         waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Choose a photo that is 5 MB or smaller.").fetchSemanticsNodes().isNotEmpty() }
 
         next = png()
         clock += 1.seconds
         onNodeWithText("Edit photo").performClick()
         clock += 1.seconds
-        onNodeWithText("Accept and choose").performClick()
+        onNodeWithText("Accept").performClick()
         waitUntil(timeoutMillis = 10_000) { onAllNodes(hasText("Use crop") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
         clock += 1.seconds
         onNodeWithText("Use crop").performClick()
