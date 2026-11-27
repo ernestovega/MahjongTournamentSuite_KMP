@@ -761,16 +761,16 @@ fun PlayerBaseScreen(navController: NavHostController) {
                 },
                 verticalArrangement = Arrangement.spacedBy(if (compactScreen) 8.dp else 16.dp),
             ) {
-                    ShowTabsAtTop(playersListState)
+                ShowTabsAtTop(playersListState)
                 error?.let {
                     AppErrorDialog(
                         message = it,
                         onDismiss = { error = null },
                     )
                 }
-                    HideOnScrollTabs {
-                                Column(verticalArrangement = Arrangement.spacedBy(if (compactScreen) 8.dp else 16.dp)) {
-                                    OutlinedTextField(
+                HideOnScrollTabs {
+                    Column(verticalArrangement = Arrangement.spacedBy(if (compactScreen) 8.dp else 16.dp)) {
+                        OutlinedTextField(
                                         value = searchQuery,
                                         onValueChange = { searchQuery = it },
                                         label = { Text(stringResource(Res.string.search)) },
@@ -861,17 +861,17 @@ fun PlayerBaseScreen(navController: NavHostController) {
                         ) {
                             Column(Modifier.fillMaxWidth().weight(1f)) {
                                 if (canDelete) {
-                                        HideOnScrollTabs {
-                                                        Column {
-                                                            PlayerSelectionBar(
-                                                                shownCount = filteredPlayers.size,
-                                                                selectedCount = chosenEmaIds.size,
-                                                                busy = saving || loading,
-                                                                onSelectAllShown = { checkedEmaIds = filteredPlayers.map { it.emaId }.toSet() },
-                                                                onClear = { checkedEmaIds = emptySet() },
-                                                                onDelete = { openDeleteConfirmation() },
-                                                                compact = compact,
-                                                            )
+                                    HideOnScrollTabs {
+                                        Column {
+                                            PlayerSelectionBar(
+                                                shownCount = filteredPlayers.size,
+                                                selectedCount = chosenEmaIds.size,
+                                                busy = saving || loading,
+                                                onSelectAllShown = { checkedEmaIds = filteredPlayers.map { it.emaId }.toSet() },
+                                                onClear = { checkedEmaIds = emptySet() },
+                                                onDelete = { openDeleteConfirmation() },
+                                                compact = compact,
+                                            )
                                                             // On a phone the bar takes two rows. The space under it matches the space above it.
                                                             if (compact) Spacer(Modifier.height(16.dp))
                                                         }
