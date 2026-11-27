@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -92,8 +93,11 @@ class TelemetryUiTest {
         onNodeWithText("Never your name", substring = true).assertExists()
         onNodeWithText("In your profile, at any time.").assertExists()
 
+        // The details fold away with an animation.
         onNodeWithTag(CONSENT_DETAILS_TAG).performClick()
-        onNodeWithText("Google Analytics for Firebase", substring = true).assertDoesNotExist()
+        waitUntil(timeoutMillis = 5_000) {
+            onAllNodesWithText("Google Analytics for Firebase", substring = true).fetchSemanticsNodes().isEmpty()
+        }
     }
 
     @Test
