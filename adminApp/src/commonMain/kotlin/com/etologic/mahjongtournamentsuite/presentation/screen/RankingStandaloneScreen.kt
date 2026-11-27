@@ -77,6 +77,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRow
+import com.etologic.mahjongtournamentsuite.presentation.components.OrganizationLogo
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerPhoto
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
@@ -297,6 +298,22 @@ private fun RankingStandaloneContent(
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                             modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
                         )
+                    }
+                    snapshot?.tournament?.let { tournament ->
+                        // The logo of the main organizer, when it has one, in the empty corner over the controls.
+                        val organizer = tournament.organizers.firstOrNull()
+                        val logoUrl = organizer?.logoUrl?.takeIf { it.isNotBlank() } ?: tournament.associationLogoUrl?.takeIf { it.isNotBlank() }
+                        if (logoUrl != null) {
+                            OrganizationLogo(
+                                name = organizer?.name ?: tournament.name,
+                                logoUrl = logoUrl,
+                                primaryColor = tournament.primaryColor,
+                                size = if (compact) COMPACT_LOGO_SIZE else LOGO_SIZE,
+                                modifier = Modifier
+                                    .align(Alignment.TopStart)
+                                    .padding(start = if (compact) 8.dp else 24.dp, top = if (compact) 20.dp else 40.dp),
+                            )
+                        }
                     }
                     if (playing) {
                         Text(
@@ -1020,3 +1037,7 @@ private val ROW_VERTICAL_OVERHEAD = 6.dp
 private val RankingTableWidth = 1_100.dp
 private val RankingHorizontalPadding = 32.dp
 private val RankingColumnSpacing = 28.dp
+
+/** The logo of the main organizer in the corner of the ranking: big on a wide screen, small on a phone. */
+private val LOGO_SIZE = 120.dp
+private val COMPACT_LOGO_SIZE = 44.dp
