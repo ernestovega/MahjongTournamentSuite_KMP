@@ -6,7 +6,7 @@ import type { Language } from "./i18n";
  */
 export type BuiltRegistrationEmail = { subject: string; text: string; html: string };
 
-type Paragraphs = { subject: string; paragraphs: string[]; action?: { label: string; link: string }; lines?: string[] };
+type Paragraphs = { subject: string; paragraphs: string[]; action?: { label: string; link: string } };
 
 type Texts = {
   verifySubject: (t: string) => string;
@@ -385,12 +385,9 @@ function escapeHtml(value: string): string {
 }
 
 function build(email: Paragraphs): BuiltRegistrationEmail {
-  const lines = email.lines ?? [];
   const textParts = [...email.paragraphs];
-  if (lines.length > 0) textParts.push(lines.join("\n"));
   if (email.action) textParts.push(`${email.action.label}: ${email.action.link}`);
   const html = email.paragraphs.map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, "<br>")}</p>`).join("")
-    + (lines.length > 0 ? `<p>${lines.map(escapeHtml).join("<br>")}</p>` : "")
     + (email.action ? `<p><a href="${escapeHtml(email.action.link)}">${escapeHtml(email.action.label)}</a></p>` : "");
   // eslint-disable-next-line no-control-regex
   return { subject: email.subject.replace(/[\u0000-\u001f\u007f]+/g, " ").trim(), text: textParts.join("\n\n"), html };
@@ -414,7 +411,7 @@ export function registeredEmail(
   return build({
     subject: waiting ? t.waitingSubject(p.tournament) : t.confirmedSubject(p.tournament),
     paragraphs: [
-      waiting ? t.waitingBody(p.tournament, p.person, p.waitingPosition ?? 0) : t.confirmedBody(p.tournament, p.person),
+      waiting ? t.waitingBody(p.tournament, p.person, p.waitingPosition!) : t.confirmedBody(p.tournament, p.person),
       ...(p.sharedEmail ? [t.sharedEmailNote] : []),
       t.manageIntro,
     ],

@@ -70,4 +70,12 @@ describe("registration emails", () => {
     assert.equal(organizationLanguage("se"), "sv");
     assert.equal(organizationLanguage("JP"), "en");
   });
+
+  it("tells a person who shares an email that the registration is in the shared mailbox", () => {
+    const shared = registeredEmail("en", { tournament: "Open", person: "Ana", link: "https://x.test/m", waitingPosition: null, sharedEmail: true });
+    const alone = registeredEmail("en", { tournament: "Open", person: "Ana", link: "https://x.test/m", waitingPosition: null });
+    assert.ok(shared.text.length > alone.text.length);
+    const sharedVerify = verifyEmail("en", { tournament: "Open", person: "Ana", link: "https://x.test/v", sharedEmail: true });
+    assert.ok(sharedVerify.text.length > verifyEmail("en", { tournament: "Open", person: "Ana", link: "https://x.test/v" }).text.length);
+  });
 });
