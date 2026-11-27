@@ -43,6 +43,8 @@ const only = process.argv.find((arg) => arg.startsWith("--only="))?.split("=")[1
 const onlyTesters = process.argv.includes("--testers");
 const onlyProduction = process.argv.includes("--production");
 
+const PRODUCTION_PROJECT = "mahjong-tournament-suite";
+
 const CREATED_BY_UID = "h0Hgasv0Y1VBOXDVnAoSq1X8RMQ2";
 const TEST_EDITOR_UID = "RH9PioX5AvNDulLDVa2JX45SP7H3";
 
@@ -1708,7 +1710,10 @@ async function main(): Promise<void> {
   }
   if (specs.some((spec) => spec.testers === true)) {
     console.log("\nTester accounts");
-    await linkTesterAccounts();
+    // The tester accounts are production accounts. In another project (staging) their uids do not exist, and a claim
+    // for them would block the EMA ids of the testers there.
+    if (firebaseProjectId === PRODUCTION_PROJECT) await linkTesterAccounts();
+    else console.log(`  skipped: the tester accounts live in ${PRODUCTION_PROJECT}`);
   }
   for (const spec of specs) {
     const avoidStored = await storedEmaIdsOf(spec.avoidPlayersOf ?? []);
