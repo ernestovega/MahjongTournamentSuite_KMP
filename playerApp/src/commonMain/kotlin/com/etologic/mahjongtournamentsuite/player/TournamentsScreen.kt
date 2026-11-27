@@ -555,9 +555,7 @@ internal fun TournamentCard(
                     TournamentLogo(tournament)
                     // Three lines: the status, the name and the dates (Ernesto, 17-nov). The status and the name have the same size.
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CardHeaderSpacing)) {
-                        if (status != null) {
-                            if (status != null) StatusChip(status)
-                        }
+                        if (status != null) StatusChip(status)
                         Text(
                             tournament.name,
                             style = cardHeadlineStyle(),

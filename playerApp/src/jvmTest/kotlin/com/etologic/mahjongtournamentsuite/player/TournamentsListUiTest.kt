@@ -1,7 +1,11 @@
 package com.etologic.mahjongtournamentsuite.player
 
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.MyTournamentSlot
@@ -59,5 +63,15 @@ class TournamentsListUiTest {
         waitUntil(timeoutMillis = 10_000) { asked.isNotEmpty() }
         waitForIdle()
         assertEquals(setOf(ScreenshotData.ONGOING, ScreenshotData.COMPLETED), asked.flatten().toSet())
+    }
+
+    @Test
+    fun aSearchThatFindsNothingSaysThatNoneMatches() = runComposeUiTest {
+        val server = ScreenshotTournamentRepository()
+        setContent { PlayerFrame(modules = { playerModules(tournaments = server) }, dark = false) { nav -> TournamentsScreen(nav) } }
+
+        waitForText("Madrid Open 2026", substring = true)
+        onAllNodes(hasSetTextAction() and hasText("Search")).onFirst().performTextInput("zzzz")
+        waitForText("No tournament matches the filters.")
     }
 }
