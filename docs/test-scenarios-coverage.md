@@ -57,7 +57,7 @@ untested, in order of priority. The last part lists the test tournaments of the 
 | Web E2E (Playwright, Chromium) | `e2e/web/tests/*.test.mjs`: the Wasm Player against the local test backend | `e2e/web/README.md` | Every night at 03:30 UTC (Actions > Test · Web E2E) and by hand |
 | Smoke test of a deploy | `scripts/smoke/smoke.mjs`, its tests in `scripts/smoke/test/` | `node scripts/smoke/smoke.mjs` (`MTS_SITE_URL` for staging) | At the end of every deploy to production and to staging |
 | Performance | `benchmarks/`, `.github/workflows/benchmark.yml` | Actions | Every morning against production |
-| Tooling scripts | `scripts/versions_test.py`, `scripts/recovery.test.mjs` | `python3 scripts/versions_test.py`, `node --test` | By hand |
+| Tooling scripts | `scripts/versions_test.py`, `scripts/recovery.test.mjs` | `python3 scripts/versions_test.py`, `node --test` | CI: Scripts and diagnostics tests (and nightly) |
 
 There are no tests of load beyond Game day, or of accessibility. The Firestore and Storage rules refuse everything, and
 `securityRules.test.ts` checks that they stay so.

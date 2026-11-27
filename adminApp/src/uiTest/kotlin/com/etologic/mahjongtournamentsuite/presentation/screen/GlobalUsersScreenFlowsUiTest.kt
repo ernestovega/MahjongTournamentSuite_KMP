@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.navigation.compose.rememberNavController
@@ -23,7 +24,9 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.Organization
+import com.etologic.mahjongtournamentsuite.domain.model.Permission
 import com.etologic.mahjongtournamentsuite.domain.model.Player
+import com.etologic.mahjongtournamentsuite.domain.model.RolesCatalog
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
@@ -31,6 +34,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
 import com.etologic.mahjongtournamentsuite.presentation.presenter.UsersPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
@@ -43,6 +47,8 @@ import org.koin.dsl.module
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TestTimeSource
 
 /** App users: create, change, disable, enable and delete an account, the password reset, the requests of club admins and the errors. */
 @OptIn(ExperimentalTestApi::class)
@@ -77,6 +83,14 @@ class GlobalUsersScreenFlowsUiTest {
             override suspend fun whoAmI(refreshMode: RefreshMode): AppResult<AdminStatus> = if (statusFails) AppResult.Failure(AppError.Network) else admin.whoAmI(refreshMode)
             override suspend fun listOrganizations(): AppResult<List<Organization>> = if (everythingFails) AppResult.Failure(AppError.Network) else admin.listOrganizations()
             override suspend fun listAccountRequests(): AppResult<List<AccountRequest>> = if (everythingFails) AppResult.Failure(AppError.Network) else admin.listAccountRequests()
+            override suspend fun listRoles(): AppResult<RolesCatalog> = AppResult.Success(
+                RolesCatalog(
+                    standard = GlobalUserRole.entries.filter { it != GlobalUserRole.PLAYER }.associateWith { Permission.defaultsOf(it) },
+                    custom = emptyList(),
+                    grantable = mapOf(GlobalUserRole.EDITOR to Permission.defaultsOf(GlobalUserRole.EDITOR) + Permission.TOURNAMENT_RESET_TABLE),
+                    required = setOf(Permission.TOURNAMENT_VIEW),
+                ),
+            )
         }
         val auth: AuthRepository = object : AuthRepository by FakeSignedInAuthRepository() {
             override suspend fun requestPasswordReset(email: String): AppResult<Unit> {
@@ -126,7 +140,7 @@ class GlobalUsersScreenFlowsUiTest {
                 }.koin
             }
             KoinContext(koin) {
-                CompositionLocalProvider(LocalThemeController provides themeController) {
+                CompositionLocalProvider(LocalThemeController provides themeController, LocalPressTimeSource provides pressClock) {
                     MtsTheme(useDarkTheme = false) { GlobalUsersScreen(rememberNavController()) }
                 }
             }
@@ -349,5 +363,42 @@ class GlobalUsersScreenFlowsUiTest {
     @Test
     fun withoutTheOwnAccessTheScreenSaysSo() = runComposeUiTest {
         show(World(users = listOf(me), everythingFails = true, statusFails = true), waitFor = "Network request failed.")
+    }
+
+    private val pressClock = TestTimeSource()
+
+    /** A later press on the clock of the buttons, scrolled into the dialog first. */
+    private fun ComposeUiTest.press(text: String, last: Boolean = false) {
+        pressClock += 1.seconds
+        val nodes = onAllNodes(hasClickAction() and hasText(text) and !hasSetTextAction())
+        val node = if (last) nodes.onLast() else nodes[0]
+        runCatching { node.performScrollTo() }
+        node.performClick()
+        waitForIdle()
+    }
+
+    @Test
+    fun thePermissionsOfAnEditorSaveAsANewRole() = runComposeUiTest {
+        val world = world(me, ed)
+        show(world)
+        open("ed@example.test")
+        press("Permissions")
+        awaitText("ID cards")
+        press("ID cards")
+        press("Save as a new role")
+        awaitText("Ed")
+        press("Save", last = true)
+        awaitText("The permissions of Ed are saved.")
+        assertEquals(listOf("createRole Ed EDITOR", "permissions e1"), world.admin.calls)
+    }
+
+    @Test
+    fun cancellingThePermissionsClosesThem() = runComposeUiTest {
+        show(world(me, ed))
+        open("ed@example.test")
+        press("Permissions")
+        awaitText("ID cards")
+        press("Cancel", last = true)
+        assertEquals(0, count("ID cards"))
     }
 }

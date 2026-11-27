@@ -12,10 +12,13 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isFocused
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
@@ -867,6 +870,42 @@ class TournamentScreenUiTest {
             show()
             waitForText("Network request failed.")
         }
+    }
+
+    /** Hand 1 of table 1 has a result marked as done. Taking Done off asks before the save. */
+    private fun ComposeUiTest.untickTheDoneOfTheFirstHand(harness: ScreenHarness) = with(harness) {
+        val hands = syncHands().mapIndexed { i, h ->
+            if (i == 0) h.copy(playerWinnerId = "1", playerLooserId = "2", handScore = "24", isDone = true) else h
+        }
+        server.seed(syncTable(version = 1, roundId = 1, tableId = 1), hands)
+        loadScreen()
+        onNode(hasAnyAncestor(hasTestTag("hand-1-done")) and isToggleable()).performScrollTo().performClick()
+        waitForIdle()
+        onNodeWithText("Save").performClick()
+        waitForText("Hands without Done")
+        onNodeWithText("Round 1 · Table 1 · Hand 1").assertExistsOnScreen()
+    }
+
+    @Test
+    fun savingAHandWithoutDoneAsksAndSavesAnyway() = runComposeUiTest {
+        val harness = ScreenHarness()
+        untickTheDoneOfTheFirstHand(harness)
+
+        onNodeWithTag("handsNotDoneSave").performClick()
+        waitUntil(timeoutMillis = 5_000) { harness.server.calls.any { it.startsWith("save 1/1 v1") } }
+        onAllNodesWithText("Hands without Done").assertCountEquals(0)
+    }
+
+    @Test
+    fun cancellingTheHandsWithoutDoneKeepsTheChanges() = runComposeUiTest {
+        val harness = ScreenHarness()
+        untickTheDoneOfTheFirstHand(harness)
+
+        onNodeWithText("Cancel").performClick()
+        waitForIdle()
+        onAllNodesWithText("Hands without Done").assertCountEquals(0)
+        assertTrue(harness.server.calls.none { it.startsWith("save ") })
+        onNodeWithText("Save").assertExistsOnScreen()
     }
 }
 

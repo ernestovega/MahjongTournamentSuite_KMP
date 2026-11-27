@@ -345,7 +345,8 @@ But one email can have only one account in the app: whoever wants their own acco
     <string name="apps_soon">Coming soon</string>
     <string name="apps_this_device">For this device</string>
     <string name="apps_notice_title">MTS apps</string>
-    <string name="apps_notice_message">MTS also comes as an app for Android, iPhone, Mac, Windows and Linux.\n\nYou can find them later in the More menu, under Get the app.</string>
+    <string name="apps_notice_message">MTS also comes as an app for Android, iPhone, Mac, Windows and Linux.</string>
+    <string name="apps_notice_later">You can find them later in the More menu, under Get the app.</string>
     <string name="apps_notice_close">Close</string>
     <string name="apps_notice_never">Don't show again</string>
 </resources>

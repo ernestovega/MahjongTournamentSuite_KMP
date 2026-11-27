@@ -345,7 +345,8 @@ Men en e-post kan bara ha ett konto i appen: den som vill ha ett eget konto beh�
     <string name="apps_soon">Kommer snart</string>
     <string name="apps_this_device">För den här enheten</string>
     <string name="apps_notice_title">MTS-appar</string>
-    <string name="apps_notice_message">MTS finns också som app för Android, iPhone, Mac, Windows och Linux.\n\nDu hittar dem senare i menyn Mer, under Hämta appen.</string>
+    <string name="apps_notice_message">MTS finns också som app för Android, iPhone, Mac, Windows och Linux.</string>
+    <string name="apps_notice_later">Du hittar dem senare i menyn Mer, under Hämta appen.</string>
     <string name="apps_notice_close">Stäng</string>
     <string name="apps_notice_never">Visa inte igen</string>
 </resources>

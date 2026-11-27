@@ -36,6 +36,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
 import com.etologic.mahjongtournamentsuite.presentation.presenter.ActivityPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
@@ -104,6 +105,7 @@ class ActivityScreenUiTest {
         failure: AppError? = null,
         tournaments: List<Tournament> = emptyList(),
         initialTournamentId: String? = null,
+        compact: Boolean = false,
     ): FakeAdminRepository {
         val admin = FakeAdminRepository(GlobalUserRole.SUPER_ADMIN).apply {
             activity = entries
@@ -125,7 +127,7 @@ class ActivityScreenUiTest {
                 }.koin
             }
             KoinContext(koin) {
-                CompositionLocalProvider(LocalThemeController provides themeController, LocalPressTimeSource provides clock) {
+                CompositionLocalProvider(LocalThemeController provides themeController, LocalPressTimeSource provides clock, LocalCompactLayout provides compact) {
                     MtsTheme(useDarkTheme = false) {
                         if (widthDp == null) {
                             ActivityScreen(rememberNavController(), initialTournamentId = initialTournamentId)
@@ -288,5 +290,22 @@ class ActivityScreenUiTest {
                 onNodeWithText("Origin").assertExists()
             }
         }
+    }
+
+    @Test
+    fun aPhoneShowsEachEntryOnOneCompactRow() = runComposeUiTest {
+        val conflict = entry("ccc", "table.conflict", "u3", "Eva Editor", isTableSave = true)
+        show(entries = listOf(save, assign, conflict), compact = true)
+
+        onAllNodesWithText("Madrid Open · Round 2 · Table 4").onFirst().assertExists()
+        onAllNodesWithText("Player 123", substring = true).onFirst().assertExists()
+        onAllNodesWithText("1 value changed", substring = true).onFirst().assertExists()
+    }
+
+    @Test
+    fun aTableSaveWithoutChangesSaysSo() = runComposeUiTest {
+        show(entries = listOf(entry("a", "table.save", "u2", "Player 123", isTableSave = true)))
+        onAllNodesWithText("Table saved").onFirst().performClick()
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("No values changed", substring = true).fetchSemanticsNodes().isNotEmpty() }
     }
 }

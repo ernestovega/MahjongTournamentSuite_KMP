@@ -345,7 +345,8 @@ Mais un email ne peut avoir qu'un seul compte dans l'app : qui veut son propre c
     <string name="apps_soon">Bientôt</string>
     <string name="apps_this_device">Pour cet appareil</string>
     <string name="apps_notice_title">Apps MTS</string>
-    <string name="apps_notice_message">MTS existe aussi en app pour Android, iPhone, Mac, Windows et Linux.\n\nVous les retrouverez plus tard dans le menu Plus, sous Télécharger l'app.</string>
+    <string name="apps_notice_message">MTS existe aussi en app pour Android, iPhone, Mac, Windows et Linux.</string>
+    <string name="apps_notice_later">Vous les retrouverez plus tard dans le menu Plus, sous Télécharger l'app.</string>
     <string name="apps_notice_close">Fermer</string>
     <string name="apps_notice_never">Ne plus afficher</string>
 </resources>

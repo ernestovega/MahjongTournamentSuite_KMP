@@ -345,7 +345,8 @@ Pero un email solo puede tener una cuenta en la app: quien quiera su propia cuen
     <string name="apps_soon">Próximamente</string>
     <string name="apps_this_device">Para este dispositivo</string>
     <string name="apps_notice_title">Apps de MTS</string>
-    <string name="apps_notice_message">MTS también está como app para Android, iPhone, Mac, Windows y Linux.\n\nMás tarde las encontrarás en el menú Más, en Descargar la app.</string>
+    <string name="apps_notice_message">MTS también está como app para Android, iPhone, Mac, Windows y Linux.</string>
+    <string name="apps_notice_later">Más tarde las encontrarás en el menú Más, en Descargar la app.</string>
     <string name="apps_notice_close">Cerrar</string>
     <string name="apps_notice_never">No volver a mostrar</string>
 </resources>

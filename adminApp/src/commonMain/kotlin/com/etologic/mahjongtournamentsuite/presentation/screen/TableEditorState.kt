@@ -445,33 +445,27 @@ internal class TableManagerEditorState private constructor(
         return if (hasCalculatedHand) totals.asTextValues() else SeatTextValues.EMPTY
     }
 
-    private fun calculateCumulativeHandScoreSubtotals(): List<SeatTextValues> =
-        cumulativeSubtotalsFor(hands, blankUncalculatedHands = false, allHandsDone = isCompleted)
+    private fun calculateCumulativeHandScoreSubtotals(): List<SeatTextValues> = cumulativeSubtotalsFor(hands, allHandsDone = isCompleted)
 
     /**
-     * Running totals for [source]. The hands dialog passes its draft hands, so the subtotals follow
-     * unsaved edits. A hand counts only when it is done or [allHandsDone] is true. With
-     * [blankUncalculatedHands], a hand that does not count shows no value.
+     * Running totals for [source]. A hand counts only when it is done or [allHandsDone] is true.
+     * A hand that does not count has no subtotal, so the screen hides its Σ line; the next hand that counts
+     * carries on from the last total.
      */
     fun cumulativeSubtotalsFor(
         source: List<HandDraftState>,
-        blankUncalculatedHands: Boolean,
         allHandsDone: Boolean,
     ): List<SeatTextValues> {
         val seats = currentSeatIds() ?: return List(source.size) { SeatTextValues.EMPTY }
         var totals = SeatIntValues.ZERO
-        var hasCalculatedHand = false
 
         return source.map { hand ->
             val handTotals = if (hand.isDone || allHandsDone) calculateHandSeatScores(hand, seats) else null
-            if (handTotals != null) {
+            if (handTotals == null) {
+                SeatTextValues.EMPTY
+            } else {
                 totals += handTotals
-                hasCalculatedHand = true
-            }
-            when {
-                blankUncalculatedHands && handTotals == null -> SeatTextValues.EMPTY
-                hasCalculatedHand -> totals.asTextValues()
-                else -> SeatTextValues.EMPTY
+                totals.asTextValues()
             }
         }
     }
