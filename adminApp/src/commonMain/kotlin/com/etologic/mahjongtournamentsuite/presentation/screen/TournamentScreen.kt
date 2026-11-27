@@ -98,12 +98,14 @@ import mahjongtournamentsuite.adminapp.generated.resources.players
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_title
 import mahjongtournamentsuite.adminapp.generated.resources.save_ema_report
 import mahjongtournamentsuite.adminapp.generated.resources.scope_tournament
+import mahjongtournamentsuite.adminapp.generated.resources.score_sheets_title
 import mahjongtournamentsuite.adminapp.generated.resources.statistics
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_button
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.time.Clock
 import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.Print
 import com.etologic.mahjongtournamentsuite.data.network.PublicSite
 import com.etologic.mahjongtournamentsuite.domain.model.myTableQrLink
 import com.etologic.mahjongtournamentsuite.presentation.platform.openTableQrWindow
@@ -174,6 +176,7 @@ fun TournamentScreen(
     var tableToReset by remember { mutableStateOf<Int?>(null) }
     var editingTournament by remember { mutableStateOf(false) }
     var tablesIdsOpen by remember { mutableStateOf(false) }
+    var scoreSheetsOpen by remember { mutableStateOf(false) }
     var restoreSaveFocus by remember { mutableStateOf(false) }
     var handsNotDoneSave by remember { mutableStateOf<HandsNotDoneSave?>(null) }
     val poller = remember(activity, pollSchedule) { TableSyncPoller(pollSchedule, activity) }
@@ -492,6 +495,9 @@ fun TournamentScreen(
     if (tablesIdsOpen && tournament != null) {
         TablesIdsDialog(tournament = tournament, onDismiss = { tablesIdsOpen = false })
     }
+    if (scoreSheetsOpen && tournament != null) {
+        ScoreSheetsDialog(tournament = tournament, onDismiss = { scoreSheetsOpen = false })
+    }
     if (editingTournament) {
         TournamentEditDialog(
             tournamentId = tournamentId,
@@ -567,6 +573,13 @@ fun TournamentScreen(
                     icon = Icons.Default.Badge,
                     onClick = { requestAction(RoundEditorAction.TableQr) },
                     enabled = !isLoading,
+                )
+                // A dialog over the table: it opens also with changes not saved, as the QR window.
+                AppTopBarButton(
+                    text = stringResource(Res.string.score_sheets_title),
+                    icon = Icons.Default.Print,
+                    onClick = { scoreSheetsOpen = true },
+                    enabled = !isLoading && tournament != null,
                 )
                 AppTopBarButton(
                     text = stringResource(Res.string.statistics),

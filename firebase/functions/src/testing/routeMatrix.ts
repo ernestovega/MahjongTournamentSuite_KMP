@@ -108,6 +108,7 @@ export const MATRIX: Array<[string, string, Access]> = [
   ["PUT", "/tournaments/:tournamentId/id-cards/staff-names", "@tournament.view"],
   ["GET", "/tournaments/:tournamentId/id-list", "@tournament.view"],
   ["GET", "/tournaments/:tournamentId/table-qr-codes", "@tournament.view"],
+  ["GET", "/tournaments/:tournamentId/score-sheets", "@tournament.view"],
   ["GET", "/tournaments/:tournamentId/integrity", "@tournament.view"],
   ["POST", "/tournaments/:tournamentId/ema-report", "@tournament.view"],
   ["GET", "/tournaments/:tournamentId/users/lookup", "@tournament.members"],

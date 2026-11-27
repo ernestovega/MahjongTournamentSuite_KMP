@@ -284,6 +284,13 @@ class DefaultTournamentRepository(
         load = { token -> backendApi.generateTableQrCodes(token, tournamentId, perSheet) },
     )
 
+    override suspend fun generateScoreSheets(tournamentId: String, perTable: Boolean, emaLogo: Boolean): AppResult<ByteArray> = cachedGeneratedFile(
+        tournamentId = tournamentId,
+        cacheSuffix = "score-sheets-${if (perTable) "tables" else "blank"}-${if (emaLogo) "ema" else "no-ema"}",
+        action = "Generating the score sheets",
+        load = { token -> backendApi.generateScoreSheets(token, tournamentId, perTable, emaLogo) },
+    )
+
     private suspend fun cachedGeneratedFile(
         tournamentId: String,
         cacheSuffix: String,

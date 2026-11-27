@@ -365,6 +365,13 @@ ROUTES = [
      "One card per table with its number in big and the QR code of the tournament, the logo of the main organizer (or its initial) and "
      "«Or just open the app:» with the main site. `?perSheet=1|2|4|6|8` cards per A4 sheet (4 by default), always in English. "
      "Permission `tournament.view`. See docs/table-qr.md.", [T, q("perSheet", "1, 2, 4, 6 or 8.", {"type": "integer"})], None, PDF),
+    ("get", "/tournaments/{tournamentId}/score-sheets", "Exports", "tEditor", "PDF with the score sheets to print",
+     "A4 sheets to fill in by hand: a row for each of the 16 hands, the score and penalty of each seat, the running total, a "
+     "box to tick once a hand adds up to 0, the table points and the signatures. The chicken hand column is there only when "
+     "the tournament counts chicken hands. `?mode=blank` (default) makes one blank sheet; `?mode=tables` makes one sheet for "
+     "each table of each round with its round and table. The logo of the main organizer always; `?ema=false` leaves out the "
+     "logo of the EMA. Always in English. Permission `tournament.view`. See docs/score-sheets.md.",
+     [T, q("mode", "blank or tables.", {"type": "string"}), q("ema", "false to leave out the logo of the EMA.", {"type": "boolean"})], None, PDF),
     ("post", "/tournaments/{tournamentId}/ema-report", "Exports", "tEditor", "Excel file of results for the EMA",
      "The app sends the final ranking.", [T], "EmaReportRequest", XLSX),
 
