@@ -74,7 +74,8 @@ fun MtsCatalog(modifier: Modifier = Modifier) {
                 Swatch("medalSilver", colors.medalSilver, colors.onMedal)
                 Swatch("medalBronze", colors.medalBronze, colors.onMedal)
                 Swatch("firstPlace", colors.firstPlaceHighlight, colors.onMedal)
-                Swatch("onHeader", scheme.primary, colors.onHeader)
+                Swatch("header", colors.header, colors.onHeader)
+                Swatch("adminHeader", colors.adminHeader, colors.onHeader)
                 colors.levels.forEachIndexed { index, c ->
                     Swatch("level ${index + 1}", c.fill, c.content, border = c.rim)
                 }

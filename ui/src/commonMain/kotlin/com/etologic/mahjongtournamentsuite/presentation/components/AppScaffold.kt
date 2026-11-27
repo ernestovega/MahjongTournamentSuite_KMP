@@ -198,7 +198,7 @@ fun AppScaffold(
                         }
 
                         val colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            containerColor = MtsTheme.colors.header,
                             titleContentColor = MtsTheme.colors.onHeader,
                             navigationIconContentColor = MtsTheme.colors.onHeaderMuted,
                             actionIconContentColor = MtsTheme.colors.onHeaderMuted,

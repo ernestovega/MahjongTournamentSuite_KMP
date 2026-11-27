@@ -28,6 +28,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.OrganizationType
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
+import com.etologic.mahjongtournamentsuite.presentation.platform.LocalPickedImageForTests
+import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.presenter.OrganizationsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
@@ -47,6 +49,7 @@ import kotlin.time.TestTimeSource
 @OptIn(ExperimentalTestApi::class)
 class OrganizationsScreenUiTest {
     private val clock = TestTimeSource()
+    private var nextImage = SelectedImage("logo.bmp", "image/bmp", ByteArray(16))
 
     private class Server(
         val failStatus: Boolean = false,
@@ -97,7 +100,7 @@ class OrganizationsScreenUiTest {
                 }.koin
             }
             KoinContext(koin) {
-                CompositionLocalProvider(LocalThemeController provides ThemeController(ThemePreference.Light, false, {}), LocalPressTimeSource provides clock) {
+                CompositionLocalProvider(LocalThemeController provides ThemeController(ThemePreference.Light, false, {}), LocalPressTimeSource provides clock, LocalPickedImageForTests provides { nextImage }) {
                     MtsTheme(useDarkTheme = false) { OrganizationsScreen(rememberNavController()) }
                 }
             }
@@ -195,5 +198,40 @@ class OrganizationsScreenUiTest {
         waitUntil(timeoutMillis = 5_000) { shown("Edit organization") }
         tap("Save")
         waitUntil(timeoutMillis = 5_000) { shown("OK") }
+    }
+
+    @Test
+    fun aLogoMustBeASmallJpegOrPngAndAGoodOneOpensTheCrop() = runComposeUiTest {
+        show(Server())
+        waitUntil(timeoutMillis = 5_000) { shown("Paris Club") }
+        tap("Paris Club", last = false)
+        waitUntil(timeoutMillis = 5_000) { shown("Edit organization") }
+
+        tap("Choose logo")
+        waitUntil(timeoutMillis = 5_000) { shown("Logo must be a JPEG or PNG image.") }
+        tap("OK")
+
+        nextImage = SelectedImage("logo.png", "image/png", ByteArray(2 * 1024 * 1024 + 1))
+        tap("Choose logo")
+        waitUntil(timeoutMillis = 5_000) { shown("Logo must be 2 MB or smaller.") }
+        tap("OK")
+
+        nextImage = SelectedImage("logo.png", "image/png", ByteArray(16))
+        tap("Choose logo")
+        waitUntil(timeoutMillis = 5_000) { shown("Crop the logo") }
+    }
+
+    @Test
+    fun theColorIsChosenInItsDialog() = runComposeUiTest {
+        show(Server())
+        waitUntil(timeoutMillis = 5_000) { shown("Paris Club") }
+        tap("Paris Club", last = false)
+        waitUntil(timeoutMillis = 5_000) { shown("Edit organization") }
+
+        clock += 1.seconds
+        onAllNodes(hasContentDescription("Choose the color") and hasClickAction()).onFirst().performSemanticsAction(SemanticsActions.OnClick)
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(hasText("OK") and hasClickAction()).fetchSemanticsNodes().isNotEmpty() }
+        tap("OK")
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(hasText("OK") and hasClickAction()).fetchSemanticsNodes().isEmpty() }
     }
 }

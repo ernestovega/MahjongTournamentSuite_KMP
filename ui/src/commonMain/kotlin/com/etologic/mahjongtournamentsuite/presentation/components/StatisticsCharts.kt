@@ -19,7 +19,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -57,6 +56,13 @@ import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsFixedColors
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
+import kotlin.math.sin
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.level_info
 import mahjongtournamentsuite.ui.generated.resources.level_needs_hands
@@ -99,13 +105,7 @@ import mahjongtournamentsuite.ui.generated.resources.skills_empty_title
 import mahjongtournamentsuite.ui.generated.resources.stats_places
 import mahjongtournamentsuite.ui.generated.resources.stats_skills
 import org.jetbrains.compose.resources.stringResource
-import kotlin.math.PI
-import kotlin.math.abs
-import kotlin.math.cos
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.roundToInt
-import kotlin.math.sin
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsFilterChip as FilterChip
 
 /** The hands won, lost and neutral (drawn, or won by a third player with a discard) in the inner ring. The way of each win or loss in the outer ring. */
 @Composable
