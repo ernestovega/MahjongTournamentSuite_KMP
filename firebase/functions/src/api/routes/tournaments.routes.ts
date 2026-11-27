@@ -397,19 +397,5 @@ export function tournamentsRouter(): Router {
   registerRoundAndTableRoutes(router);
   registerRegistrationRoutes(router);
 
-  // Placeholder: future endpoints for players/teams/tables/hands will live here.
-  router.get(
-    "/:tournamentId",
-    requireAuth,
-    requireTournamentPermission("tournament.view"),
-    async (req, res) => {
-      res.status(501).json({
-        error: "not_implemented",
-        message: "Tournament details endpoint not implemented yet",
-        tournamentId: pathParam(req, "tournamentId"),
-      });
-    },
-  );
-
   return router;
 }

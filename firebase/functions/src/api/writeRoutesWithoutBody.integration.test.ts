@@ -8,14 +8,14 @@ import { createAccount, requireAuthEmulator, startServer, type TestAccount, type
 
 type Layer = { route?: { path: string; methods: Record<string, boolean> } };
 
-/** Every route that takes a body, from the routers that the app mounts. */
-function writeRoutes(): Array<{ method: string; path: string }> {
+/** Every route of [methods], from the routers that the app mounts. */
+function routesOf(methods: string[]): Array<{ method: string; path: string }> {
   return MOUNTED_ROUTERS.flatMap(([prefix, build]) =>
     (build() as unknown as { stack: Layer[] }).stack.flatMap((layer) =>
       layer.route == null
         ? []
         : Object.keys(layer.route.methods)
-          .filter((method) => method === "post" || method === "put" || method === "patch")
+          .filter((method) => methods.includes(method))
           .map((method) => ({ method: method.toUpperCase(), path: prefix + layer.route!.path })),
     ),
   );
@@ -48,7 +48,7 @@ describe("write routes without a body", () => {
         tournamentId, roundId: "1", tableId: "1", playerId: "1", teamId: "1", emaId: "07720001",
         uid: "no-such-account", roleId: "no-such-role", requestId: "no-such-request", organizationId: "no-such-organization",
       };
-      const routes = writeRoutes();
+      const routes = routesOf(["post", "put", "patch"]);
       assert.ok(routes.length > 50, `${routes.length} routes`);
       const failures: string[] = [];
       for (const route of routes) {
@@ -60,4 +60,19 @@ describe("write routes without a body", () => {
       assert.deepEqual(failures, []);
     });
   }
+
+  it("answers every read of a tournament, account or player that does not exist with no server error", async () => {
+    const values: Record<string, string> = {
+      tournamentId: "no-such-tournament", roundId: "1", tableId: "1", playerId: "1", teamId: "1", emaId: "07729999",
+      uid: "no-such-account", roleId: "no-such-role", requestId: "no-such-request", organizationId: "no-such-organization",
+      id: "no-such-id", slug: "no-such-slug", token: "no-such-token",
+    };
+    const failures: string[] = [];
+    for (const route of routesOf(["get", "delete"])) {
+      const path = route.path.replace(/:(\w+)/g, (_whole, name: string) => values[name] ?? `no-such-${name}`);
+      const response = await server.request(route.method, path, { token: admin.token });
+      if (response.status >= 500) failures.push(`${route.method} ${route.path}: ${response.status} ${JSON.stringify(response.body)}`);
+    }
+    assert.deepEqual(failures, []);
+  });
 });
