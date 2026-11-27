@@ -323,7 +323,6 @@ async function foodOf(emaIds: string[]): Promise<Map<string, string>> {
   const result = new Map<string, string>();
   for (let start = 0; start < emaIds.length; start += 300) {
     const refs = emaIds.slice(start, start + 300).map((emaId) => db.doc(`${PERSON_PRIVATE}/${emaId}`));
-    if (refs.length === 0) continue;
     (await db.getAll(...refs)).forEach((snapshot) => {
       if (snapshot.exists) result.set(snapshot.id, String(snapshot.get("foodRestrictions") ?? ""));
     });
@@ -335,7 +334,6 @@ async function accountsOf(emaIds: string[]): Promise<Map<string, string>> {
   const uids = new Map<string, string>();
   for (let start = 0; start < emaIds.length; start += 300) {
     const refs = emaIds.slice(start, start + 300).map((emaId) => db.doc(`emaIdIndex/${emaId}`));
-    if (refs.length === 0) continue;
     (await db.getAll(...refs)).forEach((snapshot) => {
       if (snapshot.exists) uids.set(snapshot.id, String(snapshot.get("uid") ?? ""));
     });
@@ -1203,7 +1201,7 @@ export async function importRegistrations(params: {
   const current = await tournament.ref.collection(REGISTRATIONS).get();
   for (let start = 0; start < validIds.length; start += 300) {
     const refs = validIds.slice(start, start + 300).map((emaId) => db.doc(`${EMA_PLAYER_REGISTRY_COLLECTION}/${emaId}`));
-    if (refs.length > 0) (await db.getAll(...refs)).forEach((snapshot) => registry.set(snapshot.id, snapshot));
+    (await db.getAll(...refs)).forEach((snapshot) => registry.set(snapshot.id, snapshot));
   }
   const emailCount = new Map<string, number>();
   formRows.forEach((row) => {
