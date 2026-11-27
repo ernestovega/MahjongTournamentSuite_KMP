@@ -155,6 +155,10 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String, myT
     // A tournament that takes registrations opens on Players, the list of the registrations.
     val shownTab = tab.takeIf { it in mainTabs } ?: mainTabs.first()
     val teamOpen = shownTab == MainTab.TEAMS && selectedTeam != null
+    // The back leaves the tournament from its first tab only, Tables (Players while it takes registrations). From any
+    // other tab it opens that one. An open team closes first.
+    val landingTab = mainTabs.first()
+    PlatformBackHandler(enabled = shownTab != landingTab) { tab = landingTab }
     PlatformBackHandler(enabled = teamOpen) { selectedTeam = null }
     var chosenTablesTab by rememberPersistentInt("tablesTab", -1)
     // The QR of the tournament opens My tables one time. Later the player moves freely.

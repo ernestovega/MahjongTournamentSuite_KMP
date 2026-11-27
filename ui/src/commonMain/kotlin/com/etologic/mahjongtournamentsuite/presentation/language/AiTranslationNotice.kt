@@ -1,7 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.language
 
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
-import androidx.compose.material3.AlertDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable

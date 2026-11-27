@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.Canvas
+import com.etologic.mahjongtournamentsuite.presentation.components.DialogBackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
@@ -21,7 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.AlertDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AlertDialog
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.CalendarLocale
 import androidx.compose.material3.DatePicker
@@ -519,6 +520,7 @@ fun TournamentDatePickerDialog(
     }
 
     TrackedDialog("TournamentDatePicker") {
+        DialogBackHandler(onDismiss = onDismiss)
         DatePickerDialog(
             onDismissRequest = onDismiss,
             confirmButton = {
@@ -679,6 +681,7 @@ fun TournamentDateRangePickerDialog(
     // This picker needs added height to show the next month. The 420 dp cap keeps day spacing compact.
     // Outer padding keeps the custom dialog clear of small window edges.
     TrackedDialog("TournamentDateRangePicker") {
+        DialogBackHandler(onDismiss = onDismiss)
         BasicAlertDialog(
             onDismissRequest = onDismiss,
             modifier = Modifier.appFocusGroup(),

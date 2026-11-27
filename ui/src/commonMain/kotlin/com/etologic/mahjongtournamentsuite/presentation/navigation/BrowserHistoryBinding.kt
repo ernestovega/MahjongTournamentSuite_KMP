@@ -141,9 +141,10 @@ private class BrowserHistoryBinding(
         if (entries.size == 1 && entries.first().destination.id == navController.graph.startDestinationId) return null
         layers.keepOnly(entries.mapTo(mutableSetOf()) { it.id })
         val open = layers.layers.value
-        return entries.flatMap { entry ->
+        return entries.flatMapIndexed { position, entry ->
             val screen = Step(entry.routeWithArguments() ?: return null, layer = null)
-            val own = open.filter { it.owner == entry.id }
+            // The layers outside the screens, like a dialog over every screen, go after the top one.
+            val own = open.filter { it.owner == entry.id || (it.owner == null && position == entries.lastIndex) }
             listOf(screen) + own.mapIndexed { index, layer -> Step("$LAYER_ROUTE${index + 1}", layer) }
         }
     }

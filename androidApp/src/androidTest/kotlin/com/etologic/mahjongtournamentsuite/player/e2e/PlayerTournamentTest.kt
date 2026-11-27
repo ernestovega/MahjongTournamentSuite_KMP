@@ -3,8 +3,10 @@ package com.etologic.mahjongtournamentsuite.player.e2e
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
+import androidx.test.espresso.Espresso
 import org.junit.Test
 
 class PlayerTournamentTest : PlayerE2eTest() {
@@ -36,8 +38,25 @@ class PlayerTournamentTest : PlayerE2eTest() {
         c.waitForNoText("Something went wrong. Please try again.")
         c.clickButton("Back")
         c.waitForText("Search")
-        // Back goes to the tournament, on the Players tab. One more back leaves it.
+        // Back goes to the tournament, on the Players tab.
         c.waitForText("Test - Live ongoing tournament")
+    }
+
+    /**
+     * The back from any tab of the tournament opens its first tab, Tables, and only from there it leaves the
+     * tournament for the list (Ernesto 27-nov). The top bar arrow leaves at once.
+     */
+    @Test
+    fun backFromAnotherTabOpensTablesAndThenTheList() {
+        open()
+        val tablesSelected = hasText("Tables", ignoreCase = true) and isSelected()
+        c.clickButton("Ranking")
+        c.waitUntil(10_000) { c.onAllNodes(tablesSelected).fetchSemanticsNodes().isEmpty() }
+        Espresso.pressBack()
+        c.waitUntil(10_000) { c.onAllNodes(tablesSelected).fetchSemanticsNodes().isNotEmpty() }
+        c.waitForText("Me")
+        Espresso.pressBack()
+        c.waitForText("My tournaments")
     }
 
     @Test

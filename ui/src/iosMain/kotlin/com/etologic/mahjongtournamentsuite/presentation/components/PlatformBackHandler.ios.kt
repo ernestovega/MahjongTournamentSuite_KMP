@@ -1,7 +1,14 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.runtime.Composable
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 
-/** iOS has no back button: the screens go back with the arrow of their top bar. */
+/** The back gesture of iOS, a swipe from the left edge, does the same as the back of Android. */
 @Composable
-actual fun PlatformBackHandler(enabled: Boolean, onBack: () -> Unit) = Unit
+actual fun PlatformBackHandler(enabled: Boolean, onBack: () -> Unit) = NavigationBackHandler(
+    state = rememberNavigationEventState(NavigationEventInfo.None),
+    isBackEnabled = enabled,
+    onBackCompleted = onBack,
+)
