@@ -2,7 +2,6 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.material.icons.filled.PersonAdd
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -88,8 +86,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighligh
 import com.etologic.mahjongtournamentsuite.presentation.components.FullBleedRow
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectShownCheckbox
-import com.etologic.mahjongtournamentsuite.presentation.components.ScreenBleed
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenBleed
 import com.etologic.mahjongtournamentsuite.presentation.components.FilterGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHideOnScroll
@@ -178,6 +174,7 @@ import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsFilterChip as FilterChip
 
 /** Shared player base. All signed-in users can read it. Only admins can change it. */
 @Composable
@@ -795,60 +792,52 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                         modifier = Modifier.fillMaxWidth().focusRequester(searchFocusRequester),
                                     )
                                     if (players.isNotEmpty()) {
-                                        // Two titled groups side by side: the photo filter, and the countries, which scroll
-                                        // sideways and reach the right edge of the screen.
-                                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                            FilterGroup(stringResource(Res.string.photo)) {
-                                                val photoCount = players.count { !it.photoUrl.isNullOrBlank() }
-                                                FilterPillButton(
-                                                    selected = withPhotoOnly,
-                                                    description = stringResource(Res.string.filter_with_photo),
-                                                    onClick = { withPhotoOnly = !withPhotoOnly },
+                                        // Two titled groups, one under the other: the countries, which scroll sideways and reach the edges
+                                        // of the screen, and the photo filter.
+                                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            FilterGroup(stringResource(Res.string.country), Modifier.fillMaxWidth()) {
+                                                FullBleedRow(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                                                 ) {
-                                                    ButtonText(stringResource(Res.string.filter_with_photo) + " ($photoCount)")
-                                                }
-                                            }
-                                            FilterGroup(stringResource(Res.string.country), Modifier.weight(1f)) {
-                                                CompositionLocalProvider(
-                                                    LocalScreenBleed provides ScreenBleed(0.dp, LocalScreenBleed.current.end),
-                                                ) {
-                                                    FullBleedRow(
-                                                        modifier = Modifier.fillMaxWidth(),
-                                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                                    ) {
-                                                        existingPlayerCountryCodes.forEach { code ->
-                                                            val countryName = countryNameOf(
-                                                                code,
-                                                                countries.firstOrNull { it.code.equals(code, ignoreCase = true) }?.name ?: code,
+                                                    existingPlayerCountryCodes.forEach { code ->
+                                                        val countryName = countryNameOf(
+                                                            code,
+                                                            countries.firstOrNull { it.code.equals(code, ignoreCase = true) }?.name ?: code,
+                                                        )
+                                                        val countryPlayerCount = players.count {
+                                                            it.country.trim().equals(code, ignoreCase = true)
+                                                        }
+                                                        val isSelected = code in selectedCountryCodes
+                                                        val filterDescription = stringResource(
+                                                            if (isSelected) Res.string.remove_country_filter else Res.string.filter_by_code,
+                                                            countryName,
+                                                        )
+                                                        AppTooltipBox(pluralStringResource(Res.plurals.country_players_count, countryPlayerCount, countryName, countryPlayerCount)) {
+                                                            FilterChip(
+                                                                selected = isSelected,
+                                                                onClick = {
+                                                                    selectedCountryCodes = if (isSelected) {
+                                                                        selectedCountryCodes - code
+                                                                    } else {
+                                                                        selectedCountryCodes + code
+                                                                    }
+                                                                },
+                                                                label = { Text("$code ($countryPlayerCount)") },
+                                                                modifier = Modifier.semantics { contentDescription = filterDescription },
+                                                                leadingIcon = { CountryFlag(code = code) },
                                                             )
-                                                            val countryPlayerCount = players.count {
-                                                                it.country.trim().equals(code, ignoreCase = true)
-                                                            }
-                                                            val isSelected = code in selectedCountryCodes
-                                                            val filterDescription = stringResource(
-                                                                if (isSelected) Res.string.remove_country_filter else Res.string.filter_by_code,
-                                                                countryName,
-                                                            )
-                                                            AppTooltipBox(pluralStringResource(Res.plurals.country_players_count, countryPlayerCount, countryName, countryPlayerCount)) {
-                                                                FilterPillButton(
-                                                                    selected = isSelected,
-                                                                    description = filterDescription,
-                                                                    onClick = {
-                                                                        selectedCountryCodes = if (isSelected) {
-                                                                            selectedCountryCodes - code
-                                                                        } else {
-                                                                            selectedCountryCodes + code
-                                                                        }
-                                                                    },
-                                                                ) {
-                                                                    CountryFlag(code = code)
-                                                                    Spacer(Modifier.width(4.dp))
-                                                                    ButtonText("$code ($countryPlayerCount)")
-                                                                }
-                                                            }
                                                         }
                                                     }
                                                 }
+                                            }
+                                            FilterGroup(stringResource(Res.string.photo)) {
+                                                val photoCount = players.count { !it.photoUrl.isNullOrBlank() }
+                                                FilterChip(
+                                                    selected = withPhotoOnly,
+                                                    onClick = { withPhotoOnly = !withPhotoOnly },
+                                                    label = { Text(stringResource(Res.string.filter_with_photo) + " ($photoCount)") },
+                                                )
                                             }
                                         }
                                     }
@@ -1233,35 +1222,3 @@ private fun validatePlayerPhoto(image: SelectedImage): UiText? = when {
 
 /** A player has the three-letter code of the EMA, or an empty code when they have no country (a guest). */
 private fun isValidPlayerCountry(code: String): Boolean = code.trim().let { it.isEmpty() || it.matches(Regex("^[A-Za-z]{3}$")) }
-
-/** A round filter button of the players list: filled with the primary colour while [selected]. */
-@Composable
-private fun FilterPillButton(
-    selected: Boolean,
-    description: String,
-    onClick: () -> Unit,
-    content: @Composable RowScope.() -> Unit,
-) {
-    TextButton(
-        onClick = onClick,
-        buttonModifier = Modifier.semantics { contentDescription = description },
-        shape = CircleShape,
-        colors = if (selected) {
-            ButtonDefaults.textButtonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-            )
-        } else {
-            ButtonDefaults.textButtonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        },
-        border = BorderStroke(
-            width = if (selected) 2.dp else 1.dp,
-            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-        ),
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-        content = content,
-    )
-}

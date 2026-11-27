@@ -87,8 +87,10 @@ fun MtsFilterChip(
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     shape: Shape = FilterChipDefaults.shape,
-    // Selected: the green of a filled button, so the choice stands out (Ernesto, 27-nov-2026).
+    // Unselected: filled like a card, lighter than the page, so it never looks transparent. Selected: the green of a
+    // filled button, so the choice stands out (Ernesto, 27-nov-2026).
     colors: SelectableChipColors = FilterChipDefaults.filterChipColors(
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
         selectedContainerColor = MaterialTheme.colorScheme.primary,
         selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
         selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary,
