@@ -520,24 +520,11 @@
     <string name="spreadsheet_chooser_filter">CSV and Excel files</string>
     <string name="spreadsheet_error_read">The app could not read the file. Choose a CSV or Excel file and try again.</string>
     <string name="spreadsheet_error_save">The app could not save the file. Try again.</string>
-    <string name="consent_title">Anonymous analytics</string>
-    <string name="consent_intro">This app collects anonymous data about how people use it and about errors. The team uses the data only to find problems and to improve the app.</string>
-    <string name="consent_collects">The app records the following data:
-• The screens, dialogs and tabs that you open, and for how long.
-• The actions that you use, such as saving a table.
-• Errors and crashes, with technical details such as the type of the error.</string>
-    <string name="consent_not_collected">The app does not record your name, your email address, your EMA number or any text that you enter. The data does not identify you.</string>
-    <string name="consent_required">You can use the app only if you accept. If you do not accept, you cannot enter the app.</string>
-    <string name="consent_accept">Accept and continue</string>
-    <string name="consent_decline">Decline</string>
-    <string name="consent_declined_note">You cannot use the app without the anonymous analytics. You can close the app, or you can accept to continue.</string>
-    <string name="consent_withdraw">Withdraw analytics consent</string>
     <string name="profile_delete_account">Delete my account</string>
     <string name="profile_delete_account_title">Delete your account?</string>
     <string name="profile_delete_account_message">Your account is deleted for good: the sign-in, the email, the alias and the photo. Your EMA player and your tournament results remain. This cannot be undone.</string>
     <string name="profile_delete_account_confirm">Delete</string>
     <string name="privacy_policy">Privacy policy</string>
-    <string name="consent_withdraw_info">The app stops the analytics and asks you again. You cannot use the app until you accept.</string>
     <string name="stat_best_hand_points">Most points from one hand</string>
     <string name="stat_average_hands_per_table">Avg. hands per table</string>
     <string name="app_switch_to_admin">Manager app</string>
@@ -795,4 +782,19 @@ The first one that works wins</string>
     <string name="update_available_later">Later</string>
     <!-- Sign-in of the web: the page of the apps -->
     <string name="sign_in_get_the_app">Get the app</string>
+    <string name="consent_title">Anonymous analytics</string>
+    <string name="consent_message">Can the app send anonymous data about how it is used and about its errors? It helps us improve it. It is optional: the app works the same if you decline.</string>
+    <string name="consent_more_details">More details</string>
+    <string name="consent_why_title">Why</string>
+    <string name="consent_why">To find errors and see which parts of the app people use, so we know what to fix and improve.</string>
+    <string name="consent_what_title">What</string>
+    <string name="consent_what">The screens and actions that you use, and the errors with technical details. Never your name, your email, your EMA number or anything that you type.</string>
+    <string name="consent_where_title">Where</string>
+    <string name="consent_where">The usage goes to Google Analytics for Firebase, which keeps it for 14 months. The errors go to our own log on Firebase, in the EU, which deletes them after 30 days.</string>
+    <string name="consent_change_title">Change it later</string>
+    <string name="consent_change">In your profile, at any time.</string>
+    <string name="consent_accept">Accept</string>
+    <string name="consent_decline">Decline</string>
+    <string name="profile_analytics">Send anonymous analytics</string>
+    <string name="profile_analytics_info">Anonymous data about how you use the app and about its errors, never your name, your email or your EMA number. Turn it off to stop it at once. The app works the same.</string>
 </resources>

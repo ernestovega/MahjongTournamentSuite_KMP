@@ -99,7 +99,8 @@ import com.etologic.mahjongtournamentsuite.presentation.language.AiTranslationNo
 import com.etologic.mahjongtournamentsuite.presentation.language.AppLanguage
 import com.etologic.mahjongtournamentsuite.presentation.language.LanguageController
 import com.etologic.mahjongtournamentsuite.presentation.language.LocalLanguageController
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalWithdrawConsent
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.AnalyticsConsent
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalAnalyticsConsent
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsSpacing
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -461,8 +462,8 @@ class UiComponentsScreenshotTest {
 
     @Test
     fun profileDialog() = component("dialog-profile", variants = dialogVariants) {
-        // With every account action: logout, withdraw the analytics consent and delete the account.
-        CompositionLocalProvider(LocalWithdrawConsent provides {}, LocalAppVersion provides "1.0.300") {
+        // With the analytics switch and every account action: logout and delete the account.
+        CompositionLocalProvider(LocalAnalyticsConsent provides AnalyticsConsent(true) {}, LocalAppVersion provides "1.0.300") {
             ProfileDialog(
                 profile = UserProfile(uid = "player-1", email = "lucia@example.test", alias = "Lucía", emaId = "04010001"),
                 onSaveAlias = { AppResult.Success(it.let { alias -> UserProfile("player-1", "lucia@example.test", alias) }) },
