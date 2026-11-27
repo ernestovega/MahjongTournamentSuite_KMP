@@ -51,6 +51,37 @@ class RepositorySupportTest {
     }
 
     @Test
+    fun aConflictWithDetailsOfTheWrongShapeKeepsWhatItCanRead() {
+        fun conflict(body: String) = BackendHttpException(HttpStatusCode.Conflict, body).toRepositoryAppError()
+
+        // Details that are not values of their kind count as missing.
+        assertEquals(
+            AppError.Conflict("", code = ConflictCode.PREVIOUS_ROUND_IN_PLAY, args = listOf("", "", "true")),
+            conflict("""{"message":{},"details":{"code":"PREVIOUS_ROUND_IN_PLAY","roundId":[1],"tables":"3","started":{}}}"""),
+        )
+        assertEquals(
+            AppError.Conflict("m", code = ConflictCode.PREVIOUS_ROUND_IN_PLAY, args = listOf("", "", "true")),
+            conflict("""{"message":"m","details":{"code":"PREVIOUS_ROUND_IN_PLAY","roundId":null,"started":null}}"""),
+        )
+        assertEquals(
+            AppError.Conflict("m", code = ConflictCode.ASSIGNMENTS_MISSING, args = emptyList()),
+            conflict("""{"message":"m","details":{"code":"ASSIGNMENTS_MISSING","missing":{}}}"""),
+        )
+        // A code that is not a text, or details that are not an object, are no known conflict.
+        assertIs<AppError.Unexpected>(conflict("""{"details":{"code":{}}}"""))
+        assertIs<AppError.Unexpected>(conflict("""{"details":{"code":null}}"""))
+        assertIs<AppError.Unexpected>(conflict("""{"details":[1]}"""))
+        assertIs<AppError.Unexpected>(conflict("""[1]"""))
+    }
+
+    @Test
+    fun anErrorWithoutAMessageIsNamedByItsKind() {
+        assertEquals(AppError.Unexpected("IllegalStateException"), IllegalStateException("  ").toRepositoryAppError())
+        assertEquals(AppError.Unexpected("IllegalStateException"), IllegalStateException().toRepositoryAppError())
+        assertEquals(AppError.Unexpected("IllegalStateException: broken"), IllegalStateException(" broken ").toRepositoryAppError())
+    }
+
+    @Test
     fun tournamentMappingTrimsValues() {
         val tournament = TournamentDto(
             id = "tournament-1",
