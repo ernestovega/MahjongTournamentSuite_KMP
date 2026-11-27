@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -82,12 +83,10 @@ internal fun TableHandsCard(
     enabled: Boolean,
     playerNamesById: Map<Int, String>,
 ) {
-    val seatLabels = seatLabels()
     val isHandsActive = !editor.useTotalsOnly
     var handsExpanded by remember { mutableStateOf(isHandsActive) }
     LaunchedEffect(isHandsActive) { handsExpanded = isHandsActive }
     val handsEnabled = enabled && isHandsActive
-    val showChicken = LocalHandStatOptions.current.countChickenHands
     val doneCount = editor.hands.count { it.isDone }
     val subtitle = when {
         !editor.hasCompleteSeatPositions -> stringResource(Res.string.seat_positions_first)
@@ -175,157 +174,157 @@ internal fun TableHandsCard(
                 color = MaterialTheme.colorScheme.error,
             )
         }
-        if (LocalCompactLayout.current) {
-            // A phone shows each hand as a card, under a line with the player of each seat.
-            val seatNames = listOf(editor.playerEastId, editor.playerSouthId, editor.playerWestId, editor.playerNorthId)
-                .map { playerNameOrNull(it, playerNamesById)?.asString() ?: "-" }
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                SeatNamesRow(seatNames)
-                editor.hands.forEachIndexed { index, hand ->
-                    CompactHandCard(
-                        index = index,
-                        hand = hand,
-                        playerIds = editor.playerIds,
-                        playerNamesById = playerNamesById,
-                        enabled = handsEnabled,
-                        forceDoneChecked = editor.isCompleted,
-                        result = if (hand.isBlank) SeatTextValues.EMPTY else handResults.getOrNull(index).orZero(),
-                        subtotal = handSubtotals.getOrNull(index) ?: SeatTextValues.EMPTY,
-                        navigation = rowNavigators.getOrNull(index) ?: HandRowKeyboardNavigator(),
-                        previousNavigation = rowNavigators.getOrNull(index - 1),
-                        nextNavigation = rowNavigators.getOrNull(index + 1),
-                    )
-                }
-                Text(
-                    text = stringResource(Res.string.total_scores),
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    modifier = Modifier.padding(top = 8.dp),
-                )
-                SeatValuesRow(values = editor.calculatedHandScoreTotals, names = seatNames)
+        val compact = LocalCompactLayout.current
+        val seatIds = listOf(editor.playerEastId, editor.playerSouthId, editor.playerWestId, editor.playerNorthId).map { it.trim() }
+        val seatFullNames = seatIds.map { playerNameOrNull(it, playerNamesById)?.asString() ?: "-" }
+        // The buttons and the summaries use the first name: four of them fit in the width of a phone.
+        val seatShortNames = seatFullNames.map { it.substringBefore(' ') }
+        // One hand is open: the first one that is not done. Ticking Done closes it and opens the next one.
+        val doneStates = editor.hands.map { it.isDone }
+        var expandedIds by remember { mutableStateOf(setOfNotNull(editor.hands.firstOrNull { !it.isDone }?.handId)) }
+        var previousDone by remember { mutableStateOf(doneStates) }
+        LaunchedEffect(doneStates) {
+            val newlyDone = editor.hands.filterIndexed { i, hand -> hand.isDone && previousDone.getOrNull(i) == false }
+            if (newlyDone.isNotEmpty() && previousDone.size == doneStates.size) {
+                val next = editor.hands.firstOrNull { !it.isDone }?.handId
+                expandedIds = expandedIds - newlyDone.map { it.handId }.toSet() + setOfNotNull(next)
             }
-            return@SectionCard
+            previousDone = doneStates
         }
-        Column {
-            GridTable(
-                modifier = Modifier.onGloballyPositioned { coordinates ->
-                    tableHeight = coordinates.size.height.toFloat()
-                    if (stickyHost != null) {
-                        tableContentTop = coordinates.positionInRoot().y + stickyHost.scrollState.value
-                    }
-                },
-            ) {
-                GridRow(
-                    height = GridHeaderHeight,
-                    topDivider = false,
-                    modifier = Modifier
-                        .zIndex(1f)
-                        .drawWithContent {
-                            drawContent()
-                            // While the header is stuck, close it with a line twice as thick as the table borders.
-                            if (stickyHost != null && stickyHost.scrollState.value - (tableContentTop - stickyHost.viewportTop) > 0f) {
-                                val thickness = 2.dp.toPx()
-                                drawRect(
-                                    color = headerLineColor,
-                                    topLeft = Offset(0f, size.height - thickness),
-                                    size = Size(size.width, thickness),
-                                )
-                            }
-                        }
-                        .graphicsLayer {
-                            if (stickyHost != null) {
-                                val hidden = stickyHost.scrollState.value - (tableContentTop - stickyHost.viewportTop)
-                                translationY = hidden.coerceIn(0f, (tableHeight - headerHeightPx).coerceAtLeast(0f))
-                            }
-                        },
-                ) {
-                    GridHeaderCell(text = "#", modifier = Modifier.width(HandsIndexColumnWidth))
-                    GridHeaderCell(text = stringResource(Res.string.winner), modifier = Modifier.weight(HandsPlayerColumnWeight))
-                    GridHeaderCell(text = stringResource(Res.string.loser), modifier = Modifier.weight(HandsPlayerColumnWeight))
-                    GridHeaderCell(text = stringResource(Res.string.score), modifier = Modifier.width(HandsScoreColumnWidth))
-                    if (showChicken) GridHeaderCell(text = stringResource(Res.string.chicken), modifier = Modifier.width(HandsChickenColumnWidth))
-                    listOf(editor.playerEastId, editor.playerSouthId, editor.playerWestId, editor.playerNorthId)
-                        .forEachIndexed { seat, id ->
-                            GridHeaderCell(
-                                text = seatLabels[seat],
-                                icon = SeatWindIcons[seat],
-                                subtext = playerNameOrNull(id, playerNamesById)?.asString(),
-                                modifier = Modifier.weight(HandsSeatColumnWeight),
+        val gap = if (compact) 8.dp else 6.dp
+        Column(
+            modifier = Modifier.onGloballyPositioned { coordinates ->
+                tableHeight = coordinates.size.height.toFloat()
+                if (stickyHost != null) {
+                    tableContentTop = coordinates.positionInRoot().y + stickyHost.scrollState.value
+                }
+            },
+            verticalArrangement = Arrangement.spacedBy(gap),
+        ) {
+            HandsHeader(
+                seatNames = seatFullNames,
+                wide = !compact,
+                modifier = Modifier
+                    .zIndex(1f)
+                    .drawWithContent {
+                        drawContent()
+                        // While the header is stuck, close it with a line twice as thick as the borders.
+                        if (stickyHost != null && stickyHost.scrollState.value - (tableContentTop - stickyHost.viewportTop) > 0f) {
+                            val thickness = 2.dp.toPx()
+                            drawRect(
+                                color = headerLineColor,
+                                topLeft = Offset(0f, size.height - thickness),
+                                size = Size(size.width, thickness),
                             )
                         }
-                    GridHeaderCell(text = stringResource(Res.string.penalty), modifier = Modifier.width(HandsPenaltyColumnWidth))
-                    GridHeaderCell(text = stringResource(Res.string.done), modifier = Modifier.width(HandsDoneColumnWidth), last = true)
-                }
-                editor.hands.forEachIndexed { index, hand ->
-                    HandTableRow(
+                    }
+                    .graphicsLayer {
+                        if (stickyHost != null) {
+                            val hidden = stickyHost.scrollState.value - (tableContentTop - stickyHost.viewportTop)
+                            translationY = hidden.coerceIn(0f, (tableHeight - headerHeightPx).coerceAtLeast(0f))
+                        }
+                    },
+            )
+            editor.hands.forEachIndexed { index, hand ->
+                HandCard(
                         index = index,
                         hand = hand,
-                        playerIds = editor.playerIds,
-                        playerNamesById = playerNamesById,
+                        seatPlayerIds = seatIds,
+                        seatNames = seatShortNames,
                         enabled = handsEnabled,
                         forceDoneChecked = editor.isCompleted,
-                        result = if (hand.isBlank) SeatTextValues.EMPTY else handResults.getOrNull(index).orZero(),
+                        canMarkDone = editor.canMarkDone(hand),
+                        result = if (hand.isBlank) SeatTextValues.EMPTY else handResults.getOrNull(index) ?: SeatTextValues.EMPTY,
                         subtotal = handSubtotals.getOrNull(index) ?: SeatTextValues.EMPTY,
+                        preview = if (hand.handId in expandedIds) editor.previewFor(index) else null,
+                        expanded = hand.handId in expandedIds,
+                        onExpandedChange = { open -> expandedIds = if (open) expandedIds + hand.handId else expandedIds - hand.handId },
+                        wide = !compact,
                         navigation = rowNavigators.getOrNull(index) ?: HandRowKeyboardNavigator(),
                         previousNavigation = rowNavigators.getOrNull(index - 1),
                         nextNavigation = rowNavigators.getOrNull(index + 1),
                     )
-                }
             }
-            HandsTotalsRow(totals = editor.calculatedHandScoreTotals)
         }
+        HandsTotalsRow(totals = editor.calculatedHandScoreTotals, wide = !compact, seatNames = seatFullNames)
     }
 }
 
-/** The wind and the player of each seat, over the compact hand cards. */
+/**
+ * The wind and the player of each seat, over the hands. On a wide screen it has the columns of the hands: the number,
+ * the summary, the Σ sign, the four seats, Done and the arrow. It stays at the top while the hands scroll.
+ */
 @Composable
-private fun SeatNamesRow(names: List<String>) {
+private fun HandsHeader(seatNames: List<String>, wide: Boolean, modifier: Modifier = Modifier) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surfaceContainerHighest, MaterialTheme.shapes.small)
-            .padding(vertical = 8.dp),
+            .height(GridHeaderHeight)
+            .padding(horizontal = if (wide) 5.dp else 11.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        names.forEachIndexed { seat, name ->
+        if (wide) {
+            Text("#", Modifier.width(HandNumberWidth), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            Spacer(Modifier.weight(HandSummaryWeight))
+        }
+        Spacer(Modifier.width(SigmaColumnWidth))
+        seatNames.forEachIndexed { seat, name ->
             Column(Modifier.weight(1f).padding(horizontal = 2.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                SeatWindIcon(seat, Modifier.size(20.dp))
+                SeatWindIcon(seat, Modifier.size(18.dp))
                 Text(
                     text = name,
                     style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
-                    maxLines = 2,
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
         }
+        if (wide) {
+            Text(
+                text = stringResource(Res.string.done),
+                modifier = Modifier.width(HandDoneWidth),
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.width(HandArrowWidth))
+        }
     }
 }
 
-/** Totals under the hands table. They have no borders and use the same columns as the table. */
+/** The total of each seat under the hands, in the seat columns of the header. */
 @Composable
-private fun HandsTotalsRow(totals: SeatTextValues) {
-    GridRow(height = GridRowHeight, topDivider = false, modifier = Modifier.padding(horizontal = 1.dp)) {
-        GridCell(modifier = Modifier.width(HandsIndexColumnWidth), last = true) {}
-        GridCell(modifier = Modifier.weight(HandsPlayerColumnWeight), last = true, alignment = Alignment.CenterStart) {
-            Text(text = stringResource(Res.string.total_scores), style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
-        }
-        GridCell(modifier = Modifier.weight(HandsPlayerColumnWeight), last = true) {}
-        GridCell(modifier = Modifier.width(HandsScoreColumnWidth), last = true) {}
-        if (LocalHandStatOptions.current.countChickenHands) {
-            GridCell(modifier = Modifier.width(HandsChickenColumnWidth), last = true) {}
-        }
+private fun HandsTotalsRow(totals: SeatTextValues, wide: Boolean, seatNames: List<String>) {
+    if (!wide) {
+        Text(
+            text = stringResource(Res.string.total_scores),
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            modifier = Modifier.padding(top = 8.dp),
+        )
+        SeatValuesRow(values = totals, names = seatNames)
+        return
+    }
+    Row(Modifier.fillMaxWidth().padding(horizontal = 5.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Spacer(Modifier.width(HandNumberWidth))
+        Text(
+            text = stringResource(Res.string.total_scores),
+            modifier = Modifier.weight(HandSummaryWeight),
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+        )
+        Spacer(Modifier.width(SigmaColumnWidth))
         listOf(totals.east, totals.south, totals.west, totals.north).forEach { value ->
-            GridCell(modifier = Modifier.weight(HandsSeatColumnWeight), last = true) {
-                Text(
-                    text = value.ifBlank { "-" },
-                    style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                )
-            }
+            Text(
+                text = value.ifBlank { "-" },
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.titleMedium.inTextFont().copy(fontWeight = FontWeight.Bold),
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
         }
-        GridCell(modifier = Modifier.width(HandsPenaltyColumnWidth), last = true) {}
-        GridCell(modifier = Modifier.width(HandsDoneColumnWidth), last = true) {}
+        Spacer(Modifier.width(HandDoneWidth + HandArrowWidth))
     }
 }
 

@@ -56,6 +56,44 @@ function penalty(value: unknown): number {
   }, 0);
 }
 
+const PENALTY_FIELDS = ["playerEastPenalty", "playerSouthPenalty", "playerWestPenalty", "playerNorthPenalty"] as const;
+
+/**
+ * True when one penalty (the values of the four seats, east to north) is complete: one player has a negative value and
+ * the others have nothing, or one player has a negative value and the other three have positive values that add up to
+ * zero with it (a shared penalty). A penalty with no value at all is no penalty. Anything else is incomplete.
+ */
+export function isPenaltyRowComplete(cells: string[]): boolean {
+  const values = cells.map((cell) => cell.trim());
+  if (values.every((value) => value === "" || /^-?0+$/.test(value))) return true;
+  if (values.some((value) => value !== "" && !/^-?\d+$/.test(value))) return false;
+  const numbers = values.map((value) => (value === "" ? 0 : Number(value)));
+  const negatives = numbers.filter((value) => value < 0).length;
+  const positives = numbers.filter((value) => value > 0).length;
+  if (negatives !== 1) return false;
+  if (positives === 0) return true;
+  return positives === 3 && numbers.reduce((sum, value) => sum + value, 0) === 0;
+}
+
+/** The penalties of a hand, one row of four cells per penalty. The seat texts hold the penalties joined with ";". */
+export function penaltyRowsOf(hand: Data): string[][] {
+  const seats = PENALTY_FIELDS.map((field) => (text(hand[field]) === "" ? [] : text(hand[field]).split(";")));
+  const rows = Math.max(0, ...seats.map((parts) => parts.length));
+  return Array.from({ length: rows }, (_, row) => seats.map((parts) => parts[row] ?? ""));
+}
+
+/** True when every penalty of the hand is complete. */
+export function arePenaltiesComplete(hand: Data): boolean {
+  return penaltyRowsOf(hand).every(isPenaltyRowComplete);
+}
+
+/**
+ * True when the hand can be marked done: its result counts (a draw needs a score of 0) and its penalties are complete.
+ */
+export function canBeDone(hand: Data, seats: [string, string, string, string]): boolean {
+  return handSeatScores(hand, seats) != null && arePenaltiesComplete(hand);
+}
+
 /** The score change of every seat for one hand, or null when the hand does not count. */
 export function handSeatScores(hand: Data, seats: [string, string, string, string]): SeatValues | null {
   if (isResultSelectionInvalid(hand) || isCompletelyEmpty(hand)) return null;

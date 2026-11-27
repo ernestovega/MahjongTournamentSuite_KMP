@@ -459,6 +459,12 @@
     <string name="hand_score_whole">The score must be a whole number.</string>
     <string name="hand_score_minimum">The minimum score to win a hand is 8.</string>
     <string name="hand_chicken_maximum">A chicken hand cannot score more than 12 points.</string>
+    <string name="hand_self_draw">Self-draw</string>
+    <string name="chicken_hand_two_lines">Chicken\nhand</string>
+    <string name="penalty_incomplete">Penalty %1$d is incomplete: one player needs a negative value, alone or shared by the other three so that it adds up to zero.</string>
+    <string name="hand_draw">Draw</string>
+    <string name="open_hand_n">Open hand %1$d</string>
+    <string name="close_hand_n">Close hand %1$d</string>
     <string name="seat_positions_first">Select all four seat positions first</string>
     <string name="table_done">Done</string>
     <string name="edit_seats">Edit seats</string>

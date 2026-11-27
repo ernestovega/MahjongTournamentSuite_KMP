@@ -1,5 +1,5 @@
 {
-  "about": "Shared scoring cases. The server tests (firebase/functions/src/services/scoringCases.test.ts) and the app tests (adminApp and playerApp jvmTest ScoringCasesTest) all check these results, so the scoring of the server and of the apps cannot drift apart. Seats are east, south, west, north. A hand with no expected result does not count. 'result' is the hand without penalties; it is the same as 'scores' when missing. Table points use a comma for decimals.",
+  "about": "Shared scoring cases. 'penaltyRows' are single penalties (east to north): complete ones can be in a done hand. The server tests (firebase/functions/src/services/scoringCases.test.ts) and the app tests (adminApp and playerApp jvmTest ScoringCasesTest) all check these results, so the scoring of the server and of the apps cannot drift apart. Seats are east, south, west, north. A hand with no expected result does not count. 'result' is the hand without penalties; it is the same as 'scores' when missing. Table points use a comma for decimals.",
   "seats": ["11", "12", "13", "14"],
   "hands": [
     { "name": "a discard pays score plus 8, the others pay 8", "hand": { "winner": "11", "loser": "12", "score": "10" }, "scores": [34, -18, -8, -8] },
@@ -26,6 +26,17 @@
     { "name": "a penalty part that is not a number counts as 0", "hand": { "winner": "11", "loser": "12", "score": "10", "penalties": ["abc;-5", "", "", ""] }, "scores": [29, -18, -8, -8], "result": [34, -18, -8, -8] },
     { "name": "a penalty with a plus sign counts as 0", "hand": { "winner": "11", "loser": "12", "score": "10", "penalties": ["+5;-5", "", "", ""] }, "scores": [29, -18, -8, -8], "result": [34, -18, -8, -8] },
     { "name": "a draw keeps its penalties", "hand": { "score": "0", "penalties": ["", "", "", "-30"] }, "scores": [0, 0, 0, -30], "result": [0, 0, 0, 0] }
+  ],
+  "penaltyRows": [
+    { "name": "one player with a negative value is complete", "cells": ["", "-10", "", ""], "complete": true },
+    { "name": "a shared penalty that adds up to zero is complete", "cells": ["10", "-30", "10", "10"], "complete": true },
+    { "name": "no value at all is no penalty", "cells": ["", "", "", ""], "complete": true },
+    { "name": "zeros are no penalty", "cells": ["0", "", "0", ""], "complete": true },
+    { "name": "only positive values are incomplete", "cells": ["10", "", "", ""], "complete": false },
+    { "name": "two negative values are incomplete", "cells": ["-10", "-10", "", ""], "complete": false },
+    { "name": "a share for only two players is incomplete", "cells": ["10", "-30", "10", ""], "complete": false },
+    { "name": "a share for three players that does not add up to zero is incomplete", "cells": ["10", "-30", "10", "5"], "complete": false },
+    { "name": "a value that is not a number is incomplete", "cells": ["abc", "-10", "", ""], "complete": false }
   ],
   "tables": [
     {

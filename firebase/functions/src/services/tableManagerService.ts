@@ -1,14 +1,14 @@
 import { FieldValue } from "firebase-admin/firestore";
 
 import { db } from "../firebase";
-import { notFound } from "../api/httpError";
+import { badRequest, notFound } from "../api/httpError";
 import { conflict } from "../api/httpError";
 import {
   calculateTableCompletionStatus,
   hasFourValidScores,
   calculateHandSummary,
 } from "./tournamentContentRules";
-import { tablePointsOf } from "./handScoring";
+import { canBeDone, seatIdsOf, tablePointsOf } from "./handScoring";
 import { globalVersionUpdate, tableVersionKey, tableVersionUpdate } from "./dataVersionsService";
 import { prepareTableStats } from "./statisticsStore";
 import { buildConflictChangeEntry, buildResetChangeEntry, buildSaveChangeEntry, type ChangeActor } from "./changeLog";
@@ -427,6 +427,15 @@ export async function saveTableStateInTransaction(
   params.handPatches.forEach((item) => {
     const key = String(item.handId);
     handsAfter.set(key, { ...(handsBefore.get(key) ?? {}), ...item.patch, handId: item.handId });
+  });
+  // A hand can be done only with a result that counts (0 for a draw) and complete penalties. Only the hands of this
+  // save are checked, so an old hand saved before the rule does not block other changes of the table.
+  const seats = seatIdsOf(mergedTable);
+  params.handPatches.forEach((item) => {
+    const hand = handsAfter.get(String(item.handId)) ?? {};
+    if (Boolean(hand.isDone) && (seats == null || !canBeDone(hand, seats))) {
+      throw badRequest(`Hand ${item.handId} cannot be done: it needs a valid result and complete penalties`);
+    }
   });
   const stamps = doneStamps(handsBefore, handsAfter, params.handPatches.map((item) => item.handId), Date.now());
   stamps.forEach((doneAtMs, handId) => {

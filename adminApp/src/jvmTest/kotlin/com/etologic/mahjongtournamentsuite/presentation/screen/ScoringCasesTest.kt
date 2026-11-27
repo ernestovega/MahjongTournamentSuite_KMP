@@ -61,6 +61,14 @@ class ScoringCasesTest {
     }
 
     @Test
+    fun penaltyRowCases() {
+        for (entry in cases.getValue("penaltyRows").jsonArray.map { it.jsonObject }) {
+            check(entry.flag("complete"), isPenaltyRowComplete(entry.texts("cells")!!), entry.text("name"))
+        }
+        assertNoMismatches()
+    }
+
+    @Test
     fun pointsCases() {
         for (entry in cases.getValue("points").jsonArray.map { it.jsonObject }) {
             val scores = entry.texts("scores")!!.map { it.trim().toIntOrNull() }

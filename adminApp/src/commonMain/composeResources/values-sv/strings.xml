@@ -459,6 +459,12 @@
     <string name="hand_score_whole">Värdet måste vara ett heltal.</string>
     <string name="hand_score_minimum">Lägsta värdet för att vinna en hand är 8.</string>
     <string name="hand_chicken_maximum">En kycklinghand kan inte ge mer än 12 poäng.</string>
+    <string name="hand_self_draw">Självdragen</string>
+    <string name="chicken_hand_two_lines">Kyckling-\nhand</string>
+    <string name="penalty_incomplete">Straff %1$d är ofullständigt: en spelare behöver ett negativt värde, ensamt eller delat av de andra tre så att summan blir noll.</string>
+    <string name="hand_draw">Oavgjord</string>
+    <string name="open_hand_n">Öppna hand %1$d</string>
+    <string name="close_hand_n">Stäng hand %1$d</string>
     <string name="seat_positions_first">Välj alla fyra platser först</string>
     <string name="table_done">Klar</string>
     <string name="edit_seats">Redigera platser</string>

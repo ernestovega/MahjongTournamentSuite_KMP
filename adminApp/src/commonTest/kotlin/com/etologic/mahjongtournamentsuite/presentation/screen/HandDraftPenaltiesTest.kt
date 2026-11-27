@@ -36,6 +36,7 @@ class HandDraftPenaltiesTest {
     @Test
     fun aDoneHandDropsItsEmptyPenaltyRows() {
         val hand = HandDraftState.from(blank)
+        hand.updateHandScore("0")
         hand.addPenaltyRow()
 
         hand.updateDoneState(true)
@@ -63,5 +64,31 @@ class HandDraftPenaltiesTest {
         hand.handScore = "8.5"
 
         assertTrue(UiText.of(Res.string.hand_score_whole) in hand.validationDetailMessages)
+    }
+
+    @Test
+    fun aHandWithAnIncompletePenaltyCannotBeDone() {
+        val hand = HandDraftState.from(blank)
+        hand.updateHandScore("0")
+        val row = hand.addPenaltyRow()
+        hand.updatePenaltyValue(row, 0, "10")
+
+        hand.updateDoneState(true)
+
+        assertFalse(hand.isDone)
+        assertEquals(listOf(1), hand.incompletePenaltyNumbers)
+    }
+
+    @Test
+    fun aSharedPenaltyThatAddsUpToZeroIsComplete() {
+        val hand = HandDraftState.from(blank)
+        hand.updateHandScore("0")
+        val row = hand.addPenaltyRow()
+        listOf("-30", "10", "10", "10").forEachIndexed { seat, value -> hand.updatePenaltyValue(row, seat, value) }
+
+        hand.updateDoneState(true)
+
+        assertTrue(hand.isDone)
+        assertTrue(hand.incompletePenaltyNumbers.isEmpty())
     }
 }

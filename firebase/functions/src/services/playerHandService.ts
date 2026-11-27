@@ -1,7 +1,7 @@
 import { HttpError, badRequest, conflict, forbidden, notFound } from "../api/httpError";
 import { db } from "../firebase";
 import type { ChangeActor } from "./changeLog";
-import { handSeatScores, isResultSelectionInvalid, seatIdsOf, tableTotalsPatch } from "./handScoring";
+import { handSeatScores, isPenaltyRowComplete, isResultSelectionInvalid, seatIdsOf, tableTotalsPatch } from "./handScoring";
 import { seatingState, tournamentMatchPhase, unstartedRoundIsPast } from "./matchTime";
 import { manualHands, manualSeats } from "./roundControl";
 import { getPlayerRegistration } from "./playerAccountsService";
@@ -76,8 +76,8 @@ function parsePenalties(values: unknown[]): [string, string, string, string] {
   const rows = Math.max(0, ...seats.map((parts) => parts.length));
   for (let row = 0; row < rows; row += 1) {
     const cells = seats.map((parts) => parts[row] ?? "");
-    if (cells.some((cell) => cell !== "") && !cells.some((cell) => cell.startsWith("-"))) {
-      throw badRequest("A penalty needs at least one player with a negative value");
+    if (!isPenaltyRowComplete(cells)) {
+      throw badRequest("A penalty needs one player with a negative value, alone or shared by the other three");
     }
   }
   const texts = seats.map((parts) => {

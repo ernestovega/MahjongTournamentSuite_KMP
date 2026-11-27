@@ -134,7 +134,7 @@ internal class TableManagerEditorState private constructor(
 
     /** Manual totals ignore the hands, except to count chicken hands and best hands. */
     val hasInvalidHands: Boolean
-        get() = !useTotalsOnly && hands.any { it.isResultSelectionInvalid }
+        get() = !useTotalsOnly && hands.any { it.isResultSelectionInvalid || it.hasIncompletePenalty }
 
     val chickenHandCount: Int
         get() = hands.count { it.isChickenHand }
@@ -515,6 +515,27 @@ internal class TableManagerEditorState private constructor(
             west = base.west + parsePenalty(hand.currentPenalty(2)),
             north = base.north + parsePenalty(hand.currentPenalty(3)),
         )
+    }
+
+    /**
+     * What the hand at [index] adds when it counts, and the running total with it. The open hand shows it before Done
+     * is ticked. Null when its result cannot count.
+     */
+    fun previewFor(index: Int): Pair<SeatTextValues, SeatTextValues>? {
+        val seats = currentSeatIds() ?: return null
+        val hand = hands.getOrNull(index) ?: return null
+        val change = calculateHandSeatScores(hand, seats) ?: return null
+        var totals = SeatIntValues.ZERO
+        hands.take(index).forEach { before ->
+            if (before.isDone || isCompleted) calculateHandSeatScores(before, seats)?.let { totals += it }
+        }
+        return change.asTextValues() to (totals + change).asTextValues()
+    }
+
+    /** The hand can be marked done: [HandDraftState.canBeDone], and its winner and loser sit at this table. */
+    fun canMarkDone(hand: HandDraftState): Boolean {
+        val seats = currentSeatIds() ?: return false
+        return hand.canBeDone && calculateHandSeatScores(hand, seats) != null
     }
 
     private fun currentSeatIds(): SeatIds? {
