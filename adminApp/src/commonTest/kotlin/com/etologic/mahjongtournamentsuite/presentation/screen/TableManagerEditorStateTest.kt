@@ -19,6 +19,61 @@ import kotlin.test.assertTrue
 class TableManagerEditorStateTest {
 
     @Test
+    fun aPlayerChosenForASeatLeavesTheSeatHeHad() {
+        val editor = TableManagerEditorState.from(blankTableState(), emptyList())
+        listOf(0 to "1", 1 to "2", 2 to "3", 3 to "4").forEach { (seat, id) -> editor.setSeatAssignment(seat, id) }
+
+        // Each seat takes a player from each of the others in turn.
+        editor.setSeatAssignment(1, " 1 ")
+        assertEquals(listOf("", "1", "3", "4"), editor.seats())
+        editor.setSeatAssignment(1, "3")
+        editor.setSeatAssignment(1, "4")
+        assertEquals(listOf("", "4", "", ""), editor.seats())
+
+        editor.setSeatAssignment(0, "1")
+        editor.setSeatAssignment(2, "1")
+        assertEquals(listOf("", "4", "1", ""), editor.seats())
+        editor.setSeatAssignment(2, "4")
+        editor.setSeatAssignment(3, "2")
+        editor.setSeatAssignment(2, "2")
+        assertEquals(listOf("", "", "2", ""), editor.seats())
+
+        editor.setSeatAssignment(0, "5")
+        editor.setSeatAssignment(1, "6")
+        editor.setSeatAssignment(3, "5")
+        editor.setSeatAssignment(3, "6")
+        editor.setSeatAssignment(3, "2")
+        assertEquals(listOf("", "", "", "2"), editor.seats())
+
+        // An empty choice clears only its own seat, and a seat that does not exist changes nothing.
+        editor.setSeatAssignment(0, "7")
+        editor.setSeatAssignment(1, "")
+        editor.setSeatAssignment(2, " ")
+        editor.setSeatAssignment(3, "")
+        editor.setSeatAssignment(9, "7")
+        assertEquals(listOf("7", "", "", ""), editor.seats())
+    }
+
+    @Test
+    fun aManualScoreGoesToItsSeatAndAChangeOpensACompletedTable() {
+        val editor = TableManagerEditorState.from(blankTableState(), emptyList())
+        editor.enableManualTotals()
+        editor.updateManualScore(0, "10")
+        editor.updateManualScore(1, "-a5")
+        editor.updateManualScore(2, "0")
+        editor.updateManualScore(3, "-5")
+        assertEquals(listOf("10", "-5", "0", "-5"), listOf(editor.playerEastScore, editor.playerSouthScore, editor.playerWestScore, editor.playerNorthScore))
+
+        editor.isCompleted = true
+        editor.updateManualScore(3, "-5")
+        assertTrue(editor.isCompleted, "the same value keeps the table completed")
+        editor.updateManualScore(3, "-4")
+        assertFalse(editor.isCompleted)
+    }
+
+    private fun TableManagerEditorState.seats() = listOf(playerEastId, playerSouthId, playerWestId, playerNorthId)
+
+    @Test
     fun tableWithoutAnyDataIsEmpty() {
         val editor = TableManagerEditorState.from(blankTableState(), (1..16).map { sampleHand(handId = it) })
 
