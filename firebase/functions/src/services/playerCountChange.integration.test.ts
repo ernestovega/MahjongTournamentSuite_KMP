@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { before, describe, it } from "node:test";
+import { before, describe, it, mock } from "node:test";
 
 import { db } from "../firebase";
 import { HttpError } from "../api/httpError";
@@ -141,6 +141,39 @@ describe("change of the number of players", () => {
     // A new draw: the apps drop the tables they hold and read them all again.
     const manifest = await getTournamentManifest(id);
     assert.equal(manifest.resources.draw.revision, 1);
+  });
+
+  it("writes the old draw back when a write of the change fails", async () => {
+    const tag = String(Date.now()).slice(-6);
+    const { id, ref } = await create(16);
+    await assign(ref, 3, `3${tag}3`);
+    // The batch that writes the log fails, after the new slots and the new table are written.
+    const batch = db.batch.bind(db);
+    const failing = mock.method(db, "batch", () => {
+      const real = batch();
+      let writesLog = false;
+      const set = real.set.bind(real) as (...args: unknown[]) => FirebaseFirestore.WriteBatch;
+      (real as { set: unknown }).set = (docRef: FirebaseFirestore.DocumentReference, ...rest: unknown[]) => {
+        if (docRef.parent.id === "playerLog") writesLog = true;
+        return set(docRef, ...rest);
+      };
+      const commit = real.commit.bind(real);
+      real.commit = () => (writesLog ? Promise.reject(new Error("log unavailable")) : commit());
+      return real;
+    });
+    try {
+      await assert.rejects(run(id, 20), /log unavailable/);
+    } finally {
+      failing.mock.restore();
+    }
+
+    const slots = await slotsOf(ref);
+    assert.equal(slots.size, 16);
+    assert.equal(slots.get(3)?.assignedEmaId, `3${tag}3`);
+    const tables = await ref.collection("tables").get();
+    assert.deepEqual(tables.docs.map((doc) => doc.id).sort(), ["1_1", "1_2", "1_3", "1_4"]);
+    assert.equal((await ref.collection("tables").doc("1_1").collection("hands").get()).size, 16);
+    assert.equal((await ref.get()).get("numPlayers"), 16);
   });
 
   it("refuses a tournament with table data, without changing anything", async () => {
