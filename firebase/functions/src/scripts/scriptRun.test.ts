@@ -27,7 +27,7 @@ describe("script run record", () => {
     const argv = process.argv;
     process.argv = ["node", "script.js", "--apply", "--admin-email=someone@example.com"];
     try {
-      const entry = buildScriptRunEntry({ script: "resetAccess", projectId: "demo", outcome: "failed", error: new Error("x".repeat(500)), user: "u" });
+      const entry = buildScriptRunEntry({ script: "seedStaging", projectId: "demo", outcome: "failed", error: new Error("x".repeat(500)), user: "u" });
       assert.equal(entry.details.args, "--apply --admin-email=…");
       assert.equal((entry.details.error as string).length, 201);
     } finally {

@@ -23,6 +23,8 @@ import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.navigation.compose.rememberNavController
 import co.touchlab.kermit.Logger
+import com.etologic.mahjongtournamentsuite.domain.model.AppError
+import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.Player
@@ -35,6 +37,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerAccountRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerImportRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.presentation.components.BackgroundExports
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalBackgroundExports
@@ -79,6 +82,17 @@ class PlayersScreenFlowsUiTest {
         val accounts = FakePlayerAccountRepository()
         val base = FakePlayerRepository(registry)
         val store = AppMemoryStore()
+
+        /** The loads that fail besides the knobs of the fake server: "registry" and "countries". */
+        var failing: Set<String> = emptySet()
+        val tournaments: TournamentRepository = object : TournamentRepository by server {
+            override suspend fun listCountries(refreshMode: RefreshMode) =
+                if ("countries" in failing) AppResult.Failure(AppError.Network) else server.listCountries(refreshMode)
+        }
+        val registryRepository: PlayerRepository = object : PlayerRepository by base {
+            override suspend fun listPlayers(refreshMode: RefreshMode) =
+                if ("registry" in failing) AppResult.Failure(AppError.Network) else base.listPlayers(refreshMode)
+        }
         lateinit var exports: BackgroundExports
     }
 
@@ -94,10 +108,10 @@ class PlayersScreenFlowsUiTest {
                     modules(
                         module {
                             single { Logger.withTag("ui-test") }
-                            single<TournamentRepository> { world.server }
+                            single<TournamentRepository> { world.tournaments }
                             single<AdminRepository> { FakeAdminRepository(GlobalUserRole.SUPER_ADMIN) }
                             single<AuthRepository> { FakeSignedInAuthRepository() }
-                            single<PlayerRepository> { world.base }
+                            single<PlayerRepository> { world.registryRepository }
                             single<PlayerAccountRepository> { world.accounts }
                             single { world.store }
                             factory { TournamentsPresenter(get(), get(), get()) }
@@ -180,6 +194,51 @@ class PlayersScreenFlowsUiTest {
         awaitText("Network request failed.")
         click("OK")
         assertEquals(0, count("Network request failed."))
+    }
+
+    @Test
+    fun whenEveryLoadFailsTheFirstErrorShows() = runComposeUiTest {
+        val world = world(slotAna)
+        world.server.failPlayers = true
+        world.server.failTeams = true
+        world.server.failTableLists = setOf(null)
+        world.failing = setOf("registry", "countries")
+        show(world, waitForRows = false)
+        awaitText("Network request failed.")
+    }
+
+    @Test
+    fun aFailedLoadOfTheRegistryShowsItsError() = runComposeUiTest {
+        val world = world(slotAna)
+        world.failing = setOf("registry", "countries")
+        show(world, waitForRows = false)
+        awaitText("Network request failed.")
+    }
+
+    @Test
+    fun aFailedLoadOfTheCountriesShowsItsError() = runComposeUiTest {
+        val world = world(slotAna)
+        world.failing = setOf("countries")
+        world.server.failTeams = true
+        show(world, waitForRows = false)
+        awaitText("Network request failed.")
+    }
+
+    @Test
+    fun aFailedLoadOfTheTeamsOrTheTablesShowsItsError() = runComposeUiTest {
+        val world = world(slotAna)
+        world.server.failTeams = true
+        world.server.failTableLists = setOf(null)
+        show(world, waitForRows = false)
+        awaitText("Network request failed.")
+    }
+
+    @Test
+    fun aFailedLoadOfTheTablesShowsItsError() = runComposeUiTest {
+        val world = world(slotAna)
+        world.server.failTableLists = setOf(null)
+        show(world, waitForRows = false)
+        awaitText("Network request failed.")
     }
 
     @Test

@@ -1,3 +1,4 @@
+import "./useScriptTarget";
 import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 
@@ -33,15 +34,25 @@ import { runScript } from "./scriptRun";
  * Every tournament has a fixed id that starts with "test-". A new run deletes the old copy of the same id and
  * writes it again. The script never touches other tournaments.
  *
- * It previews by default. Add --apply to write. Add --only=<id>,<id> to run some tournaments.
+ * npm run seed:tournaments -- --target=<prod|staging|emulator> --set=<edge|production|testers> [--apply]
+ * --target names the project (scriptTarget.ts) and is required, so a run never goes to production by default.
+ * --set names the tournaments, and is required unless --only=<id>,<id> names them:
+ * - edge: the test-* tournaments of the edge cases and the ongoing one (the instrumented UI and web tests use them),
+ * - production: the tournaments that look like real events,
+ * - testers: the tournaments where the testers play.
+ * It previews by default. Add --apply to write.
  *
- * The tester tournaments (flag "testers" in the spec) are not part of the default run, so the emulator seed stays the
- * same. Add --testers to write only them. They are ongoing for 6 days, with 3 rounds a day between 19:00 and 01:00 (Madrid). The upcoming ones start later and have no hands.
+ * The tester tournaments (flag "testers" in the spec) are not part of the edge set, so the emulator seed stays the
+ * same. They are ongoing for 6 days, with 3 rounds a day between 19:00 and 01:00 (Madrid). The upcoming ones start later and have no hands.
  */
 const applyChanges = process.argv.includes("--apply");
 const only = process.argv.find((arg) => arg.startsWith("--only="))?.split("=")[1]?.split(",");
-const onlyTesters = process.argv.includes("--testers");
-const onlyProduction = process.argv.includes("--production");
+const tournamentSet = process.argv.find((arg) => arg.startsWith("--set="))?.slice("--set=".length).trim();
+if (only == null && tournamentSet !== "edge" && tournamentSet !== "production" && tournamentSet !== "testers") {
+  throw new Error("Pass --set=edge, --set=production or --set=testers (or --only=<id>,<id>).");
+}
+const onlyTesters = tournamentSet === "testers";
+const onlyProduction = tournamentSet === "production";
 
 const PRODUCTION_PROJECT = "mahjong-tournament-suite";
 

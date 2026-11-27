@@ -16,17 +16,17 @@ untested, in order of priority. The last part lists the test tournaments of the 
 | `domain`: business rules, use cases | 5,777 | 240 | – | – | – | – | – | 100 % | 95 % |
 | `data`: repositories, network, telemetry | 7,951 | 468 | – | – | – | – | – | 99 % | 90 % |
 | `designsystem`: theme, base components | 1,928 | – | 34 | 4 | – | – | – | 94 % | 61 % |
-| `ui`: shared Compose components | 17,922 | 93 | 322 | 24 | – | – | – | 97 % | 72 % |
-| `adminApp`: admin screens | 32,523 | 319 | 590 | 91 | – | 175 | 5 | 93 % | 72 % |
-| `playerApp`: player screens | 12,058 | 200 | 183 | 56 | – | 72 | 8 | 95 % | 69 % |
+| `ui`: shared Compose components | 18,082 | 96 | 331 | 24 | – | – | – | 97 % | 72 % |
+| `adminApp`: admin screens | 32,598 | 328 | 620 | 91 | – | 175 | 5 | 93 % | 72 % |
+| `playerApp`: player screens | 12,093 | 200 | 185 | 56 | – | 73 | 8 | 95 % | 69 % |
 | `androidApp`: Android entry point | 184 | – | – | – | – | – | – | – | – |
 | Backend: API routes and middleware | 4,013 | 60 | – | – | 322 | – | – | 93 % | 86 % |
-| Backend: services | 16,159 | 376 | – | – | 195 | – | – | 96 % | 88 % |
+| Backend: services | 16,084 | 372 | – | – | 193 | – | – | 96 % | 88 % |
 | Backend: models, clients, setup | 323 | 29 | – | – | – | – | – | 96 % | 83 % |
-| Backend: maintenance and seed scripts | 4,376 | 2 | – | – | – | – | – | 53 % | 63 % |
+| Backend: maintenance and seed scripts | 2,900 | 6 | – | – | – | – | – | 53 % | 63 % |
 | Firestore and Storage rules (deny all) | 16 | 3 | – | – | – | – | – | – | – |
 | Repository scripts (Game day, smoke, versions) | 7,377 | 124 | – | – | – | – | – | – | – |
-| **Total** | **110,607** | **1,914** | **1,129** | **175** | **517** | **247** | **13** | **95 %** | **76 %** |
+| **Total** | **109,326** | **1,926** | **1,170** | **175** | **515** | **248** | **13** | **95 %** | **76 %** |
 
 - **Counts** are the tests in the sources of each kind. A screenshot test can record several images, and an
   Android or Web E2E test of the admin or player part counts in `adminApp` or `playerApp`.
@@ -57,7 +57,7 @@ untested, in order of priority. The last part lists the test tournaments of the 
 | Web E2E (Playwright, Chromium) | `e2e/web/tests/*.test.mjs`: the Wasm Player against the local test backend | `e2e/web/README.md` | Every night at 03:30 UTC (Actions > Test · Web E2E) and by hand |
 | Smoke test of a deploy | `scripts/smoke/smoke.mjs`, its tests in `scripts/smoke/test/` | `node scripts/smoke/smoke.mjs` (`MTS_SITE_URL` for staging) | At the end of every deploy to production and to staging |
 | Performance | `benchmarks/`, `.github/workflows/benchmark.yml` | Actions | Every morning against production |
-| Tooling scripts | `scripts/versions_test.py`, `scripts/recovery.test.mjs` | `python3 scripts/versions_test.py`, `node --test` | By hand |
+| Tooling scripts | `scripts/versions_test.py`, `scripts/recovery.test.mjs` | `python3 scripts/versions_test.py`, `node --test` | CI: Scripts and diagnostics tests (and nightly) |
 
 There are no tests of load beyond Game day, or of accessibility. The Firestore and Storage rules refuse everything, and
 `securityRules.test.ts` checks that they stay so.
@@ -192,6 +192,7 @@ The web E2E tests (`e2e/web`) are in the notes.
 | Feature | Covered by | Gap |
 | --- | --- | --- |
 | Browser back and forward | `BrowserHistoryTest`, `BrowserHistoryUiTest` | Not in a real browser |
+| Back leaves the app only from the first start tab (web and Android) | `BackLayersUiTest`, E2E `PlayerHomeTest` | Not in a real browser |
 | Restore the last screen after a reload | ✅ | `RoutePersistenceUiTest` in both apps (25 Nov) |
 | App Links on Android | `SitePagesLinkTest` (which pages go to the browser) | No instrumented test of the intent filters |
 | Keyboard support on desktop | `EntryFocusAndScrollUiTest`, `KeyboardFocus` 78 % | |
@@ -261,7 +262,7 @@ The date to have it ready is 23 December 2026. Priority 1 is what can break a to
 
 ## 5. Test tournaments of the seed script
 
-The script `firebase/functions/src/scripts/seedTestTournaments.ts` writes 13 tournaments with fixed ids that start with `test-`.
+The script `firebase/functions/src/scripts/seedTestTournaments.ts` writes 13 tournaments with fixed ids that start with `test-`. Run it with `npm run seed:tournaments -- --target=<prod|staging|emulator> --set=<edge|production|testers> [--apply]` in `firebase/functions`: both options are required, so a run never writes to production by default.
 This part lists each scenario and the tournament that covers it. A scenario without a tournament is listed as a gap.
 
 ### Tournaments

@@ -60,7 +60,7 @@ From the Functions directory, run the initial seed:
 
 ```bash
 npm run build
-npm run seed:players
+npm run sync:players -- --full
 ```
 
 Create `firebase/functions/local-player-sync.env` first. Add your Firebase project and bucket:
@@ -78,28 +78,14 @@ For later local runs, use the incremental sync:
 npm run sync:players
 ```
 
-Both commands read only tournament result pages. The seed reads all known pages. Later runs read only pages that are not in `emaRankingTournamentResultIndex`.
-
-To normalize names already stored in the registry, inspect the changes first:
-
-```bash
-npm run normalize:player-names
-```
-
-Apply the reported changes with a backup:
-
-```bash
-npm run normalize:player-names -- --apply
-```
-
-Each applied migration stores the prior documents under `emaPlayerRegistryNameMigrations/{migrationId}/backupPlayers`.
+Both read only tournament result pages. `--full` reads all known pages. Later runs read only pages that are not in `emaRankingTournamentResultIndex`.
 
 The scripts read the tournament index pages on each run. They do this only to discover new result links. They do not re-read result pages already indexed.
 
 For a one-time repair of records created from an old downloaded copy, set `EMA_LOCAL_SOURCE_DIR` to that copy and run the seed. This mode is explicit and is not used by normal syncs:
 
 ```bash
-EMA_LOCAL_SOURCE_DIR="$HOME/ema-mirror" npm run seed:players
+EMA_LOCAL_SOURCE_DIR="$HOME/ema-mirror" npm run sync:players -- --full
 ```
 
 The reader supports both a direct `ranking/` folder and the host folder created by `wget --mirror`. Remove the variable after this repair.
@@ -168,7 +154,7 @@ Set the returned bucket name before a local seed:
 
 ```bash
 export EMA_FIREBASE_STORAGE_BUCKET=your-project.firebasestorage.app
-npm run seed:players
+npm run sync:players -- --full
 ```
 
 ## Troubleshooting
@@ -178,7 +164,7 @@ npm run seed:players
 `ERR_TLS_CERT_ALTNAME_INVALID` means EMA's HTTPS certificate does not match its hostname. For a local run only, you can use:
 
 ```bash
-EMA_ALLOW_INSECURE_TLS=1 npm run seed:players
+EMA_ALLOW_INSECURE_TLS=1 npm run sync:players
 ```
 
 This option is not used by Firebase services.

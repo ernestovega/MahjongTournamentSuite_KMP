@@ -254,6 +254,20 @@ class CreateTournamentDialogFlowsUiTest {
     }
 
     @Test
+    fun aRoundWithoutItsDateOrTimeStopsTheCreation() = runComposeUiTest {
+        val world = show()
+        fillGeneral()
+        fillVenue()
+        click("Schedule")
+        field("From").performTextReplacement("22/10/2026")
+        field("To").performTextReplacement("22/10/2026")
+        waitForIdle()
+        create()
+        waitUntil(timeoutMillis = 5_000) { count("* ", substring = true) > 0 }
+        assertEquals(emptyList(), world.requests)
+    }
+
+    @Test
     fun aCompleteFormDrawsAndCreatesTheTournament() = runComposeUiTest {
         val world = show()
         fillGeneral()

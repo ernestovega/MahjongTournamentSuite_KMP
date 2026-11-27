@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
@@ -187,7 +188,7 @@ class AdminScreensScreenshotTest {
         "player-base-selected",
         ready = {
             waitForText("LUCÍA MARTÍN", substring = true)
-            onAllNodesWithText(adminText("select_all_shown", 0).substringBefore("(").trim(), substring = true).onFirst().performClick()
+            onAllNodesWithContentDescription(adminText("select_all_shown", 0).substringBefore("(").trim(), substring = true).onFirst().performClick()
             waitForIdle()
         },
     ) { nav -> PlayerBaseScreen(nav) }

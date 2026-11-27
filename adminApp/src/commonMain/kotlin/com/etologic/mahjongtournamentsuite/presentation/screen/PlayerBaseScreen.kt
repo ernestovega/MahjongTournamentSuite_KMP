@@ -87,6 +87,10 @@ import com.etologic.mahjongtournamentsuite.presentation.components.EmaCountryDro
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
 import com.etologic.mahjongtournamentsuite.presentation.components.FullBleedRow
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectShownCheckbox
+import com.etologic.mahjongtournamentsuite.presentation.components.ScreenBleed
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenBleed
+import com.etologic.mahjongtournamentsuite.presentation.components.FilterGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHideOnScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
@@ -146,6 +150,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.photo_error_size
 import mahjongtournamentsuite.adminapp.generated.resources.photo_error_type
 import mahjongtournamentsuite.adminapp.generated.resources.photo_of
 import mahjongtournamentsuite.adminapp.generated.resources.player_base
+import mahjongtournamentsuite.adminapp.generated.resources.top_bar_ema_players
 import mahjongtournamentsuite.adminapp.generated.resources.player_base_countries
 import mahjongtournamentsuite.adminapp.generated.resources.player_base_players
 import mahjongtournamentsuite.adminapp.generated.resources.player_details
@@ -723,7 +728,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
     deleteResults?.let { EmaPlayerDeletesResultDialog(it, deleteResultPlayers, onDismiss = { deleteResults = null }) }
 
     AppScaffold(
-        title = stringResource(Res.string.players),
+        title = stringResource(Res.string.top_bar_ema_players),
         isLoading = loading || saving,
         showBackgroundLogo = loading && players.isEmpty(),
         contentLoading = loading && players.isEmpty(),
@@ -790,11 +795,10 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                         modifier = Modifier.fillMaxWidth().focusRequester(searchFocusRequester),
                                     )
                                     if (players.isNotEmpty()) {
-                                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                            FullBleedRow(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                            ) {
+                                        // Two titled groups side by side: the photo filter, and the countries, which scroll
+                                        // sideways and reach the right edge of the screen.
+                                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                            FilterGroup(stringResource(Res.string.photo)) {
                                                 val photoCount = players.count { !it.photoUrl.isNullOrBlank() }
                                                 FilterPillButton(
                                                     selected = withPhotoOnly,
@@ -803,34 +807,45 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                                 ) {
                                                     ButtonText(stringResource(Res.string.filter_with_photo) + " ($photoCount)")
                                                 }
-                                                existingPlayerCountryCodes.forEach { code ->
-                                                    val countryName = countryNameOf(
-                                                        code,
-                                                        countries.firstOrNull { it.code.equals(code, ignoreCase = true) }?.name ?: code,
-                                                    )
-                                                    val countryPlayerCount = players.count {
-                                                        it.country.trim().equals(code, ignoreCase = true)
-                                                    }
-                                                    val isSelected = code in selectedCountryCodes
-                                                    val filterDescription = stringResource(
-                                                        if (isSelected) Res.string.remove_country_filter else Res.string.filter_by_code,
-                                                        countryName,
-                                                    )
-                                                    AppTooltipBox(pluralStringResource(Res.plurals.country_players_count, countryPlayerCount, countryName, countryPlayerCount)) {
-                                                        FilterPillButton(
-                                                            selected = isSelected,
-                                                            description = filterDescription,
-                                                            onClick = {
-                                                                selectedCountryCodes = if (isSelected) {
-                                                                    selectedCountryCodes - code
-                                                                } else {
-                                                                    selectedCountryCodes + code
+                                            }
+                                            FilterGroup(stringResource(Res.string.country), Modifier.weight(1f)) {
+                                                CompositionLocalProvider(
+                                                    LocalScreenBleed provides ScreenBleed(0.dp, LocalScreenBleed.current.end),
+                                                ) {
+                                                    FullBleedRow(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                                    ) {
+                                                        existingPlayerCountryCodes.forEach { code ->
+                                                            val countryName = countryNameOf(
+                                                                code,
+                                                                countries.firstOrNull { it.code.equals(code, ignoreCase = true) }?.name ?: code,
+                                                            )
+                                                            val countryPlayerCount = players.count {
+                                                                it.country.trim().equals(code, ignoreCase = true)
+                                                            }
+                                                            val isSelected = code in selectedCountryCodes
+                                                            val filterDescription = stringResource(
+                                                                if (isSelected) Res.string.remove_country_filter else Res.string.filter_by_code,
+                                                                countryName,
+                                                            )
+                                                            AppTooltipBox(pluralStringResource(Res.plurals.country_players_count, countryPlayerCount, countryName, countryPlayerCount)) {
+                                                                FilterPillButton(
+                                                                    selected = isSelected,
+                                                                    description = filterDescription,
+                                                                    onClick = {
+                                                                        selectedCountryCodes = if (isSelected) {
+                                                                            selectedCountryCodes - code
+                                                                        } else {
+                                                                            selectedCountryCodes + code
+                                                                        }
+                                                                    },
+                                                                ) {
+                                                                    CountryFlag(code = code)
+                                                                    Spacer(Modifier.width(4.dp))
+                                                                    ButtonText("$code ($countryPlayerCount)")
                                                                 }
-                                                            },
-                                                        ) {
-                                                            CountryFlag(code = code)
-                                                            Spacer(Modifier.width(4.dp))
-                                                            ButtonText("$code ($countryPlayerCount)")
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -875,7 +890,16 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                     }
                                 if (!compact) {
                                     DataTableHeaderRow {
-                                        if (canDelete) Spacer(Modifier.width(PlayerCheckboxColumnWidth))
+                                        if (canDelete) {
+                                            SelectShownCheckbox(
+                                                shownCount = filteredPlayers.size,
+                                                selectedCount = chosenEmaIds.size,
+                                                enabled = !saving && !loading,
+                                                onSelectAllShown = { checkedEmaIds = filteredPlayers.map { it.emaId }.toSet() },
+                                                onClear = { checkedEmaIds = emptySet() },
+                                                modifier = Modifier.width(PlayerCheckboxColumnWidth),
+                                            )
+                                        }
                                         PlayerTableHeader(stringResource(Res.string.photo), Modifier.width(PlayerPhotoColumnWidth))
                                         PlayerTableHeader(stringResource(Res.string.country), Modifier.width(PlayerCountryColumnWidth))
                                         PlayerTableHeader(stringResource(Res.string.name), Modifier.weight(1f))
@@ -1168,6 +1192,7 @@ private fun PlayerPhotoPreview(
             FocusHighlightContainer(
                 modifier = Modifier,
                 interactionSource = interactionSource,
+                lightsUpContent = true,
             ) {
                 Box(
                     modifier = Modifier

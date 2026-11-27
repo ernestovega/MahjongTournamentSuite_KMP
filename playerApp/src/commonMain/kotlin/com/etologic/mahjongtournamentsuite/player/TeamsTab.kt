@@ -1,7 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -195,7 +194,8 @@ private fun TeamList(view: PlayerTournamentView, onSelect: (Int) -> Unit) {
 private fun TeamListCard(row: TeamListRow, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     Card(
-        Modifier.fillMaxWidth().clickable(onClick = onClick),
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
         border = if (row.mine) BorderStroke(2.dp, colors.primary) else null,
         colors = CardDefaults.cardColors(containerColor = colors.surfaceContainerHigh),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),

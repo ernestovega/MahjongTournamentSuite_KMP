@@ -1,10 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
-import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -31,7 +28,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
@@ -353,20 +349,10 @@ internal fun AssignEmaPlayerDialog(
             confirmButton = {
                 MtsDialogButtons {
                     val cancelInteractionSource = remember { MutableInteractionSource() }
-                    val cancelHovered by cancelInteractionSource.collectIsHoveredAsState()
-                    val cancelFocused by cancelInteractionSource.collectIsFocusedAsState()
                     TextButton(
                         onClick = { onDismiss() },
                         interactionSource = cancelInteractionSource,
                         modifier = Modifier
-                            .clip(MaterialTheme.shapes.small)
-                            .background(
-                                if (cancelHovered || cancelFocused) {
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
-                                } else {
-                                    androidx.compose.ui.graphics.Color.Transparent
-                                },
-                            )
                             .focusRequester(cancelFocusRequester)
                             .focusProperties {
                                 previous = playerFocusRequesters.getOrNull(
@@ -432,10 +418,6 @@ internal fun ClearAssignmentDialog(
     val clearCancelFocusRequester = remember(slotId) { FocusRequester() }
     val clearConfirmInteractionSource = remember(slotId) { MutableInteractionSource() }
     val clearCancelInteractionSource = remember(slotId) { MutableInteractionSource() }
-    val clearConfirmFocused by clearConfirmInteractionSource.collectIsFocusedAsState()
-    val clearConfirmHovered by clearConfirmInteractionSource.collectIsHoveredAsState()
-    val clearCancelFocused by clearCancelInteractionSource.collectIsFocusedAsState()
-    val clearCancelHovered by clearCancelInteractionSource.collectIsHoveredAsState()
 
     LaunchedEffect(slotId) {
         clearConfirmFocusRequester.requestFocus()
@@ -457,18 +439,7 @@ internal fun ClearAssignmentDialog(
             },
             confirmButton = {
                 MtsDialogButtons {
-                    Box(
-                        modifier = Modifier
-                            .clip(MaterialTheme.shapes.small)
-                            .background(
-                                if (clearConfirmFocused || clearConfirmHovered) {
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
-                                } else {
-                                    androidx.compose.ui.graphics.Color.Transparent
-                                },
-                            )
-                            .padding(3.dp),
-                    ) {
+                    Box {
                         Button(
                             enabled = !saving,
                             onClick = onConfirm,
@@ -499,18 +470,7 @@ internal fun ClearAssignmentDialog(
                         ) { ButtonText(stringResource(Res.string.clear_assignment_2)) }
                     }
 
-                    Box(
-                        modifier = Modifier
-                            .clip(MaterialTheme.shapes.small)
-                            .background(
-                                if (clearCancelFocused || clearCancelHovered) {
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
-                                } else {
-                                    androidx.compose.ui.graphics.Color.Transparent
-                                },
-                            )
-                            .padding(3.dp),
-                    ) {
+                    Box {
                         TextButton(
                             onClick = { onDismiss() },
                             interactionSource = clearCancelInteractionSource,

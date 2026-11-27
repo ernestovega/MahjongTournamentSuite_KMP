@@ -3,7 +3,6 @@ import { before, describe, it } from "node:test";
 
 import { db } from "../firebase";
 import { readTable, requireEmulator, seedTournament } from "../testing/firestoreFixtures";
-import { backfillHandsCopy, copyHandsIntoTable } from "./handsCopyBackfill";
 import {
   getAllTablesWithHands,
   getRoundTablesWithHands,
@@ -92,35 +91,5 @@ describe("the copy of the hands in the table", () => {
     assert.equal(copy.version, 2);
     assert.ok(copy.hands.every((hand) => hand.handScore === "" && hand.isDone === false));
     assert.equal((await getAllTablesWithHands({ tournamentId: id }))[0].hands[0].handScore, "");
-  });
-});
-
-describe("the backfill of the copies", () => {
-  before(requireEmulator);
-
-  it("previews without writing, then copies the hands without changing the version", async () => {
-    const id = await seedTournament({ tables: [{ roundId: 1, tableId: 1, version: 3 }] });
-    await handRef(id, 4).update({ handScore: "16", isDone: true });
-
-    assert.equal(await copyHandsIntoTable(tableRef(id), false), "copied");
-    assert.equal(copyOf(await readTable(id, 1, 1)), undefined);
-
-    assert.equal(await copyHandsIntoTable(tableRef(id), true), "copied");
-    const table = await readTable(id, 1, 1);
-    assert.equal(table.version, 3);
-    assert.equal(copyOf(table)!.version, 3);
-    assert.equal(copyOf(table)!.hands[3].handScore, "16");
-
-    assert.equal(await copyHandsIntoTable(tableRef(id), true), "valid");
-  });
-
-  it("skips a table whose hands are missing and counts every table", async () => {
-    const id = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }, { roundId: 1, tableId: 2 }] });
-    await handRef(id, 16, 1, 2).delete();
-
-    const counts = await backfillHandsCopy({ tournamentIds: [id], apply: true });
-
-    assert.deepEqual(counts, { copied: 1, valid: 0, "missing-hands": 1 });
-    assert.equal(copyOf(await readTable(id, 1, 2)), undefined);
   });
 });

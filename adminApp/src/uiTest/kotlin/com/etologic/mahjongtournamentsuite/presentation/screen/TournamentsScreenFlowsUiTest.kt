@@ -7,21 +7,27 @@ import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import co.touchlab.kermit.Logger
+import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
+import com.etologic.mahjongtournamentsuite.domain.model.CreateTournamentRequest
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationSettings
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
@@ -41,10 +47,12 @@ import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
 import com.etologic.mahjongtournamentsuite.presentation.presenter.CreateTournamentPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.IdCardProofPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
+import com.etologic.mahjongtournamentsuite.presentation.sync.TournamentListPoll
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController
@@ -59,6 +67,8 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TestTimeSource
 
 /**
  * The list of tournaments: where a tournament opens (its players, its rounds or its registrations), the edit and the
@@ -74,6 +84,8 @@ class TournamentsScreenFlowsUiTest {
     @AfterTest
     fun resetMain() = Dispatchers.resetMain()
 
+    private val pressClock = TestTimeSource()
+
     private val open = Tournament(id = "t1", name = "Open Madrid", isTeams = false, numPlayers = 4, numRounds = 1)
     private val assigned = (1..4).map { TournamentPlayer(id = it, name = "P$it", team = 0, assignedEmaId = "0$it") }
 
@@ -83,7 +95,10 @@ class TournamentsScreenFlowsUiTest {
         role: GlobalUserRole = GlobalUserRole.SUPER_ADMIN,
         val countriesFail: Boolean = false,
         val alias: String = "Me",
+        /** The loads that fail: "profile", "admin" or "tournaments". */
+        val failing: Set<String> = emptySet(),
     ) {
+        val requests = mutableListOf<CreateTournamentRequest>()
         val server = FakeTournamentRepository().apply {
             this.tournaments = tournaments
             this.players = players
@@ -91,10 +106,24 @@ class TournamentsScreenFlowsUiTest {
         }
         val repository: TournamentRepository = object : TournamentRepository by server {
             override suspend fun listCountries(refreshMode: RefreshMode) = if (countriesFail) AppResult.Failure(AppError.Network) else server.listCountries(refreshMode)
+
+            override suspend fun listTournaments(refreshMode: RefreshMode): AppResult<List<Tournament>> =
+                if ("tournaments" in failing) AppResult.Failure(AppError.Network) else server.listTournaments(refreshMode)
+
+            override suspend fun createTournament(request: CreateTournamentRequest): AppResult<Tournament> {
+                requests += request
+                val tournament = Tournament(id = "new", name = request.name, isTeams = request.isTeams, numPlayers = request.numPlayers, numRounds = request.numRounds)
+                return AppResult.Success(if (request.registration != null) tournament.copy(drawPending = true) else tournament)
+            }
         }
-        val admin: AdminRepository = FakeAdminRepository(role)
+        private val fakeAdmin = FakeAdminRepository(role)
+        val admin: AdminRepository = object : AdminRepository by fakeAdmin {
+            override suspend fun whoAmI(refreshMode: RefreshMode): AppResult<AdminStatus> =
+                if ("admin" in failing) AppResult.Failure(AppError.Network) else fakeAdmin.whoAmI(refreshMode)
+        }
         val auth: AuthRepository = object : AuthRepository by FakeSignedInAuthRepository() {
-            override suspend fun getMe(refreshMode: RefreshMode) = AppResult.Success(UserProfile("me", "john.doe-smith@example.test", alias))
+            override suspend fun getMe(refreshMode: RefreshMode): AppResult<UserProfile> =
+                if ("profile" in failing) AppResult.Failure(AppError.Network) else AppResult.Success(UserProfile("me", "john.doe-smith@example.test", alias))
         }
         val store = AppMemoryStore()
     }
@@ -120,7 +149,7 @@ class TournamentsScreenFlowsUiTest {
                 }.koin
             }
             KoinContext(koin) {
-                CompositionLocalProvider(LocalThemeController provides themeController, LocalCompactLayout provides compact) {
+                CompositionLocalProvider(LocalThemeController provides themeController, LocalCompactLayout provides compact, LocalPressTimeSource provides pressClock) {
                     MtsTheme(useDarkTheme = false) {
                         val navController = rememberNavController()
                         NavHost(navController, startDestination = TournamentsRoute) {
@@ -306,5 +335,78 @@ class TournamentsScreenFlowsUiTest {
 
         openTheTournament()
         awaitText("AT registrations")
+    }
+
+    @Test
+    fun aFailedProfileShowsTheErrorOfTheProfileFirst() = runComposeUiTest {
+        show(World(listOf(open), failing = setOf("profile", "admin", "tournaments")))
+        awaitText("Network request failed.")
+    }
+
+    @Test
+    fun aFailedAccessShowsTheError() = runComposeUiTest {
+        show(World(listOf(open), failing = setOf("admin", "tournaments")))
+        awaitText("Network request failed.")
+    }
+
+    @Test
+    fun aFailedListOfTournamentsShowsTheError() = runComposeUiTest {
+        show(World(listOf(open), failing = setOf("tournaments")))
+        awaitText("Network request failed.")
+    }
+
+    @Test
+    fun theListChecksTheServerAgainAfterAWhile() = runComposeUiTest {
+        val world = World(listOf(open))
+        show(world)
+        awaitText("Open Madrid")
+        world.server.tournaments = listOf(open, open.copy(id = "t2", name = "Winter Cup"))
+
+        mainClock.advanceTimeBy(TournamentListPoll.IDLE.inWholeMilliseconds + 1_000)
+        awaitText("Winter Cup")
+    }
+
+    private fun ComposeUiTest.field(label: String) = onNode(hasSetTextAction() and hasText(label))
+
+    /** Fills a valid form: one round, its date and time, and a venue. */
+    private fun ComposeUiTest.fillTheNewTournament(registrations: Boolean) {
+        click("New tournament")
+        field("Name").performTextInput("Spring Open")
+        field("Short name").performTextInput("SPRING")
+        field("Players").performTextReplacement("16")
+        field("Rounds").performTextReplacement("1")
+        if (registrations) onNode(isToggleable() and hasText("Open registrations")).performScrollTo().performClick()
+        waitForIdle()
+        click("Venue")
+        field("Venue name").performScrollTo().performTextInput("Club")
+        field("Address").performScrollTo().performTextInput("Calle 1")
+        field("City").performScrollTo().performTextInput("Madrid")
+        field("Contact email").performScrollTo().performTextInput("club@example.test")
+        click("Schedule")
+        field("From").performTextReplacement("22/10/2026")
+        field("To").performTextReplacement("22/10/2026")
+        field("Date").performScrollTo().performTextInput("22/10/2026")
+        field("Start").performScrollTo().performTextInput("10:00")
+        waitForIdle()
+        pressClock += 1.seconds
+        click("Create")
+    }
+
+    @Test
+    fun aNewTournamentWithItsDrawOpensOnItsPlayers() = runComposeUiTest {
+        // A club admin organizes with its club, so the form needs no organizer.
+        show(World(listOf(open), role = GlobalUserRole.CLUB_ADMIN))
+        awaitText("Open Madrid")
+        fillTheNewTournament(registrations = false)
+        waitUntil(timeoutMillis = 10_000) { count("AT players") > 0 }
+    }
+
+    @Test
+    fun aNewTournamentWithRegistrationsOpensOnThem() = runComposeUiTest {
+        // A club admin organizes with its club, so the form needs no organizer.
+        show(World(listOf(open), role = GlobalUserRole.CLUB_ADMIN))
+        awaitText("Open Madrid")
+        fillTheNewTournament(registrations = true)
+        waitUntil(timeoutMillis = 10_000) { count("AT registrations") > 0 }
     }
 }

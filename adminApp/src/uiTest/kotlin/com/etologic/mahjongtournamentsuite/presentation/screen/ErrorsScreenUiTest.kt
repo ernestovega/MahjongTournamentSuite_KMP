@@ -22,6 +22,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.ErrorLogCursor
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorReportEntry
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.presenter.ErrorsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
@@ -50,6 +51,7 @@ class ErrorsScreenUiTest {
         kind: String = "handled",
         env: String = "prod",
         app: String = "admin",
+        ago: Long = 1_000,
     ) = ErrorGroup(
         id = id,
         errorType = type,
@@ -57,7 +59,7 @@ class ErrorsScreenUiTest {
         message = "boom $id",
         count = count,
         firstSeen = now - 5_000,
-        lastSeen = now - 1_000,
+        lastSeen = now - ago,
         lastKind = kind,
         lastApp = app,
         lastPlatform = platform,
@@ -77,6 +79,7 @@ class ErrorsScreenUiTest {
         failure: AppError? = null,
         configure: FakeAdminRepository.() -> Unit = {},
         ready: String? = "WebFailure",
+        compact: Boolean = false,
     ): FakeAdminRepository {
         val admin = FakeAdminRepository(GlobalUserRole.SUPER_ADMIN).apply {
             errorPageSize = pageSize
@@ -122,7 +125,7 @@ class ErrorsScreenUiTest {
                 }.koin
             }
             KoinContext(koin) {
-                CompositionLocalProvider(LocalThemeController provides themeController) {
+                CompositionLocalProvider(LocalThemeController provides themeController, LocalCompactLayout provides compact) {
                     MtsTheme(useDarkTheme = false) { ErrorsScreen(rememberNavController()) }
                 }
             }
@@ -355,6 +358,46 @@ class ErrorsScreenUiTest {
 
         // The two problems were seen one second ago.
         onAllNodesWithText("Just now").onFirst().assertExists()
+    }
+
+    private val hour = 60 * 60_000L
+
+    @Test
+    fun aPhoneShowsEachProblemOnOneCompactRow() = runComposeUiTest {
+        show(base = listOf(webGroup, group("g3", "CrashFailure", "android", 4, kind = "crash"), group("g5", "Quiet", "web", 1).copy(message = "")), compact = true)
+
+        onNodeWithText("CrashFailure").assertExists()
+        onNodeWithText("×7").assertExists()
+        onNodeWithText("boom g1").assertExists()
+        onAllNodesWithText("Just now", substring = true).onFirst().assertExists()
+    }
+
+    @Test
+    fun olderProblemsSayHowLongAgoAndUnknownNamesShowAsTheyCame() = runComposeUiTest {
+        show(
+            base = listOf(
+                group("g1", "MinutesAgo", "ios", 1, ago = 5 * 60_000L, app = "timer", kind = "anr"),
+                group("g2", "HoursAgo", "desktop", 1, ago = 3 * hour),
+                group("g3", "DaysAgo", "web", 1, ago = 50 * hour),
+            ),
+            ready = "MinutesAgo",
+        )
+
+        onAllNodesWithText("5 min ago", substring = true).onFirst().assertExists()
+        onAllNodesWithText("3 h ago", substring = true).onFirst().assertExists()
+        onAllNodesWithText("2 d ago", substring = true).onFirst().assertExists()
+        onAllNodesWithText("anr", substring = true).onFirst().assertExists()
+    }
+
+    @Test
+    fun copyPutsTheStackTraceInTheClipboard() = runComposeUiTest {
+        show()
+        onAllNodesWithText("WebFailure").onFirst().performClick()
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Copy stack trace").fetchSemanticsNodes().isNotEmpty() }
+
+        onNodeWithText("Copy stack trace").performClick()
+        waitForIdle()
+        onNodeWithText("Copy stack trace").assertExists()
     }
 
     private fun androidx.compose.ui.test.SemanticsNodeInteraction.assertExistsText() = assertExists()

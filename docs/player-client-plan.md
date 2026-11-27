@@ -45,7 +45,6 @@ No new libraries were added.
    `npx -y firebase-tools@latest functions:secrets:set MTS_SMTP_URI --project mahjong-tournament-suite`.
 3. `PLAYER_APP_URL` and `MAIL_FROM` are set in `firebase/functions/.env`. Deploy the functions. Then deploy hosting.
 4. Save each existing editor account once in the accounts screen so it gets the `editor` claim.
-5. Run `npm run verify:roles` (see `firebase-role-rollout.md`).
 
 ## Phase 3: schedules and notifications
 

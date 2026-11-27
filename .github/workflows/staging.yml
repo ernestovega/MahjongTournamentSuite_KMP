@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: "deploy: publish the branch (develop or main) on staging. seed: admin account, countries and the EMA players of the rehearsal. tournaments: the tournaments of the production seed (seed:production-tournaments) and the statistics. android: build the staging APK."
+        description: "deploy: publish the branch (develop or main) on staging. seed: admin account, countries and the EMA players of the rehearsal. tournaments: the tournaments of the production seed (seed:tournaments --set=production) and the statistics. android: build the staging APK."
         type: choice
         options: [deploy, seed, tournaments, android]
         default: deploy
@@ -236,14 +236,14 @@ jobs:
           npm run seed:staging -- --apply --project="$STAGING"
 
   # The tournaments of the production seed, so that staging has as much data as production (Ernesto, 2026-11-27):
-  # the same specs as `npm run seed:production-tournaments:apply`, with players from the EMA registry of staging, then
+  # the same specs as `npm run seed:tournaments -- --set=production`, with players from the EMA registry of staging, then
   # the statistics rebuilt from the tables. It writes only the fixed ids of those tournaments and their organizations,
   # never accounts or emails. A new run writes them again from the start.
   tournaments:
     name: Seed the production tournaments
     if: (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') && inputs.action == 'tournaments'
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 60
     permissions:
       contents: read
       id-token: write
@@ -282,8 +282,9 @@ jobs:
           export EMA_FIREBASE_STORAGE_BUCKET="$STAGING.firebasestorage.app"
           NUMBER="$(gcloud projects describe "$STAGING" --format='value(projectNumber)')"
           export EMA_FIREBASE_SERVICE_ACCOUNT="$NUMBER-compute@developer.gserviceaccount.com"
-          npm run seed:production-tournaments:apply
-          npm run backfill:statistics:apply
+          npm run seed:tournaments -- --target=staging --set=production --apply
+          # Only the tournaments of the seed: all of staging (game days included) takes longer than the job.
+          npm run backfill:statistics:apply -- --only=madrid-open-2026,toledo-mcr-challenge-2026,alcala-team-cup-2026,barcelona-mahjong-open-2027,madrid-spring-open-2027,uppsala-mcr-open-2026
 
   # The staging Android app (build type `staging`), as a downloadable APK, on every push to develop and by hand. It may
   # run on any branch: it touches no project.

@@ -3,15 +3,18 @@ import { refreshTournamentStats } from "../services/statisticsStore";
 import { runScript } from "./scriptRun";
 
 const applyChanges = process.argv.includes("--apply");
+const only = process.argv.find((arg) => arg.startsWith("--only="))?.split("=")[1]?.split(",").filter((id) => id !== "");
 
 /**
  * Rebuilds the statistics store from the tables of every tournament. Run it after a change of the statistics
  * rules, and after tables are written without the app, as the test seed does. It works one table at a time,
  * so the memory use does not depend on the number of tournaments. It is safe to run again:
- * a table that did not change adds nothing a second time.
+ * a table that did not change adds nothing a second time. Add --only=<id>,<id> to rebuild only some tournaments, such as
+ * the ones that a seed has just written.
  */
 async function backfill(): Promise<{ tournaments: number; tables: number }> {
-  const tournaments = await db.collection("tournaments").select().get();
+  const all = await db.collection("tournaments").select().get();
+  const tournaments = { docs: all.docs.filter((doc) => only == null || only.includes(doc.id)), get size() { return this.docs.length; } };
   console.log(`${applyChanges ? "Applying" : "Previewing"} the statistics rebuild for ${firebaseProjectId}: ${tournaments.size} tournaments.`);
   let tables = 0;
   for (const [index, tournament] of tournaments.docs.entries()) {

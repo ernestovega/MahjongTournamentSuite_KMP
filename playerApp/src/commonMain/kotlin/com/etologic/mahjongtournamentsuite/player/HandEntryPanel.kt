@@ -2,7 +2,6 @@ package com.etologic.mahjongtournamentsuite.player
 
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -733,19 +732,19 @@ private fun ScoreNumpad(value: String, onChange: (String) -> Unit) {
                 row.forEach { key ->
                     val isDigit = key.first().isDigit()
                     Surface(
+                        onClick = {
+                            onChange(
+                                when (key) {
+                                    NUMPAD_CLEAR -> ""
+                                    NUMPAD_DELETE -> value.dropLast(1)
+                                    // No leading zero, and no more digits than a score has.
+                                    else -> if (value.length >= NUMPAD_MAX_DIGITS || (value.isEmpty() && key == "0")) value else value + key
+                                },
+                            )
+                        },
                         modifier = Modifier
                             .weight(1f)
-                            .height(52.dp)
-                            .clickable {
-                                onChange(
-                                    when (key) {
-                                        NUMPAD_CLEAR -> ""
-                                        NUMPAD_DELETE -> value.dropLast(1)
-                                        // No leading zero, and no more digits than a score has.
-                                        else -> if (value.length >= NUMPAD_MAX_DIGITS || (value.isEmpty() && key == "0")) value else value + key
-                                    },
-                                )
-                            },
+                            .height(52.dp),
                         shape = MaterialTheme.shapes.medium,
                         color = if (isDigit) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainerHighest,
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
@@ -803,7 +802,8 @@ private fun WinSoFar(view: PlayerTournamentView, winner: Int?, loser: Int? = nul
 @Composable
 private fun SelfDrawButton(label: String, onClick: () -> Unit) {
     Surface(
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.medium,
         color = MaterialTheme.colorScheme.surface,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
@@ -847,7 +847,8 @@ private fun PlayerChoices(
                 group.forEach { slot ->
                     val isSelected = slot == selected
                     Surface(
-                        modifier = Modifier.weight(1f).testTag(PLAYER_CHOICE_TAG).clickable { onSelect(slot) },
+                        onClick = { onSelect(slot) },
+                        modifier = Modifier.weight(1f).testTag(PLAYER_CHOICE_TAG),
                         shape = MaterialTheme.shapes.medium,
                         color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
                         border = BorderStroke(

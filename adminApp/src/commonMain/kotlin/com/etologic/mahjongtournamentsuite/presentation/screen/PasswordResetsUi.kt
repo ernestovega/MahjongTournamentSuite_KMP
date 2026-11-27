@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectShownCheckbox
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -34,7 +35,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
-import mahjongtournamentsuite.adminapp.generated.resources.clear
 import mahjongtournamentsuite.adminapp.generated.resources.delete_selected_count
 import mahjongtournamentsuite.adminapp.generated.resources.dialog_done_title
 import mahjongtournamentsuite.adminapp.generated.resources.ok
@@ -47,7 +47,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.reset_failure_no_emai
 import mahjongtournamentsuite.adminapp.generated.resources.reset_failure_not_found
 import mahjongtournamentsuite.adminapp.generated.resources.reset_failure_unknown
 import mahjongtournamentsuite.adminapp.generated.resources.result_section_sent
-import mahjongtournamentsuite.adminapp.generated.resources.select_all_shown
 import mahjongtournamentsuite.adminapp.generated.resources.selected_count
 import mahjongtournamentsuite.adminapp.generated.resources.send_password_reset_count
 import mahjongtournamentsuite.adminapp.generated.resources.send_section_failed
@@ -74,6 +73,8 @@ internal fun PasswordResetBar(
     showSend: Boolean = true,
     /** False for a club admin: only super admins delete accounts. */
     showDelete: Boolean = true,
+    /** True on a phone, where the list has no header for the box that selects every account. */
+    showSelectAll: Boolean = false,
 ) {
     // The items wrap on a narrow screen. On a wide one the send button stays at the end of the line.
     FlowRow(
@@ -82,11 +83,19 @@ internal fun PasswordResetBar(
         verticalArrangement = Arrangement.spacedBy(4.dp),
         itemVerticalAlignment = Alignment.CenterVertically,
     ) {
-        TextButton(enabled = shownCount > 0 && !busy, onClick = onSelectAllShown) {
-            ButtonText(stringResource(Res.string.select_all_shown, shownCount))
+        // The box in the header of the list selects every account that it shows. A phone has no header: the box goes here.
+        if (showSelectAll) {
+            SelectShownCheckbox(
+                shownCount = shownCount,
+                selectedCount = selectedCount,
+                enabled = !busy,
+                onSelectAllShown = onSelectAllShown,
+                onClear = onClear,
+                label = stringResource(Res.string.selected_count, selectedCount),
+            )
+        } else {
+            Text(stringResource(Res.string.selected_count, selectedCount), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        TextButton(enabled = selectedCount > 0 && !busy, onClick = onClear) { ButtonText(stringResource(Res.string.clear)) }
-        Text(stringResource(Res.string.selected_count, selectedCount), color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (showSend) Spacer(Modifier.weight(1f))
         // On a phone the delete stays here, and the send button floats at the bottom of the screen.
         if (showDelete) {

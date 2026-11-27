@@ -3,7 +3,6 @@ package com.etologic.mahjongtournamentsuite.player
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -83,6 +82,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.LocalHideOnSc
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsTabRow
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
+import com.etologic.mahjongtournamentsuite.presentation.components.PlatformBackHandler
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.hideOnScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.label
@@ -230,6 +230,9 @@ fun TournamentsScreen(navController: NavHostController) {
     val ownLive = items.orEmpty().any { it.id in mine && statusOf(it) == TournamentStatus.IN_PROGRESS }
     val tabs = listOfNotNull(StartTab.LIVE.takeIf { anyLive }, StartTab.ALL, StartTab.STATS)
     val tab = StartTab.entries.getOrNull(tabId)?.takeIf { it in tabs } ?: StartTab.ALL
+    // The back leaves the app from the first tab only, In play or Tournaments. From any other one it opens that tab.
+    val homeTab = tabs.first()
+    PlatformBackHandler(enabled = tab != homeTab) { tabId = homeTab.ordinal }
     // The app opens on the In play tab when the account plays a tournament now, once each time the app starts, so
     // coming back from a tournament keeps the tab that the person chose.
     LaunchedEffect(ownLive) {
@@ -540,7 +543,8 @@ internal fun TournamentCard(
     val dates = datesOf(tournament)
     val hasCity = tournament.hostCity.isNotBlank() || tournament.hostCountry.isNotBlank()
     Card(
-        Modifier.fillMaxWidth().clickable(onClick = onClick),
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         // No border (Ernesto, 20-nov): the status and the Open button keep the color of the status.
