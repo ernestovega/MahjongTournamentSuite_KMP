@@ -1269,4 +1269,7 @@ Reveal the results at the prize giving from Round control.</string>
     <string name="score_sheets_chicken_on">It has a column for chicken hands, because the tournament counts them.</string>
     <string name="score_sheets_chicken_off">It has no column for chicken hands, because the tournament does not count them.</string>
     <string name="score_sheets_save">Save the score sheets</string>
+    <string name="reveal_third_place">Reveal 3rd place</string>
+    <string name="reveal_second_place">Reveal 2nd place</string>
+    <string name="reveal_first_place">Reveal 1st place</string>
 </resources>

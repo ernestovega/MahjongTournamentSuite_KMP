@@ -1269,4 +1269,7 @@ De uitslagen worden bij de prijsuitreiking onthuld via Rondebeheer.</string>
     <string name="score_sheets_chicken_on">Het heeft een kolom voor chicken hands, omdat het toernooi ze telt.</string>
     <string name="score_sheets_chicken_off">Het heeft geen kolom voor chicken hands, omdat het toernooi ze niet telt.</string>
     <string name="score_sheets_save">Scorebladen opslaan</string>
+    <string name="reveal_third_place">3e plaats onthullen</string>
+    <string name="reveal_second_place">2e plaats onthullen</string>
+    <string name="reveal_first_place">1e plaats onthullen</string>
 </resources>

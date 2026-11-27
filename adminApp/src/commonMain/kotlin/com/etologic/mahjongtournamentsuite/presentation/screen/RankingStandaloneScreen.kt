@@ -10,10 +10,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -32,6 +34,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -134,6 +137,9 @@ import mahjongtournamentsuite.adminapp.generated.resources.seconds_short
 import mahjongtournamentsuite.adminapp.generated.resources.settings
 import mahjongtournamentsuite.adminapp.generated.resources.show_fewer_rows
 import mahjongtournamentsuite.adminapp.generated.resources.show_ranking_here_anyway
+import mahjongtournamentsuite.adminapp.generated.resources.reveal_first_place
+import mahjongtournamentsuite.adminapp.generated.resources.reveal_second_place
+import mahjongtournamentsuite.adminapp.generated.resources.reveal_third_place
 import mahjongtournamentsuite.adminapp.generated.resources.ranking_hidden_from_public_message
 import mahjongtournamentsuite.adminapp.generated.resources.ranking_hidden_from_public_title
 import mahjongtournamentsuite.adminapp.generated.resources.show_first_3
@@ -187,6 +193,8 @@ private fun RankingStandaloneContent(
     var remainingSeconds by remember { mutableIntStateOf(intervalSeconds) }
     var maxRowsPerScreen by remember { mutableIntStateOf(MAX_ROWS_PER_SCROLL) }
     var showTopThree by rememberSaveable { mutableStateOf(false) }
+    // The prize giving: how many of the hidden top three each page shows, from the third up (Ernesto, 2026-11-27).
+    var revealedByPage by remember { mutableStateOf(mapOf<String, Int>()) }
     // While the public cannot see the results, this screen asks before it shows them to the room.
     var showHiddenResults by rememberSaveable { mutableStateOf(false) }
     var playing by remember { mutableStateOf(false) }
@@ -227,8 +235,8 @@ private fun RankingStandaloneContent(
         }
     }
     val labels = rememberRankingLabels()
-    val pages = remember(snapshot, showTopThree, labels) {
-        snapshot?.toPages(showTopThree, labels).orEmpty()
+    val pages = remember(snapshot, showTopThree, revealedByPage, labels) {
+        snapshot?.toPages(showTopThree, revealedByPage, labels).orEmpty()
     }
     LaunchedEffect(pages.size) {
         if (pages.isNotEmpty()) pageIndex = pageIndex.coerceIn(0, pages.lastIndex)
@@ -276,7 +284,12 @@ private fun RankingStandaloneContent(
                     val compact = LocalCompactLayout.current
                     // On a phone the switches under the logos would cover the first rows: while paused, the table
                     // goes down to leave them room.
-                    val compactTop = if (!playing && snapshot?.tournament != null) COMPACT_TOP_WITH_SWITCHES else 24.dp
+                    // On a phone the title goes between the logos (Ernesto, 2026-11-27), in the band they take: the
+                    // logos and, while paused, their switches. The table starts under that band.
+                    val hasLogos = snapshot?.tournament != null
+                    val compactBand = if (playing) COMPACT_LOGO_SIZE else COMPACT_LOGO_BAND_WITH_SWITCHES
+                    val compactTop = if (hasLogos) COMPACT_LOGO_TOP + compactBand + 8.dp else 24.dp
+                    val showsPage = currentPage != null && !(snapshot?.tournament?.resultsHiddenFromRound != null && !showHiddenResults)
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -313,11 +326,24 @@ private fun RankingStandaloneContent(
                             }
                             else -> RankingPage(
                                 page = currentPage,
+                                showTitle = !(compact && hasLogos),
                                 listState = listState,
                                 rowsPerScroll = rowsPerScroll,
                                 onMaxRowsChanged = { maxRowsPerScreen = it },
                                 modifier = Modifier.weight(1f),
                             )
+                        }
+                    }
+                    if (compact && hasLogos && showsPage && currentPage != null) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .padding(top = COMPACT_LOGO_TOP, start = COMPACT_TITLE_SIDE, end = COMPACT_TITLE_SIDE)
+                                .height(compactBand)
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            RankingTitle(currentPage.title, compact = true)
                         }
                     }
                     snapshot?.let { held ->
@@ -339,7 +365,7 @@ private fun RankingStandaloneContent(
                                 onShowWhileRunningChange = { showOrganizerLogo = it },
                                 modifier = Modifier
                                     .align(Alignment.TopStart)
-                                    .padding(start = if (compact) 8.dp else 24.dp, top = if (compact) MtsTheme.spacing.xl else 40.dp),
+                                    .padding(start = if (compact) 8.dp else 24.dp, top = if (compact) COMPACT_LOGO_TOP else 40.dp),
                             ) {
                                 OrganizationLogo(
                                     name = tournament.mainOrganizerName(),
@@ -355,7 +381,7 @@ private fun RankingStandaloneContent(
                             onShowWhileRunningChange = { showEmaLogo = it },
                             // On a wide screen at the bottom left, under the controls, so the table keeps its width.
                             modifier = if (compact) {
-                                Modifier.align(Alignment.TopEnd).padding(end = 8.dp, top = MtsTheme.spacing.xl)
+                                Modifier.align(Alignment.TopEnd).padding(end = 8.dp, top = COMPACT_LOGO_TOP)
                             } else {
                                 Modifier.align(Alignment.BottomStart).padding(start = 24.dp, bottom = 24.dp)
                             },
@@ -395,7 +421,20 @@ private fun RankingStandaloneContent(
                         },
                         onToggleTheme = onToggleTheme,
                         showTopThree = showTopThree,
-                        onShowTopThreeChanged = { showTopThree = it },
+                        onShowTopThreeChanged = {
+                            showTopThree = it
+                            revealedByPage = emptyMap()
+                        },
+                        // The place that the next press shows: the lowest hidden one of the page, 3, then 2, then 1.
+                        nextReveal = currentPage?.rows?.take(3)?.indexOfLast { it.isMasked }?.takeIf { it >= 0 }?.plus(1),
+                        onReveal = {
+                            currentPage?.let { page ->
+                                // The room watches the podium: the paging stops and the page goes back to its top.
+                                playing = false
+                                revealedByPage = revealedByPage + (page.key to ((revealedByPage[page.key] ?: 0) + 1).coerceAtMost(3))
+                                scope.launch { listState.animateScrollToItem(0) }
+                            }
+                        },
                         modifier = Modifier
                             .align(if (compact) Alignment.BottomCenter else Alignment.CenterStart)
                             .padding(if (compact) 8.dp else 12.dp),
@@ -424,6 +463,9 @@ private fun RankingControls(
     onToggleTheme: () -> Unit,
     showTopThree: Boolean,
     onShowTopThreeChanged: (Boolean) -> Unit,
+    /** The place (3, 2 or 1) that [onReveal] shows on this page, or null when its top three shows. */
+    nextReveal: Int?,
+    onReveal: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val playFocusRequester = remember { FocusRequester() }
@@ -434,12 +476,14 @@ private fun RankingControls(
     val shorterIntervalFocusRequester = remember { FocusRequester() }
     val longerIntervalFocusRequester = remember { FocusRequester() }
     val themeFocusRequester = remember { FocusRequester() }
+    val revealFocusRequester = remember { FocusRequester() }
 
     val compact = LocalCompactLayout.current
     val settingsFocusRequester = remember { FocusRequester() }
     var settingsOpen by remember { mutableStateOf(false) }
     val activeFocusRequesters = buildList {
         add(playFocusRequester)
+        if (nextReveal != null) add(revealFocusRequester)
         if (pageCount > 1) {
             add(previousFocusRequester)
             add(nextFocusRequester)
@@ -489,6 +533,30 @@ private fun RankingControls(
             onCheckedChange = onShowTopThreeChanged,
             style = MaterialTheme.typography.labelSmall,
         )
+    }
+    val reveal: @Composable () -> Unit = {
+        if (nextReveal != null) {
+            FocusedButton(
+                onClick = onReveal,
+                focusRequester = revealFocusRequester,
+                // Beside the ranking the button keeps to the width of the other controls, in two lines if needed.
+                buttonModifier = focusLoopFor(revealFocusRequester)
+                    .then(if (compact) Modifier else Modifier.widthIn(max = 136.dp))
+                    .testTag("ranking_reveal_next"),
+                contentPadding = if (compact) ButtonDefaults.ContentPadding else PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+            ) {
+                ButtonText(
+                    textAlign = TextAlign.Center,
+                    text = stringResource(
+                        when (nextReveal) {
+                            3 -> Res.string.reveal_third_place
+                            2 -> Res.string.reveal_second_place
+                            else -> Res.string.reveal_first_place
+                        },
+                    ),
+                )
+            }
+        }
     }
     val pager: @Composable () -> Unit = {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -582,6 +650,7 @@ private fun RankingControls(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 playButton()
+                reveal()
                 pager()
                 FocusedIconButton(
                     onClick = { settingsOpen = true },
@@ -618,10 +687,24 @@ private fun RankingControls(
         ) {
             playButton()
             topThree()
+            reveal()
             pager()
             settings()
         }
     }
+}
+
+/** The title of a page of the ranking: Players, Teams... */
+@Composable
+private fun RankingTitle(title: String, compact: Boolean, modifier: Modifier = Modifier) {
+    Text(
+        text = title,
+        style = (if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium).copy(fontWeight = FontWeight.Bold),
+        textAlign = TextAlign.Center,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -631,6 +714,8 @@ private fun RankingPage(
     rowsPerScroll: Int,
     onMaxRowsChanged: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    /** False when the title goes elsewhere: between the logos on a phone. */
+    showTitle: Boolean = true,
 ) {
     // A phone reads the ranking in the hand: a normal text size, the full width, and the name column takes the space left.
     val compact = LocalCompactLayout.current
@@ -639,11 +724,6 @@ private fun RankingPage(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(
-            text = page.title,
-            style = (if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium).copy(fontWeight = FontWeight.Bold),
-            modifier = Modifier.padding(bottom = 8.dp),
-        )
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
@@ -653,7 +733,13 @@ private fun RankingPage(
             contentAlignment = Alignment.TopCenter,
         ) {
             val headerHeight = 28.dp
-            val availableRowsHeight = (maxHeight - headerHeight).coerceAtLeast(0.dp)
+            // The title goes with the table, so the two are centered together when the rows do not fill the screen.
+            val titleHeight = when {
+                !showTitle -> 0.dp
+                compact -> COMPACT_RANKING_TITLE_HEIGHT
+                else -> RANKING_TITLE_HEIGHT
+            }
+            val availableRowsHeight = (maxHeight - titleHeight - headerHeight).coerceAtLeast(0.dp)
             val rowHeight = availableRowsHeight / (rowsPerScroll + ROW_LAYOUT_SAFETY_ROWS).toFloat()
             val fontSize = (rowHeight - ROW_VERTICAL_OVERHEAD).value
                 .coerceIn(MIN_RANKING_FONT_SIZE_SP, MAX_RANKING_FONT_SIZE_SP)
@@ -685,12 +771,25 @@ private fun RankingPage(
             val measuredWidths = rememberRankingColumnWidths(page, textStyle, headerStyle, teamStyle)
             val tableWidth = if (compact) maxWidth else RankingTableWidth
             val widths = measuredWidths.fitNameTo(tableWidth, spacing, if (page.showPhoto) photoSize else null, compact)
+            // When every row fits, the room left goes half between the rows and half above and below, the same on
+            // both sides, so a short page fills the screen and stays centered (Ernesto, 2026-11-27).
+            val fill = rankingFill(page.rows.size, photoSize + ROW_BASE_VERTICAL_PADDING * 2, availableRowsHeight)
 
-            Column(modifier = Modifier.width(tableWidth).fillMaxHeight()) {
+            Column(
+                modifier = Modifier.width(tableWidth).fillMaxHeight().padding(vertical = fill.margin),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                if (showTitle) {
+                    Box(modifier = Modifier.height(titleHeight), contentAlignment = Alignment.TopCenter) {
+                        RankingTitle(page.title, compact)
+                    }
+                }
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .height(headerHeight)
                         .padding(bottom = 4.dp),
+                    verticalAlignment = Alignment.Bottom,
                     horizontalArrangement = Arrangement.spacedBy(
                         spacing,
                         Alignment.CenterHorizontally,
@@ -724,7 +823,7 @@ private fun RankingPage(
                             },
                             contentPadding = androidx.compose.foundation.layout.PaddingValues(
                                 horizontal = 0.dp,
-                                vertical = 2.dp,
+                                vertical = ROW_BASE_VERTICAL_PADDING + fill.extraPerRow / 2,
                             ),
                             horizontalArrangement = Arrangement.spacedBy(
                                 spacing,
@@ -994,7 +1093,7 @@ private fun rememberRankingLabels(): RankingLabels {
     }
 }
 
-private fun RankingSnapshot.toPages(showTopThree: Boolean, labels: RankingLabels): List<RankingPage> {
+private fun RankingSnapshot.toPages(showTopThree: Boolean, revealed: Map<String, Int>, labels: RankingLabels): List<RankingPage> {
     val slotsById = tournamentPlayers.associateBy { it.id }
     val playersByEma = basePlayers.associateBy { it.emaId }
     val teamNamesById = tournamentTeams.associate { it.id to it.name }
@@ -1010,7 +1109,7 @@ private fun RankingSnapshot.toPages(showTopThree: Boolean, labels: RankingLabels
             teamHeader = labels.team,
             rows = rankings.players.map {
                 it.toRow(slotsById, playersByEma, teamNamesById, labels)
-            }.maskTopThree(!showTopThree),
+            }.maskTopThree(!showTopThree, revealed["players"] ?: 0),
         )
     }
     if (isTeams && rankings.teams.isNotEmpty()) {
@@ -1019,7 +1118,7 @@ private fun RankingSnapshot.toPages(showTopThree: Boolean, labels: RankingLabels
             title = labels.teams,
             nameHeader = labels.team,
             showCountry = false,
-            rows = rankings.teams.map { it.toRow(teamNamesById, labels) }.maskTopThree(!showTopThree),
+            rows = rankings.teams.map { it.toRow(teamNamesById, labels) }.maskTopThree(!showTopThree, revealed["teams"] ?: 0),
         )
     }
     if (tournament.countChickenHands && rankings.chickenHands.isNotEmpty()) {
@@ -1030,7 +1129,7 @@ private fun RankingSnapshot.toPages(showTopThree: Boolean, labels: RankingLabels
             extraHeader = labels.chickenHands,
             rows = rankings.chickenHands.map {
                 it.toRow(slotsById, playersByEma, labels)
-            }.maskTopThree(!showTopThree),
+            }.maskTopThree(!showTopThree, revealed["chicken-hands"] ?: 0),
         )
     }
     if (tournament.countBestHands && rankings.bestHands.isNotEmpty()) {
@@ -1043,14 +1142,15 @@ private fun RankingSnapshot.toPages(showTopThree: Boolean, labels: RankingLabels
             showScore = false,
             rows = rankings.bestHands.map {
                 it.toRow(slotsById, playersByEma, labels)
-            }.maskTopThree(!showTopThree),
+            }.maskTopThree(!showTopThree, revealed["best-hands"] ?: 0),
         )
     }
     return pages
 }
 
-private fun List<RankingRow>.maskTopThree(mask: Boolean): List<RankingRow> = mapIndexed { index, row ->
-    row.copy(isMasked = mask && index < 3)
+/** Hides the top three of a page, except the [revealed] of its places from the third up. */
+private fun List<RankingRow>.maskTopThree(mask: Boolean, revealed: Int): List<RankingRow> = mapIndexed { index, row ->
+    row.copy(isMasked = mask && index < 3 - revealed)
 }
 
 private fun PlayerRanking.toRow(
@@ -1118,6 +1218,27 @@ private const val MIN_INTERVAL_SECONDS = 1
 private const val MIN_RANKING_FONT_SIZE_SP = 11f
 private const val MAX_RANKING_FONT_SIZE_SP = 54f
 private const val ROW_LAYOUT_SAFETY_ROWS = 1
+
+/** The padding above and below the text of a row. */
+private val ROW_BASE_VERTICAL_PADDING = 2.dp
+
+/** The height of the title of a page over the table, with its gap. */
+private val RANKING_TITLE_HEIGHT = 44.dp
+private val COMPACT_RANKING_TITLE_HEIGHT = 36.dp
+
+/** How a page whose rows all fit spreads over the screen: more room in each row, and equal margins above and below. */
+private class RankingFill(val extraPerRow: Dp, val margin: Dp)
+
+/**
+ * Half the room left by [rows] rows of [rowHeight] in [available] goes into the rows, at most 60 % of a row each, and
+ * the rest into two equal margins. A page that does not fit is left as it is.
+ */
+private fun rankingFill(rows: Int, rowHeight: Dp, available: Dp): RankingFill {
+    val free = available - rowHeight * rows
+    if (rows == 0 || free <= 0.dp) return RankingFill(0.dp, 0.dp)
+    val extra = minOf(free / 2f / rows.toFloat(), rowHeight * 0.6f)
+    return RankingFill(extra, (free - extra * rows.toFloat()) / 2f)
+}
 private val ROW_VERTICAL_OVERHEAD = 6.dp
 private val RankingTableWidth = 1_100.dp
 private val RankingHorizontalPadding = 32.dp
@@ -1128,7 +1249,13 @@ private const val TEAM_TEXT_SCALE = 0.45f
 
 /** The logos of the main organizer and of the EMA in the corners of the ranking: big on a wide screen, small on a phone. */
 private val LOGO_SIZE = 120.dp
-private val COMPACT_LOGO_SIZE = 44.dp
+private val COMPACT_LOGO_SIZE = 64.dp
 
-/** The top of the ranking on a phone while paused: under the small logos and their switches. */
-private val COMPACT_TOP_WITH_SWITCHES = 128.dp
+/** Where the small logos start on a phone: under the line that says which data the screen shows. */
+private val COMPACT_LOGO_TOP = 24.dp
+
+/** The height of a small logo with its switch under it, while paused. */
+private val COMPACT_LOGO_BAND_WITH_SWITCHES = COMPACT_LOGO_SIZE + 64.dp
+
+/** The room the title keeps on each side for the logos and their switches. */
+private val COMPACT_TITLE_SIDE = 104.dp

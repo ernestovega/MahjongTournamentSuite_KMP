@@ -1323,4 +1323,7 @@
     <string name="score_sheets_chicken_on">Есть столбец для чикен-хэндов: турнир их считает.</string>
     <string name="score_sheets_chicken_off">Нет столбца для чикен-хэндов: турнир их не считает.</string>
     <string name="score_sheets_save">Сохранить листы записи</string>
+    <string name="reveal_third_place">Открыть 3-е место</string>
+    <string name="reveal_second_place">Открыть 2-е место</string>
+    <string name="reveal_first_place">Открыть 1-е место</string>
 </resources>
