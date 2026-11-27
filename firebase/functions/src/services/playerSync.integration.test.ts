@@ -195,4 +195,69 @@ describe("EMA player registry sync", () => {
     assert.ok((await db.collection("emaRankingTournamentResultIndex").doc("TR_80000.html").get()).exists);
     assert.ok((await db.collection("emaRankingTournamentResultIndex").doc("TR_80500.html").get()).exists);
   });
+
+  it("keeps no photo address for a photo that did not change, and stores a photo without a type or an etag", async () => {
+    // A local photo that did not change, for a player whose photo address is gone.
+    await db.collection("emaPlayerRegistry").doc("99000004").update({ photoUrl: null });
+    await runEmaPlayerRegistrySync("seed");
+    assert.equal((await registry("99000004")).get("photoUrl"), null);
+
+    const local = source;
+    delete process.env.EMA_LOCAL_SOURCE_DIR;
+    const fetching = mock.method(globalThis, "fetch", async (url: string) => {
+      const path = new URL(url).pathname;
+      if (path.endsWith("/Tournament/Tournaments_2025.html")) return new Response(`<a href="TR_9908.html">t</a>`, { status: 200 });
+      if (path.endsWith("/Tournament/TR_9908.html")) {
+        return new Response(row("99000008", "BARE", "BEA", "ESP") + row("99000009", "SAME", "SOL", "ESP"), { status: 200 });
+      }
+      if (path.endsWith("/Players/99000008.html")) return new Response(`<html><img src="photo/99000008.jpg"/></html>`, { status: 200 });
+      if (path.endsWith("/Players/99000009.html")) return new Response(`<html><img src="photo/99000009.jpg"/></html>`, { status: 200 });
+      if (path.endsWith("/Players/photo/99000008.jpg")) {
+        const response = new Response(new Uint8Array([1, 2, 3]), { status: 200 });
+        response.headers.delete("content-type");
+        return response;
+      }
+      if (path.endsWith("/Players/photo/99000009.jpg")) return new Response(null, { status: 304 });
+      try {
+        return new Response(await readFile(join(local, path), "utf8"), { status: 200 });
+      } catch {
+        return new Response("missing", { status: 404 });
+      }
+    });
+    try {
+      await runEmaPlayerRegistrySync("incremental");
+    } finally {
+      fetching.mock.restore();
+      process.env.EMA_LOCAL_SOURCE_DIR = local;
+    }
+    const bare = await registry("99000008");
+    assert.match(String(bare.get("photoUrl")), /playerPhotos%2F99000008\.jpg/);
+    assert.equal(bare.get("photoSourceEtag"), null);
+    assert.equal((await registry("99000009")).get("photoUrl"), null);
+  });
+
+  it("stops the run on a page that the EMA site refuses, and reads many players", async () => {
+    const local = source;
+    delete process.env.EMA_LOCAL_SOURCE_DIR;
+    let refuse = true;
+    const rows = Array.from({ length: 50 }, (_, index) => row(String(98000000 + index), "MANY", "MIA", "ESP")).join("");
+    const logged = mock.method(console, "log", () => {});
+    const fetching = mock.method(globalThis, "fetch", async (url: string) => {
+      const path = new URL(url).pathname;
+      if (refuse) return new Response("down", { status: 503 });
+      if (path.endsWith("/Tournament/Tournaments_all.html")) return new Response(`<a href="TR_9909.html">t</a>`, { status: 200 });
+      if (path.endsWith("/Tournament/TR_9909.html")) return new Response(rows, { status: 200 });
+      return new Response("<html></html>", { status: 200 });
+    });
+    try {
+      await assert.rejects(runEmaPlayerRegistrySync("incremental"), /EMA request failed \(503\)/);
+      refuse = false;
+      await runEmaPlayerRegistrySync("incremental");
+    } finally {
+      fetching.mock.restore();
+      logged.mock.restore();
+      process.env.EMA_LOCAL_SOURCE_DIR = local;
+    }
+    assert.ok(logged.mock.calls.some((call) => /Read 50\/50 tournament player pages/.test(String(call.arguments[0]))));
+  });
 });

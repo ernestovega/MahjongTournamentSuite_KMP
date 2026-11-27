@@ -19,3 +19,13 @@ test("tournament rows provide separate source-case name parts and padded EMA IDs
     country: "NED",
   }]);
 });
+
+test("skips result rows without the id cell or the name cells, and reads a row without a country", () => {
+  const html = [
+    `<div class="TCTT_ligne"><p>Rank</p><p>Name</p></div>`,
+    `<div class="TCTT_ligne"><p><a href="../Players/04290001.html">other</a></p><p>RUIZ</p><p>ANA</p></div>`,
+    `<div class="TCTT_ligne"><p><a href="../Players/04290002.html">04290002</a></p><p>RUIZ</p></div>`,
+    `<div class="TCTT_ligne"><p><a href="../Players/04290003.html">04290003</a></p><p>RUIZ</p><p>BEA</p></div>`,
+  ].join("");
+  assert.deepEqual(parseTournamentPlayerNames(html).map((player) => [player.emaId, player.country]), [["04290003", ""]]);
+});
