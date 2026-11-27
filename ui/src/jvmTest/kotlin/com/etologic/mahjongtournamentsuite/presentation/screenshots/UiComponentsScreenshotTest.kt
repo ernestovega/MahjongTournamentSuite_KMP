@@ -71,6 +71,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.LevelMedalTag
 import com.etologic.mahjongtournamentsuite.presentation.components.LevelRibbonBadge
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppVersion
 import com.etologic.mahjongtournamentsuite.presentation.components.PasswordResetConfirmDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.PhotoPublicNoticeDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStandingCard
 import com.etologic.mahjongtournamentsuite.presentation.components.PositionTrophy
 import com.etologic.mahjongtournamentsuite.presentation.components.ProfileDialog
@@ -113,6 +114,10 @@ import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData
 import com.etologic.mahjongtournamentsuite.screenshots.narrowInEveryLanguage
 import com.etologic.mahjongtournamentsuite.screenshots.screenshots
 import kotlin.test.Test
+import mahjongtournamentsuite.ui.generated.resources.Res
+import mahjongtournamentsuite.ui.generated.resources.photo_public_notice_hide
+import mahjongtournamentsuite.ui.generated.resources.photo_public_notice_text
+import org.jetbrains.compose.resources.stringResource
 
 /** The shared components of both apps (module ui), each one in its states, light and dark. */
 @OptIn(ExperimentalTestApi::class)
@@ -472,7 +477,18 @@ class UiComponentsScreenshotTest {
                 onDismiss = {},
                 onSignOut = {},
                 onDeleteAccount = { AppResult.Success(Unit) },
+                // With the switch that hides the photo from the public.
+                onSetPublicPhoto = { error("unused") },
             )
         }
+    }
+
+    @Test
+    fun photoPublicNoticeDialog() = component("dialog-photo-public-notice", variants = dialogVariants) {
+        PhotoPublicNoticeDialog(
+            text = stringResource(Res.string.photo_public_notice_text) + "\n\n" + stringResource(Res.string.photo_public_notice_hide),
+            onAccept = {},
+            onDismiss = {},
+        )
     }
 }
