@@ -22,6 +22,10 @@ describe("table QR cards of malformed documents", () => {
     const orphan = db.doc(`tournaments/table-qr-orphan-${Date.now()}`);
     await orphan.set({ numPlayers: 4, organizerIds: [], name: "Orphan" });
     assert.equal((await loadTableQrDocument(orphan.id, 1)).organizerName, "Orphan");
+
+    const linked = db.doc(`tournaments/table-qr-linked-${Date.now()}`);
+    await linked.set({ numPlayers: 4, name: "Linked", registration: { slug: "linked-open" } });
+    assert.match((await loadTableQrDocument(linked.id, 1)).link, /\/linked-open\/my-table$/);
   });
 
   it("draws a very long name at the smallest size, an initial outside Latin and a logo that is not an image", async () => {

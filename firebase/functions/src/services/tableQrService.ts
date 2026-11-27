@@ -109,12 +109,12 @@ export async function loadTableQrDocument(tournamentId: string, perSheet: CardsP
   const logoPath = await mainOrganizerLogoPath(organizerIds);
   const logo = logoPath.length > 0 ? await storage.file(logoPath).download().then(([bytes]) => bytes).catch(() => null) : null;
   const tournamentName = String(tournament.get("name") ?? "").trim();
-  const color = String(mainOrganizer?.primaryColor ?? DEFAULT_ORGANIZER_COLOR).trim().toUpperCase();
   return {
     tournamentName,
     logo,
     organizerName: mainOrganizer?.name ?? tournamentName,
-    organizerColor: /^#[0-9A-F]{6}$/.test(color) ? color : DEFAULT_ORGANIZER_COLOR,
+    // The organizations already read a stored color that does not fit as the default one.
+    organizerColor: mainOrganizer?.primaryColor ?? DEFAULT_ORGANIZER_COLOR,
     link: myTableQrLink(playerAppUrl(), tournamentId, slug),
     tableCount,
     texts: tableQrTexts("en"),
@@ -153,16 +153,17 @@ function drawQr(doc: PDFKit.PDFDocument, modules: boolean[][], x: number, y: num
   doc.fill().restore();
 }
 
-/**
- * One card: the name of the tournament on the color of the organizer, the number of the table as big as it fits, and
- * the code with one sentence and the link. A wide card puts the number on the left and the code on the right.
- */
 /** Writes one line centred in a box, without ever letting pdfkit start a new page. */
 function centeredLine(doc: PDFKit.PDFDocument, text: string, x: number, y: number, width: number): void {
   const textWidth = doc.widthOfString(text);
   doc.text(text, x + Math.max(0, (width - textWidth) / 2), y, { lineBreak: false, height: 100000 });
 }
 
+/**
+ * One card: the name of the tournament on the color of the organizer, the number of the table as big as it fits, and
+ * the code with one sentence and the link. Every size of [sheetGrid] gives a wide card, with the number on the left
+ * and the code on the right.
+ */
 function drawCard(
   doc: PDFKit.PDFDocument,
   model: TableQrDocument,
@@ -212,15 +213,12 @@ function drawCard(
 
   const bodyTop = top + bandHeight + padding * 0.6;
   const bodyHeight = height - bandHeight - padding * 1.6;
-  const wide = width > height * 1.2;
   const numberText = String(tableId);
   // Only the host (mts.mahjongmadrid.com): easier to type than the full link, which the code already carries.
   const siteText = model.link.replace(/^https?:\/\//, "").replace(/\/.*$/, "");
 
   // The number: the word "Table" over it, and the number as big as the room allows.
-  const numberBox = wide
-    ? { x: left + padding, y: bodyTop, w: (width - padding * 3) * 0.5, h: bodyHeight }
-    : { x: left + padding, y: bodyTop, w: width - padding * 2, h: bodyHeight * 0.42 };
+  const numberBox = { x: left + padding, y: bodyTop, w: (width - padding * 3) * 0.5, h: bodyHeight };
   // pdfkit places a line by the top of its box, so the digits are measured by the font's cap height
   // to fill the room exactly: the word on top, a gap, and the digits under it.
   doc.font("CardApp").fillColor("#000000");
@@ -229,7 +227,7 @@ function drawCard(
   const ascentRatio = font.ascender / 1000;
   const labelSize = Math.max(10, numberBox.h * 0.12);
   const gap = labelSize * 0.5;
-  const room = numberBox.h - gap * (wide ? 0 : 1.5);
+  const room = numberBox.h;
   const digitsRoom = room - labelSize * capRatio - gap;
   const numberSize = Math.min(fitFontSize(doc, numberText, numberBox.w * 0.9, digitsRoom / capRatio, 20), digitsRoom / capRatio);
   const block = labelSize * capRatio + gap + numberSize * capRatio;
@@ -243,9 +241,7 @@ function drawCard(
   centeredLine(doc, numberText, numberBox.x, digitsTop - (ascentRatio - capRatio) * numberSize, numberBox.w);
 
   // The code, with the sentences and the main site over it.
-  const codeBox = wide
-    ? { x: left + padding * 2 + numberBox.w, y: bodyTop, w: (width - padding * 3) * 0.5, h: bodyHeight }
-    : { x: left + padding, y: bodyTop + numberBox.h, w: width - padding * 2, h: bodyHeight - numberBox.h };
+  const codeBox = { x: left + padding * 2 + numberBox.w, y: bodyTop, w: (width - padding * 3) * 0.5, h: bodyHeight };
   // The sentence, then "Or just open the app:" and the main site, go over the code.
   const hintSize = Math.max(8, 10.5 * scale);
   const openSize = Math.max(6, 7.5 * scale);

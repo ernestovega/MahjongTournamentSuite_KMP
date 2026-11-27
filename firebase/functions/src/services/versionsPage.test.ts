@@ -104,3 +104,35 @@ describe("the page of the versions, with the site and Google Play faked", () => 
     assert.ok(requests.includes("POST com.etologic.mahjongtournamentsuite/edits"));
   });
 });
+
+describe("the rows of the versions at the edges", () => {
+  it("shows unknown builds, unknown tracks after the known ones, and a release without a name", () => {
+    const rows = versionRows({ version: "1.0.1" }, "1.0.9", {
+      releases: [
+        { track: "beta-x", name: "", versionCodes: ["7"], status: "completed" },
+        { track: "production", name: "1.0.5", versionCodes: ["5"], status: "completed" },
+      ],
+    });
+    assert.equal(rows[0].latest, "?");
+    assert.equal(rows[2].latest, "?");
+    assert.deepEqual(rows[2].published.map((row) => row.text), ["Production: 1.0.5", "beta-x: 7"]);
+    assert.ok(rows[2].published.every((row) => !row.upToDate));
+  });
+
+  it("names the default account when Google Play refuses and the credentials have no email", async () => {
+    const fetching = mock.method(globalThis, "fetch", async () => new Response(JSON.stringify({ web: "1.0.9" }), { status: 200 }));
+    const credentials = mock.method(GoogleAuth.prototype, "getCredentials", async () => ({}));
+    const getClient = mock.method(GoogleAuth.prototype, "getClient", async () => {
+      throw Object.assign(new Error("unauthorized"), { response: { status: 401 } });
+    });
+    mock.timers.enable({ apis: ["Date"], now: Date.UTC(2031, 0, 1) });
+    try {
+      assert.match(await versionsPage(), /Invite the service account of the functions in Play Console/);
+    } finally {
+      mock.timers.reset();
+      fetching.mock.restore();
+      credentials.mock.restore();
+      getClient.mock.restore();
+    }
+  });
+});
