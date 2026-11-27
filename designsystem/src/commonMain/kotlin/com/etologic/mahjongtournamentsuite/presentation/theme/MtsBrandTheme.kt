@@ -6,7 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import kotlin.math.max
@@ -19,7 +18,8 @@ import kotlin.math.min
  *
  * Any color can come from an organization, so the roles keep their contrast: the text on a fill is white or almost
  * black, whichever reads better, and the brand as text (links, text buttons) is darkened in the light theme and lightened
- * in the dark theme until it reads at 4.5:1 on the page and the cards. The pink focus ring and the error red stay.
+ * in the dark theme until it reads at 4.5:1 on the page and the cards. The pink focus ring, the error red and the grey
+ * containers stay.
  */
 @Composable
 fun MtsBrandTheme(brand: Color?, content: @Composable () -> Unit) {
@@ -42,8 +42,6 @@ internal fun brandedColors(scheme: ColorScheme, colors: MtsColors, brand: Color)
     val onBrand = textOn(opaque)
     // The brand as text: it must read on the page and on the cards.
     val text = readableOn(opaque, listOf(scheme.background, scheme.surface, scheme.surfaceContainerHighest), dark)
-    val tint = opaque.copy(alpha = if (dark) 0.30f else 0.16f).compositeOver(scheme.surface)
-    val strongTint = opaque.copy(alpha = if (dark) 0.42f else 0.30f).compositeOver(scheme.surface)
     val branded = scheme.copy(
         primary = opaque,
         onPrimary = onBrand,
@@ -51,11 +49,6 @@ internal fun brandedColors(scheme: ColorScheme, colors: MtsColors, brand: Color)
         onPrimaryContainer = onBrand,
         secondary = text,
         onSecondary = textOn(text),
-        secondaryContainer = tint,
-        onSecondaryContainer = scheme.onSurface,
-        tertiaryContainer = strongTint,
-        onTertiaryContainer = scheme.onSurface,
-        surfaceVariant = tint,
         inversePrimary = readableOn(opaque, listOf(scheme.inverseSurface), !dark),
         surfaceTint = opaque,
     )
