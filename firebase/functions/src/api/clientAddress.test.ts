@@ -37,3 +37,15 @@ describe("clientAddress", () => {
     assert.equal(isGoogleProxy("not an address"), false);
   });
 });
+
+describe("addresses that are no IPv4 address", () => {
+  it("are no Google proxy", () => {
+    assert.equal(isGoogleProxy("64.233.a.1"), false);
+    assert.equal(isGoogleProxy("64.233.300.1"), false);
+    assert.equal(isGoogleProxy("64.233.172"), false);
+  });
+
+  it("gives unknown for a request without the header and without a socket", () => {
+    assert.equal(clientAddress({ header: () => undefined } as unknown as Request), "unknown");
+  });
+});

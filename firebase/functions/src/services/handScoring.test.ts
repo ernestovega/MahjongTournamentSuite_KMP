@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { handScoreTotals, handSeatScores, isResultSelectionInvalid, pointsFromScores, seatIdsOf, tablePointsOf, tableTotalsPatch } from "./handScoring";
+import { handScoreTotals, handSeatScores, isResultSelectionInvalid, penaltyRowsOf, pointsFromScores, seatIdsOf, tablePointsOf, tableTotalsPatch } from "./handScoring";
 
 const table = {
   playerEastId: "1", playerSouthId: "2", playerWestId: "3", playerNorthId: "4",
@@ -92,4 +92,9 @@ test("the table patch has scores and points of the counted hands", () => {
     playerEastScore: "32", playerSouthScore: "-16", playerWestScore: "-8", playerNorthScore: "-8",
     playerEastPoints: "4", playerSouthPoints: "0", playerWestPoints: "1,5", playerNorthPoints: "1,5",
   });
+});
+
+test("the penalty rows fill the seats with fewer penalties with empty cells", () => {
+  assert.deepEqual(penaltyRowsOf({ playerEastPenalty: "-10;-5", playerSouthPenalty: "15" }), [["-10", "15", "", ""], ["-5", "", "", ""]]);
+  assert.deepEqual(penaltyRowsOf({}), []);
 });

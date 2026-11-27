@@ -40,7 +40,8 @@ function ipv4ToNumber(address: string): number | null {
 
 const RANGES = GOOGLE_PROXY_RANGES.map(([base, bits]) => {
   const size = 2 ** (32 - bits);
-  const start = Math.floor((ipv4ToNumber(base) ?? 0) / size) * size;
+  // The bases above are all valid addresses.
+  const start = Math.floor(ipv4ToNumber(base)! / size) * size;
   return { start, end: start + size };
 });
 

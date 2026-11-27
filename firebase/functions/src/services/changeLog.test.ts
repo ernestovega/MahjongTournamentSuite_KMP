@@ -94,3 +94,14 @@ test("the source follows the actor and conflicts have their own kind", () => {
   assert.equal(buildResetChangeEntry({ roundId: 1, tableId: 1, version: 1, actor: null }).source, null);
   assert.equal(buildConflictChangeEntry({ roundId: 1, tableId: 1, version: 4, actor: player }).kind, "conflict");
 });
+
+test("a value that a save clears is logged as null", () => {
+  const entry = buildSaveChangeEntry({
+    roundId: 1, tableId: 1, version: 1, actor,
+    tableBefore: { playerEastId: "1" }, tablePatch: { playerEastId: null },
+    handsBefore: new Map([["2", { handScore: "8" }]]), handPatches: [{ handId: 2, patch: { handScore: null } }],
+  });
+
+  assert.deepEqual(entry.tableChanges, [{ field: "playerEastId", from: "1", to: null }]);
+  assert.deepEqual(entry.handChanges, [{ handId: 2, field: "handScore", from: "8", to: null }]);
+});
