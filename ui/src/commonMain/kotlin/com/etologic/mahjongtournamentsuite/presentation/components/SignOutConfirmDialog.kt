@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import mahjongtournamentsuite.ui.generated.resources.Res

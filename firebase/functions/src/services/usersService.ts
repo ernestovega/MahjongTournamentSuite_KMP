@@ -420,10 +420,6 @@ export async function listUserTournamentAssignments(
     .sort((left, right) => left.tournamentName.localeCompare(right.tournamentName));
 }
 
-export async function listAssignedTournamentIds(uid: string): Promise<Set<string>> {
-  return new Set((await listUserTournamentAssignments(uid)).map((assignment) => assignment.tournamentId));
-}
-
 export async function syncUserTournamentAssignments(
   uid: string,
   assignments: TournamentAssignment[],

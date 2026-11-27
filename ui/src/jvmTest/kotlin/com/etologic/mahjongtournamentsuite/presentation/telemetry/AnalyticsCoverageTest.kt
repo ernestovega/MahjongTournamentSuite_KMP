@@ -86,7 +86,8 @@ class AnalyticsCoverageTest {
         val dialog = Regex("""(?<![\w.])(?:androidx\.compose\.material3\.)?(AlertDialog|BasicAlertDialog|Dialog|ModalBottomSheet|DialogWindow)\s*\(""")
         val found = presentation.sumOf { source -> dialog.findAll(source.code).count() }
         assertTrue(found > 40, "The scan found only $found dialogs")
-        val offenders = presentation.flatMap { source ->
+        // DialogBack.kt holds the AlertDialog of the app, which calls the one of Material 3.
+        val offenders = presentation.filter { it.file.name != "DialogBack.kt" }.flatMap { source ->
             val spans = lambdaSpans(source.code, Regex("""\bTrackedDialog\s*\("""))
             dialog.findAll(source.code)
                 .filterNot { source.code.substring(maxOf(0, it.range.first - 4), it.range.first).contains("fun ") }
