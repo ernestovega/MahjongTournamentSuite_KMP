@@ -8,6 +8,8 @@ import {
   normalizeTimeZone,
   readStoredMatchExtraMinutes,
   readStoredTimeZone,
+  roundStartMs,
+  unstartedRoundIsPast,
   plannedRoundClocks,
   seatingIsOpen,
   tournamentMatchPhase,
@@ -210,4 +212,21 @@ test("stored time zones and extra minutes that do not fit read as none and as th
   assert.equal(readStoredTimeZone("Europe/Madrid"), "Europe/Madrid");
   assert.equal(readStoredMatchExtraMinutes(-3), normalizeMatchExtraMinutes(null));
   assert.equal(readStoredMatchExtraMinutes(7), 7);
+});
+
+test("a round without a gong waits for a round before it that still plays, or that has no planned time", () => {
+  assert.equal(roundStartMs({ date: "2026-10-10", startTime: null }, "UTC"), Date.UTC(2026, 9, 10));
+  const day = (roundId: number, startTime: string) => ({ roundId, date: "2026-10-10", startTime });
+  const late = Date.UTC(2026, 9, 10, 23, 0);
+  const playing = { startedAtMs: late - 10 * MIN, pausedAtMs: null, pausedMs: 0, adjustMs: 0 };
+  const base = { timeZone: "UTC", numRounds: 3 };
+  // Round 1 still plays, so rounds 2 and 3 cannot be over.
+  const stillPlaying = { ...base, roundSchedules: [day(1, "10:00"), day(2, "12:00"), day(3, "14:00")], roundClocks: { 1: playing } };
+  assert.equal(unstartedRoundIsPast(stillPlaying, 2, late), false);
+  assert.equal(unstartedRoundIsPast(stillPlaying, 3, late), false);
+  // Round 1 has no planned time: round 2 counts from its own planned time.
+  assert.equal(unstartedRoundIsPast({ ...base, roundSchedules: [day(2, "12:00")] }, 2, late), true);
+  // Round 2 has no planned time: round 3 counts from the end of round 2, which follows round 1.
+  assert.equal(unstartedRoundIsPast({ ...base, roundSchedules: [day(1, "10:00"), day(3, "14:00")] }, 3, late), true);
+  assert.equal(plannedRoundClocks({ timeZone: "UTC", roundSchedules: [day(1, "10:00")] }, late).size, 0);
 });
