@@ -19,13 +19,14 @@ export const WRITES_PER_USER_PER_MINUTE = 120;
 const userWriteLimit = rateLimit({
   windowMs: 60_000,
   max: WRITES_PER_USER_PER_MINUTE,
-  key: (req) => `uid:${(req.res?.locals.auth as { uid?: string } | undefined)?.uid ?? "unknown"}`,
+  // It runs after requireAuth verified the token, so the request has its account.
+  key: (req) => `uid:${(req.res!.locals.auth as { uid: string }).uid}`,
 });
 
 function extractBearerToken(headerValue: string | undefined): string | null {
   if (!headerValue) return null;
   const match = headerValue.match(/^Bearer\s+(.+)$/i);
-  return match?.[1] ?? null;
+  return match == null ? null : match[1];
 }
 
 export async function requireAuth(

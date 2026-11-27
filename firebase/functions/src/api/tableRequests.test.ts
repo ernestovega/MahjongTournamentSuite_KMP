@@ -92,3 +92,7 @@ test("a body that is not an object gives an empty patch", () => {
   assert.deepEqual(parseTablePatch("text"), {});
   assert.deepEqual(parseHandPatch(undefined), {});
 });
+
+test("a hand patch that is no object has no hand id", () => {
+  rejects(() => parseSaveTableRequest(params, { expectedVersion: 0, tablePatch: {}, handPatches: [null] }), /handId/);
+});

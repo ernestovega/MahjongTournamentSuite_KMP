@@ -70,6 +70,21 @@ describe("appCheck", () => {
     }]);
   });
 
+  it("logs the user agent of the app, cut to a short text", async () => {
+    const middleware = appCheck({ mode: () => "monitor", verify: async () => undefined });
+    const headers: Record<string, string> = { "x-mts-client": "android/1.0.400; appcheck=failed:x", "user-agent": "okhttp/4".padEnd(200, "x") };
+    const req = { method: "GET", path: "/me", header: (name: string) => headers[name.toLowerCase()] } as unknown as Request;
+    const logged: Array<{ userAgent: string | null }> = [];
+    const original = console.warn;
+    console.warn = (...args: unknown[]) => { logged.push(args[1] as { userAgent: string | null }); };
+    try {
+      await middleware(req, {} as never, () => undefined);
+    } finally {
+      console.warn = original;
+    }
+    assert.equal(logged[0]?.userAgent?.length, 120);
+  });
+
   it("logs nothing for the web, the desktop app or a script, which send no token", async () => {
     const middleware = appCheck({ mode: () => "monitor", verify: async () => undefined });
     const logged: unknown[] = [];
