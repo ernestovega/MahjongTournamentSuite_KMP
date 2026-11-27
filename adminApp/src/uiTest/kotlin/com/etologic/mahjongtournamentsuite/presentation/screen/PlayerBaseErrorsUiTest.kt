@@ -37,6 +37,8 @@ import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
+import com.etologic.mahjongtournamentsuite.presentation.platform.LocalPickedImageForTests
+import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerBasePresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.UsersPresenter
@@ -72,6 +74,23 @@ private class FailingRegistry(private val players: List<Player>, private val loa
     override suspend fun deleteEmaPlayers(emaIds: List<String>): AppResult<List<EmaPlayerDeleteResult>> = AppResult.Failure(AppError.Network)
 }
 
+/** A registry where the players save and their photos do not. */
+private class PhotoFailingRegistry(private val players: List<Player>) : PlayerRepository by FailingRegistry(players) {
+    val calls = mutableListOf<String>()
+    override suspend fun createPlayer(player: Player): AppResult<Player> {
+        calls += "create:${player.emaId}"
+        return AppResult.Success(player)
+    }
+    override suspend fun updatePlayer(previousEmaId: String, player: Player): AppResult<Unit> {
+        calls += "update:${player.emaId}"
+        return AppResult.Success(Unit)
+    }
+    override suspend fun updatePlayerPhoto(emaId: String, contentType: String, bytes: ByteArray): AppResult<Player> {
+        calls += "photo:$emaId"
+        return AppResult.Failure(AppError.Network)
+    }
+}
+
 /** The EMA registry screen tells what is wrong: a missing field, a wrong or taken EMA number, and a failed save. */
 @OptIn(ExperimentalTestApi::class)
 class PlayerBaseErrorsUiTest {
@@ -90,6 +109,9 @@ class PlayerBaseErrorsUiTest {
 
     private val ada = Player(emaId = "00010001", firstName = "Ada", lastName = "Lovelace", country = "GBR")
     private val babbage = Player(emaId = "00010002", firstName = "Charles", lastName = "Babbage", country = "GBR")
+
+    /** What the photo picker of the screen returns next, in place of the file chooser. */
+    private var nextImage = SelectedImage("ada.png", "image/png", ByteArray(16))
 
     private fun ComposeUiTest.show(registry: PlayerRepository) {
         setContent {
@@ -113,7 +135,7 @@ class PlayerBaseErrorsUiTest {
                 }.koin
             }
             KoinContext(koin) {
-                CompositionLocalProvider(LocalThemeController provides ThemeController(ThemePreference.Light, false, {}), LocalPressTimeSource provides clock) {
+                CompositionLocalProvider(LocalThemeController provides ThemeController(ThemePreference.Light, false, {}), LocalPressTimeSource provides clock, LocalPickedImageForTests provides { nextImage }) {
                     MtsTheme(useDarkTheme = false) { PlayerBaseScreen(rememberNavController()) }
                 }
             }
@@ -235,5 +257,57 @@ class PlayerBaseErrorsUiTest {
     private fun ComposeUiTest.onNodeWithTextClick(text: String) {
         onAllNodes(hasText(text) and hasClickAction()).onFirst().press()
         waitForIdle()
+    }
+
+    @Test
+    fun aPhotoOfTheWrongTypeIsRefusedAndAPhotoThatDoesNotUploadSaysSo() = runComposeUiTest {
+        val registry = PhotoFailingRegistry(listOf(ada, babbage))
+        show(registry)
+        selectAda()
+
+        nextImage = SelectedImage("ada.bmp", "image/bmp", ByteArray(16))
+        pressChip("Choose new photo")
+        awaitText("Choose a JPEG, PNG, WebP, or GIF image.")
+        onAllNodes(hasText("OK") and hasClickAction()).onLast().press()
+        waitForIdle()
+
+        nextImage = SelectedImage("ada.png", "image/png", ByteArray(16))
+        pressChip("Choose new photo")
+        awaitText("ada.png")
+        saveAndExpect("Network request failed.")
+        assertEquals(listOf("update:00010001", "photo:00010001"), registry.calls)
+        // The photo stays to try again.
+        awaitText("ada.png")
+    }
+
+    @Test
+    fun aNewPlayerKeepsTheDataWhenItsPhotoDoesNotUpload() = runComposeUiTest {
+        val registry = PhotoFailingRegistry(listOf(ada, babbage))
+        show(registry)
+        awaitText("10001")
+        onNodeWithTextClick("New player")
+        awaitText("Add player")
+
+        nextImage = SelectedImage("grace.bmp", "image/bmp", ByteArray(16))
+        onNode(hasText("Choose photo") and hasClickAction() and hasAnyAncestor(isDialog())).press()
+        awaitText("Choose a JPEG, PNG, WebP, or GIF image.")
+        if (onAllNodes(hasText("OK") and hasClickAction()).fetchSemanticsNodes().isNotEmpty()) {
+            onAllNodes(hasText("OK") and hasClickAction()).onLast().press()
+            waitForIdle()
+        }
+        nextImage = SelectedImage("grace.png", "image/png", ByteArray(16))
+        onNode(hasText("Choose photo") and hasClickAction() and hasAnyAncestor(isDialog())).press()
+        awaitText("grace.png")
+
+        dialogField("EMA number").performTextReplacement("99999")
+        dialogField("First name").performTextReplacement("Grace")
+        dialogField("Last name").performTextReplacement("Hopper")
+        onNode(hasText("Country") and hasAnyAncestor(isDialog())).press()
+        awaitText("No country")
+        onAllNodesWithText("No country").onFirst().press()
+        waitForIdle()
+        onNode(hasText("Add player") and hasClickAction() and hasAnyAncestor(isDialog())).pressAction()
+        awaitText("Network request failed.")
+        assertEquals(listOf("create:00099999", "photo:00099999"), registry.calls)
     }
 }

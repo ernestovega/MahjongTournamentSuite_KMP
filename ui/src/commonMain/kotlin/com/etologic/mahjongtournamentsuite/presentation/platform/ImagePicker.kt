@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.platform
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import kotlin.io.encoding.Base64
 
@@ -24,6 +25,12 @@ class ImagePicker internal constructor(
 ) {
     fun launch() = launchAction()
 }
+
+/**
+ * Tests give here the image that a picker returns, in place of the file chooser of the system, which a test cannot
+ * use. Null (the default) opens the chooser. Only the desktop picker reads it, because the UI tests run there.
+ */
+val LocalPickedImageForTests = staticCompositionLocalOf<(() -> SelectedImage)?> { null }
 
 @Composable
 expect fun rememberImagePicker(
