@@ -212,7 +212,7 @@ internal fun HandTableRow(
             listOf(result.east, result.south, result.west, result.north).forEach { value ->
                 GridCell(modifier = Modifier.weight(HandsSeatColumnWeight)) {
                     Text(
-                        text = value.ifBlank { "-" },
+                        text = "Σ " + value.ifBlank { "-" },
                         style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                         textAlign = TextAlign.Center,

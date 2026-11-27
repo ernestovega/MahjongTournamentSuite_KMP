@@ -20,9 +20,7 @@
     { "name": "a winner who is not at the table does not count", "hand": { "winner": "99", "loser": "12", "score": "10" }, "scores": null },
     { "name": "a loser who is not at the table does not count", "hand": { "winner": "11", "loser": "99", "score": "10" }, "scores": null },
     { "name": "a hand with only the chicken mark does not count", "hand": { "chicken": true }, "scores": null },
-    { "name": "a hand with only a penalty counts for the penalty, with no result", "hand": { "penalties": ["-10", "", "", ""] }, "scores": [-10, 0, 0, 0], "result": null },
-    { "name": "a hand with only penalty texts that are not numbers does not count", "hand": { "penalties": ["abc", "", "", ""] }, "scores": null },
-    { "name": "a hand with only the chicken mark and a penalty does not count", "hand": { "chicken": true, "penalties": ["-10", "", "", ""] }, "scores": null },
+    { "name": "an empty hand does not count, even with a penalty", "hand": { "penalties": ["-10", "", "", ""] }, "scores": null },
     { "name": "spaces around the values are ignored", "hand": { "winner": " 11 ", "loser": " 12 ", "score": " 10 " }, "scores": [34, -18, -8, -8] },
     { "name": "penalties add to the result, several joined with ';'", "hand": { "winner": "11", "loser": "12", "score": "10", "penalties": ["-10;-5", "", "-20", ""] }, "scores": [19, -18, -28, -8], "result": [34, -18, -8, -8] },
     { "name": "a penalty part that is not a number counts as 0", "hand": { "winner": "11", "loser": "12", "score": "10", "penalties": ["abc;-5", "", "", ""] }, "scores": [29, -18, -8, -8], "result": [34, -18, -8, -8] },
@@ -30,17 +28,6 @@
     { "name": "a draw keeps its penalties", "hand": { "score": "0", "penalties": ["", "", "", "-30"] }, "scores": [0, 0, 0, -30], "result": [0, 0, 0, 0] }
   ],
   "tables": [
-    {
-      "name": "a done hand with only a penalty adds the penalty to the totals",
-      "table": { "seats": ["11", "12", "13", "14"] },
-      "hands": [
-        { "winner": "11", "loser": "12", "score": "10", "done": true },
-        { "penalties": ["", "-10", "", ""], "done": true },
-        { "penalties": ["-20", "", "", ""], "done": false }
-      ],
-      "scores": ["34", "-28", "-8", "-8"],
-      "points": ["4", "0", "1,5", "1,5"]
-    },
     {
       "name": "hands mode adds the hands that are done",
       "table": { "seats": ["11", "12", "13", "14"] },

@@ -124,8 +124,7 @@ class CalculateStatisticsUseCase {
 
         val scores = seatScores.map { it!! }
         val counted = if (table.useTotalsOnly) emptyList() else countedHands(rankingTable.hands, table.isCompleted, seatIds)
-        val played = counted.filterNot { it.penaltyOnly }
-        val hasHands = played.isNotEmpty()
+        val hasHands = counted.isNotEmpty()
 
         val running = IntArray(4)
         val won = IntArray(4)
@@ -157,7 +156,7 @@ class CalculateStatisticsUseCase {
         counted.forEach { hand ->
             hand.change.forEachIndexed { seat, delta ->
                 running[seat] += delta
-                if (!hand.penaltyOnly) swing[seat] += running[seat]
+                swing[seat] += running[seat]
             }
             hand.penalties.forEachIndexed { seat, penalty ->
                 if (penalty < 0) {
@@ -166,7 +165,6 @@ class CalculateStatisticsUseCase {
                 }
             }
             hand.worstPenalties.forEachIndexed { seat, worst -> if (worst > maxPenalty[seat]) maxPenalty[seat] = worst }
-            if (hand.penaltyOnly) return@forEach
             val winner = hand.winnerSeat
             (0..3).forEach { seat ->
                 wonFlags[seat] += seat == winner
@@ -217,7 +215,7 @@ class CalculateStatisticsUseCase {
                 score = scores[seat],
                 points = seatPoints[seat],
                 hasHands = hasHands,
-                handsPlayed = played.size,
+                handsPlayed = if (hasHands) counted.size else 0,
                 handsWon = won[seat],
                 selfDraws = selfDraws[seat],
                 dealIns = dealIns[seat],
@@ -247,7 +245,7 @@ class CalculateStatisticsUseCase {
         return TableAnalysis(
             table = rankingTable,
             hasHands = hasHands,
-            handChanges = played.map { it.change },
+            handChanges = counted.map { it.change },
             results = results,
             swing = (0..3).map { TableScoreSwing(seatIds[it], swing[it]) },
             winningScores = winningScores,
@@ -268,8 +266,6 @@ class CalculateStatisticsUseCase {
         val penalties: List<Int>,
         /** The biggest single penalty of each seat in this hand, as a positive number. */
         val worstPenalties: List<Int>,
-        /** The hand has only penalties: they count, but the hand is not a played hand. */
-        val penaltyOnly: Boolean = false,
     )
 
     /** Seat ids in the order east, south, west, north. Null when a seat is empty or repeated. */
@@ -293,11 +289,7 @@ class CalculateStatisticsUseCase {
         val worstPenalties = penaltyTexts.map(::worstPenaltyOf)
 
         val isEmpty = winnerText.isEmpty() && loserText.isEmpty() && scoreText.isEmpty() && !hand.isChickenHand
-        // A hand with no result counts only for its penalties. It is not a played hand.
-        if (isEmpty) {
-            if (penalties.all { it == 0 }) return null
-            return CountedHand(null, null, 0, false, penalties, penalties, worstPenalties, penaltyOnly = true)
-        }
+        if (isEmpty) return null
         if (winnerText.isEmpty() && loserText.isEmpty() && (scoreText.isEmpty() || scoreText == "0")) {
             if (hand.isChickenHand) return null
             return CountedHand(null, null, 0, false, penalties, penalties, worstPenalties)

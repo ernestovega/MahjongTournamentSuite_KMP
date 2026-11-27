@@ -116,11 +116,6 @@ fun TableHand.resultChange(seatIds: List<Int>): List<Int>? {
     }
 }
 
-/** True when the hand has no winner, no loser, no score and no chicken mark. */
-private val TableHand.hasNoResult: Boolean
-    get() = playerWinnerId.trim().isEmpty() && playerLooserId.trim().let { it.isEmpty() || it == "-" } &&
-        handScore.trim().isEmpty() && !isChickenHand
-
 /** One line of the detail table. */
 private sealed interface DetailRow {
     /** [winnerSeat] and [loserSeat] are seat positions. A null [loserSeat] with a winner means a win from the wall. */
@@ -136,11 +131,10 @@ private fun detailRows(hands: List<TableHand>, seatIds: List<Int>): Map<Int, Lis
     hands.sortedBy { it.handId }.forEach { hand ->
         val rows = mutableListOf<DetailRow>()
         val penalties = hand.penaltyRows()
-        // A hand with no result and a penalty counts only for the penalty, so it shows no result line.
-        val penaltyOnly = hand.hasNoResult && penalties.isNotEmpty()
         val change = if (hand.isDone) hand.resultChange(seatIds) else null
-        val counted = hand.isDone && (change != null || penaltyOnly)
-        if (hand.isDone && !penaltyOnly) {
+        // Like the server, the penalties of a hand count only when its result counts.
+        val counted = change != null
+        if (hand.isDone) {
             val winnerSeat = seatIds.indexOf(hand.playerWinnerId.trim().toIntOrNull()).takeIf { change != null && it >= 0 }
             val loserSeat = seatIds.indexOf(hand.playerLooserId.trim().toIntOrNull()).takeIf { change != null && it >= 0 }
             rows += DetailRow.Result(hand, change, winnerSeat, loserSeat)

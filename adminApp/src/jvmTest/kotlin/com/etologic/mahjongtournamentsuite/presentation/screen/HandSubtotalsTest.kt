@@ -55,19 +55,6 @@ class HandSubtotalsTest {
         assertEquals(listOf(values(34, -18, -8, -8), empty), editor.cumulativeHandScoreSubtotals)
     }
 
-    @Test
-    fun aDoneHandWithOnlyAPenaltyAddsThePenaltyToTheRunningTotal() {
-        val editor = editor(
-            hand(1, winner = "11", loser = "12", score = "10"),
-            hand(2, penalties = listOf("", "-10", "", "")),
-            // Not done: its penalty does not count yet.
-            hand(3, penalties = listOf("-20", "", "", ""), done = false),
-        )
-
-        assertEquals(values(0, -10, 0, 0), editor.handResultScores[1])
-        assertEquals(listOf(values(34, -18, -8, -8), values(34, -28, -8, -8), empty), editor.cumulativeHandScoreSubtotals)
-    }
-
     private fun values(east: Int, south: Int, west: Int, north: Int) = SeatTextValues(east.toString(), south.toString(), west.toString(), north.toString())
 
     private fun editor(vararg hands: TableHand, completed: Boolean = false) = TableManagerEditorState.from(
@@ -94,23 +81,16 @@ class HandSubtotalsTest {
         hands.toList(),
     )
 
-    private fun hand(
-        id: Int,
-        winner: String = "",
-        loser: String = "",
-        score: String = "",
-        done: Boolean = true,
-        penalties: List<String> = listOf("", "", "", ""),
-    ) = TableHand(
+    private fun hand(id: Int, winner: String = "", loser: String = "", score: String = "", done: Boolean = true) = TableHand(
         handId = id,
         playerWinnerId = winner,
         playerLooserId = loser,
         handScore = score,
         isChickenHand = false,
         isDone = done,
-        playerEastPenalty = penalties[0],
-        playerSouthPenalty = penalties[1],
-        playerWestPenalty = penalties[2],
-        playerNorthPenalty = penalties[3],
+        playerEastPenalty = "",
+        playerSouthPenalty = "",
+        playerWestPenalty = "",
+        playerNorthPenalty = "",
     )
 }

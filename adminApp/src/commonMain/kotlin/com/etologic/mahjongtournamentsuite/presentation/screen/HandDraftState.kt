@@ -150,7 +150,10 @@ internal class HandDraftState private constructor(
      * Done that the user forgot to mark again after a correction, so the editor asks before saving it.
      */
     val isChangedValidButNotDone: Boolean
-        get() = !isDone && !isBlank && !isResultSelectionInvalid && buildPatch().isNotEmpty()
+        get() = !isDone && !isCompletelyEmpty && !isResultSelectionInvalid && buildPatch().isNotEmpty()
+
+    val isIgnoredForCalculation: Boolean
+        get() = isResultSelectionInvalid || isCompletelyEmpty
 
     private val isCompletelyEmpty: Boolean
         get() = playerWinnerId.trim().isEmpty() && normalizedLoserId.isEmpty() && handScore.trim().isEmpty() &&
