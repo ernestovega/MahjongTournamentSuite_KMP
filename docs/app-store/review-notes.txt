@@ -10,8 +10,8 @@ Thank you for the review. Here is the information requested.
 - Content created by users:
   • No chat, comments or posts.
   • Players only enter the scores of their own table.
-  • An account may upload its own profile photo, which other users see next to the player's name (for example in tournament registrations).
-  • Administrators can remove any profile photo, and anyone can report a photo or a name through the Contact form of the app.
+  • An account may upload its own photo: public in rankings, statistics and registrations after accepting a notice, and hideable from the profile.
+  • Administrators can remove any photo; anyone can report one through the in-app Contact form.
   • The optional alias of an account is visible only to that account and to the organizers.
 
 2. PURPOSE AND AUDIENCE
