@@ -44,6 +44,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.map
 import com.etologic.mahjongtournamentsuite.presentation.PlayerCountRoute
 import com.etologic.mahjongtournamentsuite.presentation.ActivityRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
+import com.etologic.mahjongtournamentsuite.presentation.RankingControlRoute
 import com.etologic.mahjongtournamentsuite.presentation.RoundControlRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
@@ -393,7 +394,11 @@ fun TournamentScreen(
             )?.takeIf { it in tableEditors } ?: selectedTableId
             RoundEditorAction.Players -> navController.navigate(PlayersRoute(tournamentId))
             RoundEditorAction.TableQr -> tablesIdsOpen = true
-            RoundEditorAction.Rankings -> openRankings(navController, tournamentId)
+            RoundEditorAction.Rankings -> {
+                openRankings(navController, tournamentId)
+                // On the desktop and the web the ranking opens in a window of its own, and this one goes to its control.
+                if (rankingControlsInSeparateScreen) navController.navigate(RankingControlRoute(tournamentId))
+            }
             RoundEditorAction.Statistics -> {
                 val round = selectedRoundId
                 val table = selectedTableId

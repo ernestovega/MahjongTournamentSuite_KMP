@@ -1272,4 +1272,20 @@ Die Ergebnisse werden bei der Siegerehrung in der Rundensteuerung aufgedeckt.</s
     <string name="reveal_third_place">3. Platz enthüllen</string>
     <string name="reveal_second_place">2. Platz enthüllen</string>
     <string name="reveal_first_place">1. Platz enthüllen</string>
+    <string name="ranking_control">Ranglisten-Steuerung</string>
+    <string name="ranking_control_not_open_title">Die projizierte Rangliste ist nicht geöffnet</string>
+    <string name="ranking_control_not_open_message">Öffne sie und zieh ihr Fenster auf den Projektor. Du steuerst sie von hier aus.</string>
+    <string name="open_projected_ranking">Projizierte Rangliste öffnen</string>
+    <string name="ranking_control_on_screen">Auf dem Bildschirm: %1$s</string>
+    <string name="ranking_control_next_in">Weiter in %1$d s</string>
+    <string name="ranking_control_paused">Pausiert</string>
+    <string name="ranking_control_playback">Blättern</string>
+    <string name="ranking_control_lists">Listen</string>
+    <string name="show_on_screen">Zeigen</string>
+    <string name="podium_revealed">Podium enthüllt</string>
+    <string name="ranking_control_show_hidden">Rangliste im Saal zeigen</string>
+    <string name="ranking_control_display">Anzeige</string>
+    <string name="organizer_logo_on_screen">Logo des Veranstalters</string>
+    <string name="ema_logo_on_screen">EMA-Logo</string>
+    <string name="ranking_control_hidden_message">Die Öffentlichkeit sieht die Ergebnisse dieses Turniers noch nicht. Der Saal sieht diese Rangliste erst, wenn du das einschaltest.</string>
 </resources>

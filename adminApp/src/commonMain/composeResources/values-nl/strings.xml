@@ -1272,4 +1272,20 @@ De uitslagen worden bij de prijsuitreiking onthuld via Rondebeheer.</string>
     <string name="reveal_third_place">3e plaats onthullen</string>
     <string name="reveal_second_place">2e plaats onthullen</string>
     <string name="reveal_first_place">1e plaats onthullen</string>
+    <string name="ranking_control">Ranglijstbediening</string>
+    <string name="ranking_control_not_open_title">De geprojecteerde ranglijst is niet open</string>
+    <string name="ranking_control_not_open_message">Open hem en sleep het venster naar de projector. Je bedient hem van hieruit.</string>
+    <string name="open_projected_ranking">Geprojecteerde ranglijst openen</string>
+    <string name="ranking_control_on_screen">Op het scherm: %1$s</string>
+    <string name="ranking_control_next_in">Volgende over %1$d s</string>
+    <string name="ranking_control_paused">Gepauzeerd</string>
+    <string name="ranking_control_playback">Bladeren</string>
+    <string name="ranking_control_lists">Lijsten</string>
+    <string name="show_on_screen">Tonen</string>
+    <string name="podium_revealed">Podium onthuld</string>
+    <string name="ranking_control_show_hidden">Ranglijst in de zaal tonen</string>
+    <string name="ranking_control_display">Weergave</string>
+    <string name="organizer_logo_on_screen">Logo van de organisator</string>
+    <string name="ema_logo_on_screen">EMA-logo</string>
+    <string name="ranking_control_hidden_message">Het publiek ziet de uitslagen van dit toernooi nog niet. De zaal ziet deze ranglijst pas als je dit aanzet.</string>
 </resources>

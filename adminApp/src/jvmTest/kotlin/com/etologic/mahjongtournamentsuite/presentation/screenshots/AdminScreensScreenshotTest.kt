@@ -37,6 +37,11 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerBaseScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerRoundTablesTag
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerRoundTablesToggleTag
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayersScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.RankingControlScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.RankingDisplayControl
+import com.etologic.mahjongtournamentsuite.presentation.screen.RankingDisplayLink
+import com.etologic.mahjongtournamentsuite.presentation.screen.RankingDisplayPage
+import com.etologic.mahjongtournamentsuite.presentation.screen.RankingDisplayStatus
 import com.etologic.mahjongtournamentsuite.presentation.screen.RankingStandaloneScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RegistrationsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RolesScreen
@@ -58,6 +63,12 @@ import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotAuthReposi
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData.ONGOING
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotTournamentRepository
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.best_hands
+import mahjongtournamentsuite.adminapp.generated.resources.chicken_hands
+import mahjongtournamentsuite.adminapp.generated.resources.players
+import mahjongtournamentsuite.adminapp.generated.resources.teams
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.test.Test
 import kotlin.time.Clock
@@ -360,7 +371,7 @@ class AdminScreensScreenshotTest {
             Thread.sleep(1_500)
             waitForIdle()
         },
-    ) { RankingStandaloneScreen(ONGOING, clock = FixedClock) }
+    ) { RankingStandaloneScreen(ONGOING, clock = FixedClock, separateControls = false) }
 
     /** The projected ranking, playing: both logos stay, their switches hide. */
     @Test
@@ -376,7 +387,7 @@ class AdminScreensScreenshotTest {
             Thread.sleep(1_500)
             waitForIdle()
         },
-    ) { RankingStandaloneScreen(ONGOING, clock = FixedClock) }
+    ) { RankingStandaloneScreen(ONGOING, clock = FixedClock, separateControls = false) }
 
     /** The prize giving: the third place shows, the button reveals the second next (the first one waits). */
     @Test
@@ -389,7 +400,58 @@ class AdminScreensScreenshotTest {
             Thread.sleep(1_500)
             waitForIdle()
         },
-    ) { RankingStandaloneScreen(ONGOING, clock = FixedClock) }
+    ) { RankingStandaloneScreen(ONGOING, clock = FixedClock, separateControls = false) }
+
+    /**
+     * The projected ranking run from "Ranking control" in another window: no buttons, the third place revealed. The
+     * room sees it like this on the desktop and the web.
+     */
+    @Test
+    fun rankingProjected() = adminScreenshots(
+        "ranking-projected",
+        ready = {
+            waitForText("LUCÍA MARTÍN", substring = true)
+            Thread.sleep(1_500)
+            waitForIdle()
+        },
+    ) {
+        remember {
+            RankingDisplayLink.reset()
+            RankingDisplayLink.setControl(ONGOING, RankingDisplayControl(playing = false).reveal("players"))
+        }
+        RankingStandaloneScreen(ONGOING, clock = FixedClock, separateControls = true)
+    }
+
+    /** The control of the projected ranking, while it shows the players with their third place revealed. */
+    @Test
+    fun rankingControl() = adminScreenshots(
+        "ranking-control",
+        ready = {
+            waitForText(adminText("reveal_second_place"))
+            waitForIdle()
+        },
+    ) {
+        val titles = listOf(Res.string.players, Res.string.teams, Res.string.chicken_hands, Res.string.best_hands).map { stringResource(it) }
+        remember {
+            RankingDisplayLink.reset()
+            RankingDisplayLink.setControl(ONGOING, RankingDisplayControl(playing = false).reveal("players"))
+            RankingDisplayLink.setStatus(
+                ONGOING,
+                RankingDisplayStatus(
+                    pages = listOf(
+                        RankingDisplayPage("players", titles[0], 3),
+                        RankingDisplayPage("teams", titles[1], 3),
+                        RankingDisplayPage("chicken-hands", titles[2], 3),
+                        RankingDisplayPage("best-hands", titles[3], 3),
+                    ),
+                    pageIndex = 0,
+                    remainingSeconds = 7,
+                    resultsHidden = true,
+                ),
+            )
+        }
+        RankingControlScreen(ONGOING, onOpenProjection = {}, onBack = {})
+    }
 
     @Test
     fun rankingStandalone() = adminScreenshots(
@@ -401,7 +463,7 @@ class AdminScreensScreenshotTest {
             waitForIdle()
         },
     ) {
-        RankingStandaloneScreen(ONGOING, clock = FixedClock)
+        RankingStandaloneScreen(ONGOING, clock = FixedClock, separateControls = false)
     }
 }
 
