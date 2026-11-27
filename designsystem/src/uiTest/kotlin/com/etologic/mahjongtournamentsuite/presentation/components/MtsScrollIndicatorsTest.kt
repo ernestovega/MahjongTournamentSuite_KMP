@@ -18,6 +18,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.InspectableValue
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.getBoundsInRoot
@@ -85,6 +86,34 @@ class MtsScrollIndicatorsMathTest {
 
 @OptIn(ExperimentalTestApi::class)
 class MtsScrollIndicatorsUiTest {
+    @Test
+    fun aNewThemeRedrawsTheIndicatorsAndTheInspectorNamesThem() = runComposeUiTest {
+        var dark by mutableStateOf(false)
+        var shown: Modifier = Modifier
+        val state = ScrollState(0)
+        setContent {
+            MtsTheme(useDarkTheme = dark) {
+                val indicators = Modifier.scrollIndicators(state, scrollbar = MtsScrollbar.None)
+                shown = indicators
+                Box(Modifier.width(300.dp).height(200.dp)) {
+                    Column(Modifier.fillMaxWidth().then(indicators).verticalScroll(state).testTag("content")) {
+                        repeat(20) { Text("Line $it", Modifier.height(40.dp)) }
+                    }
+                }
+            }
+        }
+        waitForIdle()
+        val light = shown
+        dark = true
+        waitForIdle()
+
+        assertTrue(light != shown, "the colors of the dark theme are other indicators")
+        assertTrue(light.hashCode() != shown.hashCode())
+        val inspected = assertNotNull(shown as? InspectableValue)
+        assertEquals("scrollIndicators", inspected.nameFallback)
+        assertEquals(listOf("orientation", "scrollbar"), inspected.inspectableElements.map { it.name }.toList())
+    }
+
     @Test
     fun theScrollbarNeverTakesAStripBecauseItShowsOnlyWhileScrolling() = runComposeUiTest {
         var lines by mutableStateOf(2)
