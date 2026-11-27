@@ -59,17 +59,16 @@ const namedHtmlEntities: Record<string, string> = {
   gt: ">",
 };
 
+/** The letter of a numeric entity, or the entity as it is when the number is no Unicode letter. */
+function codePointText(entity: string, codePoint: number): string {
+  return codePoint <= 0x10ffff ? String.fromCodePoint(codePoint) : entity;
+}
+
 /** Decode the named and numeric entities used by EMA player names. */
 export function decodePlayerNameEntities(value: string): string {
   return value.replace(/&(#x[0-9a-f]+|#\d+|[a-z][a-z0-9]+);/gi, (entity, code: string) => {
-    if (code.toLowerCase().startsWith("#x")) {
-      const parsed = Number.parseInt(code.slice(2), 16);
-      return Number.isFinite(parsed) ? String.fromCodePoint(parsed) : entity;
-    }
-    if (code.startsWith("#")) {
-      const parsed = Number.parseInt(code.slice(1), 10);
-      return Number.isFinite(parsed) ? String.fromCodePoint(parsed) : entity;
-    }
+    if (code.toLowerCase().startsWith("#x")) return codePointText(entity, Number.parseInt(code.slice(2), 16));
+    if (code.startsWith("#")) return codePointText(entity, Number.parseInt(code.slice(1), 10));
     const decoded = namedHtmlEntities[code.toLowerCase()];
     if (decoded == null) return entity;
     return /^[A-Z]/.test(code) ? decoded.toUpperCase() : decoded;
