@@ -14,8 +14,6 @@ import {
   handSeatScores,
   isPenaltyOnly,
   isResultSelectionInvalid,
-  MAX_CHICKEN_HAND_SCORE,
-  MIN_HAND_SCORE,
   seatIdsOf,
   tablePointsOf,
 } from "./handScoring";
@@ -414,10 +412,7 @@ function checkTableScores(c: Collector, table: Data, hands: Array<{ id: string; 
     }
     if (winner !== "" && winner === loser) c.add("error", "hands.sameWinnerLoser", "The winner and the discarder are the same player.", handPlaces(hand));
     const score = Number(text(hand.handScore));
-    if (winner !== "" && score < MIN_HAND_SCORE) c.add("error", "hands.score", `The score ${score} is below ${MIN_HAND_SCORE}.`, handPlaces(hand));
-    if (Boolean(hand.isChickenHand) && score > MAX_CHICKEN_HAND_SCORE) {
-      c.add("error", "hands.chickenScore", `A chicken hand cannot score ${score}.`, handPlaces(hand));
-    }
+    // A score below the minimum, or a chicken hand over its maximum, is already an invalid result above.
     if (winner !== "" && score > 200) c.add("warning", "hands.highScore", `The score ${score} is very high. Check for a typing error.`, handPlaces(hand));
     ["playerEastPenalty", "playerSouthPenalty", "playerWestPenalty", "playerNorthPenalty"].forEach((field) => {
       const parts = penaltyParts(hand[field]);

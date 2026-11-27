@@ -140,12 +140,6 @@ export async function listOrganizations(): Promise<Organization[]> {
   return [...(await organizationsById()).values()].sort((left, right) => left.name.localeCompare(right.name));
 }
 
-export async function getOrganization(id: string): Promise<Organization> {
-  const snapshot = await db.doc(`${COLLECTION}/${id}`).get();
-  if (!snapshot.exists) throw notFound("Organization not found");
-  return mapOrganization(snapshot);
-}
-
 export function organizerView(organization: Organization): OrganizerView {
   const { id, name, type, country, primaryColor, logoUrl, logoHash } = organization;
   return { id, name, type, country, primaryColor, logoUrl, logoHash };

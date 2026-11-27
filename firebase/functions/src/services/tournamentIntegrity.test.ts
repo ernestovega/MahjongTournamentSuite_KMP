@@ -235,3 +235,45 @@ test("after 25 findings of one kind the rest are only counted", () => {
   assert.equal(names.length, 26);
   assert.ok(names.some((finding) => finding.message.includes("more findings of this kind are not listed")));
 });
+
+test("documents without their numbers and tables with broken data are each reported", () => {
+  const input = valid();
+  delete input.tournament.tablesWithProgress;
+  input.players = input.players.map(({ id, data }) => ({ id, data: { ...data, id: undefined } }));
+  input.rounds = [{ id: "1", data: {} }];
+  const seats = { playerEastId: "1", playerSouthId: "2", playerWestId: "3", playerNorthId: "4" };
+  const [first, second, third, fourth] = input.tables;
+  // A document whose id is not its round and table, in a round that does not exist, and a copy of it.
+  first.id = "9_9";
+  first.data = { ...first.data, roundId: 3, version: "abc", ...seats, chickenHandCount: 5 };
+  first.hands = [
+    hand(1, { isDone: true }),
+    hand(2, { handId: 3, playerWinnerId: "9", playerLooserId: "8", handScore: "8" }),
+    hand(4, { playerWinnerId: "1", playerLooserId: "-", handScore: "300", playerEastPenalty: "abc", playerSouthPenalty: "5" }),
+    hand(5, { playerWinnerId: "2", playerLooserId: "2", handScore: "8" }),
+    hand(6, { playerWinnerId: "1", playerLooserId: "3", handScore: "8", isDone: true }),
+    hand(6),
+  ];
+  second.id = "9_9";
+  // A completed table without seats or totals, and a table without players that uses manual totals.
+  third.data = { ...third.data, isCompleted: true };
+  fourth.data = { ...fourth.data, playerIds: undefined, version: undefined, useTotalsOnly: true };
+  fourth.hands = hands([hand(1, { playerWinnerId: "13", playerLooserId: "14", handScore: "8" })]);
+
+  const found = new Set(codes(input));
+  for (const code of [
+    "tables.id", "tables.duplicate", "tables.round", "tables.version", "tables.playerIds", "tables.completedWithoutSeats",
+    "hands.count", "hands.id", "hands.duplicate", "hands.doneEmpty", "hands.winnerSeat", "hands.loserSeat", "hands.sameWinnerLoser",
+    "hands.highScore", "hands.penaltyText", "hands.positivePenalty", "hands.gap", "tables.completedWithoutTotals", "tables.handsIgnored",
+    "tables.chickenCount", "counters.tablesWithProgress",
+  ]) assert.ok(found.has(code), `${code} in ${[...found].join(", ")}`);
+});
+
+test("two tables with the same four players are repeated opponents", () => {
+  const input = valid();
+  input.tournament.numRounds = 2;
+  input.rounds.push({ id: "2", data: { roundId: 2 } });
+  input.tournament.roundSchedules = [...(input.tournament.roundSchedules as unknown[]), { roundId: 2, date: "2026-10-02", startTime: "09:00" }];
+  input.tables.push(...input.tables.map((table) => ({ ...table, id: `2_${table.data.tableId}`, data: { ...table.data, roundId: 2 } })));
+  assert.ok(codes(input).includes("tables.repeatOpponents"));
+});
