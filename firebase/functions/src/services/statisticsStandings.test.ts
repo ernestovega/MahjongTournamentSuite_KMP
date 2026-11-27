@@ -46,3 +46,15 @@ test("equal best hands share a place and a slot without a result has no standing
   assert.equal(standingOf("t", 9, data), null);
   assert.equal(standingOf("t", 1, {}), null);
 });
+
+test("reads totals without points or score, slots without chicken or best hands, and empty tables of best hands", () => {
+  const standing = standingOf("t", 1, {
+    totals: { 1: {}, 2: { points: 3, score: 10 } },
+    chicken: { 2: { 1: 1, 2: "x" } },
+    best: { 2: { 1: null, 2: 24 }, 3: null },
+  });
+  assert.equal(standing?.rank, 2);
+  assert.equal(standing?.points, 0);
+  assert.equal(standing?.chickenHands, 0);
+  assert.equal(standing?.bestHand, 0);
+});
