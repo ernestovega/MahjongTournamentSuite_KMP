@@ -55,11 +55,10 @@ describe("registration routes without a body", () => {
     ];
     const answers: string[] = [];
     for (const [method, path] of calls) {
-      const response = await server.request(method, path, { token: admin.token });
-      answers.push(`${method} ${path.split("/").slice(3).join("/")} ${response.status}`);
+      const response = await server.request(method, path, { token: admin.token, noBody: true });
+      answers.push(`${method} ${path.split("/").slice(3).join("/")} ${response.status} ${JSON.stringify(response.body)}`);
     }
-    assert.deepEqual(answers.filter((answer) => / 5\d\d$/.test(answer)), [], answers.join("\n"));
-    console.log(answers.join("\n"));
+    assert.deepEqual(answers.filter((answer) => / 5\d\d /.test(answer)), [], answers.join("\n"));
   });
 
   it("saves a pending email that is missing as none and reads a file without a name", async () => {

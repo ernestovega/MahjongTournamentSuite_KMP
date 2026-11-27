@@ -1257,4 +1257,16 @@ Resultaten visas vid prisutdelningen från Omgångskontroll.</string>
     <string name="ranking_hidden_from_public_title">Resultaten är dolda för publiken</string>
     <string name="ranking_hidden_from_public_message">Om den här skärmen står i salen ser alla rankingen. Visa resultaten vid prisutdelningen från Omgångskontroll.</string>
     <string name="show_ranking_here_anyway">Visa här ändå</string>
+    <string name="projection_logo_show_while_running">Visa under körning</string>
+    <string name="score_sheets_title">Poängblad</string>
+    <string name="score_sheets_info">Blad att skriva ut på A4 och fylla i vid borden. De är alltid på engelska.</string>
+    <string name="score_sheets_blank">Tomt</string>
+    <string name="score_sheets_blank_info">Ett blad att kopiera så många gånger som behövs.</string>
+    <string name="score_sheets_tables">Med omgång och bord</string>
+    <string name="score_sheets_tables_info">Ett blad för varje bord i varje omgång, med omgång och bord ifyllda (%1$d blad).</string>
+    <string name="score_sheets_no_tables">Turneringen har inga bord än.</string>
+    <string name="score_sheets_ema_logo">EMA-logga</string>
+    <string name="score_sheets_chicken_on">Det har en kolumn för chicken hands, eftersom turneringen räknar dem.</string>
+    <string name="score_sheets_chicken_off">Det har ingen kolumn för chicken hands, eftersom turneringen inte räknar dem.</string>
+    <string name="score_sheets_save">Spara poängbladen</string>
 </resources>

@@ -1257,4 +1257,16 @@ I risultati si rivelano alla premiazione da Controllo del turno.</string>
     <string name="ranking_hidden_from_public_title">I risultati sono nascosti al pubblico</string>
     <string name="ranking_hidden_from_public_message">Se questo schermo è in sala, tutti vedranno la classifica. Rivela i risultati da Controllo del turno alla premiazione.</string>
     <string name="show_ranking_here_anyway">Mostra qui comunque</string>
+    <string name="projection_logo_show_while_running">Mostra in corso</string>
+    <string name="score_sheets_title">Fogli punteggio</string>
+    <string name="score_sheets_info">Fogli da stampare in A4 e compilare ai tavoli. Sono sempre in inglese.</string>
+    <string name="score_sheets_blank">Vuoto</string>
+    <string name="score_sheets_blank_info">Un foglio da fotocopiare tutte le volte che serve.</string>
+    <string name="score_sheets_tables">Con turno e tavolo</string>
+    <string name="score_sheets_tables_info">Un foglio per ogni tavolo di ogni turno, con turno e tavolo già scritti (%1$d fogli).</string>
+    <string name="score_sheets_no_tables">Il torneo non ha ancora tavoli.</string>
+    <string name="score_sheets_ema_logo">Logo EMA</string>
+    <string name="score_sheets_chicken_on">Ha una colonna per le chicken hand, perché il torneo le conta.</string>
+    <string name="score_sheets_chicken_off">Non ha una colonna per le chicken hand, perché il torneo non le conta.</string>
+    <string name="score_sheets_save">Salva i fogli punteggio</string>
 </resources>

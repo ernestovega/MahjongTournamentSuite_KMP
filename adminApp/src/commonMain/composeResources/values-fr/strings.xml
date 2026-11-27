@@ -1257,4 +1257,16 @@ Les résultats se révèlent à la remise des prix depuis le Contrôle du tour.<
     <string name="ranking_hidden_from_public_title">Les résultats sont masqués au public</string>
     <string name="ranking_hidden_from_public_message">Si cet écran est dans la salle, tout le monde verra le classement. Révélez les résultats depuis le Contrôle du tour à la remise des prix.</string>
     <string name="show_ranking_here_anyway">Afficher ici quand même</string>
+    <string name="projection_logo_show_while_running">Afficher en cours</string>
+    <string name="score_sheets_title">Feuilles de score</string>
+    <string name="score_sheets_info">Feuilles à imprimer en A4 et à remplir aux tables. Elles sont toujours en anglais.</string>
+    <string name="score_sheets_blank">Vierge</string>
+    <string name="score_sheets_blank_info">Une feuille à photocopier autant de fois que nécessaire.</string>
+    <string name="score_sheets_tables">Avec manche et table</string>
+    <string name="score_sheets_tables_info">Une feuille par table et par manche, avec sa manche et sa table inscrites (%1$d feuilles).</string>
+    <string name="score_sheets_no_tables">Le tournoi n'a pas encore de tables.</string>
+    <string name="score_sheets_ema_logo">Logo de l'EMA</string>
+    <string name="score_sheets_chicken_on">Elle a une colonne pour les chicken hands, car le tournoi les compte.</string>
+    <string name="score_sheets_chicken_off">Elle n'a pas de colonne pour les chicken hands, car le tournoi ne les compte pas.</string>
+    <string name="score_sheets_save">Enregistrer les feuilles de score</string>
 </resources>

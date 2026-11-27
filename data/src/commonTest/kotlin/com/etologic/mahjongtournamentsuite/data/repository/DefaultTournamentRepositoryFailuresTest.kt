@@ -82,6 +82,7 @@ class DefaultTournamentRepositoryFailuresTest {
         assertIs<AppResult.Failure>(repository.getAllTablesWithHands("t1", RefreshMode.FORCE))
         assertIs<AppResult.Failure>(repository.getRoundClocks("t1"))
         assertIs<AppResult.Failure>(repository.generateTableQrCodes("t1", perSheet = 6))
+        assertIs<AppResult.Failure>(repository.generateScoreSheets("t1", perTable = true, emaLogo = true))
     }
 
     @Test
@@ -133,6 +134,7 @@ class DefaultTournamentRepositoryFailuresTest {
     @Test
     fun theGeneratedFilesAndTheListOfTheAdminAppNeedAnAccount() = runTest {
         assertIs<AppResult.Failure>(repository(auth = signedOut).generateTableQrCodes("t1", perSheet = 6))
+        assertIs<AppResult.Failure>(repository(auth = signedOut).generateScoreSheets("t1", perTable = false, emaLogo = false))
         assertIs<AppResult.Failure>(repository(auth = signedOut).listTournaments(RefreshMode.FORCE))
     }
 }

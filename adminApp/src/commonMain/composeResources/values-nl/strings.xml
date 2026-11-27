@@ -1257,4 +1257,16 @@ De uitslagen worden bij de prijsuitreiking onthuld via Rondebeheer.</string>
     <string name="ranking_hidden_from_public_title">De uitslagen zijn verborgen voor het publiek</string>
     <string name="ranking_hidden_from_public_message">Staat dit scherm in de zaal, dan ziet iedereen de stand. Onthul de uitslagen bij de prijsuitreiking via Rondebeheer.</string>
     <string name="show_ranking_here_anyway">Toch hier tonen</string>
+    <string name="projection_logo_show_while_running">Tonen tijdens lopen</string>
+    <string name="score_sheets_title">Scorebladen</string>
+    <string name="score_sheets_info">Bladen om op A4 te printen en aan de tafels in te vullen. Ze zijn altijd in het Engels.</string>
+    <string name="score_sheets_blank">Leeg</string>
+    <string name="score_sheets_blank_info">Eén blad om zo vaak als nodig te kopiëren.</string>
+    <string name="score_sheets_tables">Met ronde en tafel</string>
+    <string name="score_sheets_tables_info">Eén blad voor elke tafel van elke ronde, met de ronde en de tafel ingevuld (%1$d bladen).</string>
+    <string name="score_sheets_no_tables">Het toernooi heeft nog geen tafels.</string>
+    <string name="score_sheets_ema_logo">EMA-logo</string>
+    <string name="score_sheets_chicken_on">Het heeft een kolom voor chicken hands, omdat het toernooi ze telt.</string>
+    <string name="score_sheets_chicken_off">Het heeft geen kolom voor chicken hands, omdat het toernooi ze niet telt.</string>
+    <string name="score_sheets_save">Scorebladen opslaan</string>
 </resources>

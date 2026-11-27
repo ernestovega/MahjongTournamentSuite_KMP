@@ -9,13 +9,16 @@ import {
   accountOfEma,
   adminAddRegistration,
   adminRegistrations,
+  adminRemoveRegistration,
   adminUpdateRegistration,
+  applyPlayerCountToRegistrations,
   addOwnTeamMember,
   cancelOwnRegistration,
   confirmRegistration,
   createOwnTeam,
   emailHint,
   freeSlug,
+  importRegistrations,
   loadTournament,
   ownRegistration,
   publicRegistrations,
@@ -209,5 +212,64 @@ describe("registrations with malformed documents", () => {
 
     assert.deepEqual(await registrationsOfEma(""), []);
     assert.ok((await registrationsOfEma("07660001")).some((item) => item.tournamentId === tournamentId));
+  });
+});
+
+/** An import of a file whose rows miss times, names or numbers, and the admin changes of registrations that are gone. */
+describe("registrations of an import with missing fields", () => {
+  const tournamentId = `malformed-import-${Date.now()}`;
+  const ref = db.doc(`tournaments/${tournamentId}`);
+  const registrations = ref.collection("registrations");
+
+  before(async () => {
+    setMailTransportForTests(async () => {});
+    await ref.set({ isTeams: true, drawPending: true, registration: { status: "OPEN" } });
+  });
+  after(() => setMailTransportForTests(null));
+
+  it("names and orders the rows without a time or a name, and leaves a fifth person out of a full team", async () => {
+    const csv = [
+      "Timestamp,Email,First name,Last name,EMA number,Team",
+      ",,,,ABC,",
+      "15/09/2026 18:00:00,nameless@example.test,,,XYZ,",
+      ",,Ana,One,07670001,Full",
+      "15/09/2026 18:01:00,,Bea,Two,07670002,Full",
+      ",,Cris,Three,07670003,Full",
+      "15/09/2026 18:02:00,,Dani,Four,07670004,Full",
+      ",,Eva,Five,07670005,Full",
+    ].join("\n");
+    const result = await importRegistrations({ tournamentId, csv, apply: true, language: "en" });
+    assert.equal(result.imported, 7);
+
+    const byId = new Map((await registrations.get()).docs.map((doc) => [doc.id, doc.data()]));
+    assert.equal(byId.get("row-2")?.name, "row-2");
+    assert.equal(byId.get("row-3")?.name, "nameless@example.test");
+    assert.equal(byId.get("07670001")?.name, "Ana One");
+    const inTeam = ["07670001", "07670002", "07670003", "07670004", "07670005"].filter((id) => byId.get(id)?.teamId != null);
+    assert.equal(inTeam.length, 4);
+  });
+
+  it("takes a person out of a team with an empty team name, and removes a pending registration without a log", async () => {
+    const view = await adminUpdateRegistration({ tournamentId, emaId: "07670001", teamName: null });
+    assert.equal(view.teamId ?? null, null);
+
+    await registrations.doc("07670010").set({ status: "PENDING", order: 1 });
+    await adminRemoveRegistration({ tournamentId, emaId: "07670010" });
+    assert.equal((await registrations.doc("07670010").get()).exists, false);
+    const log = await ref.collection("registrationLog").get();
+    assert.equal(log.docs.some((doc) => doc.get("emaId") === "07670010"), false);
+  });
+
+  it("finds no registration link of a tournament that is gone or private", async () => {
+    await db.doc("registrationSlugs/malformed-gone").set({ tournamentId: "malformed-no-such-tournament" });
+    await assert.rejects(tournamentOfSlug("malformed-gone"), /Registration link not found/);
+    await db.doc(`tournaments/${tournamentId}-private`).set({ isPublic: false });
+    await db.doc("registrationSlugs/malformed-private").set({ tournamentId: `${tournamentId}-private` });
+    await assert.rejects(tournamentOfSlug("malformed-private"), /Registration link not found/);
+  });
+
+  it("skips people of a player count change who have no registration", async () => {
+    await applyPlayerCountToRegistrations({ tournamentId, removedEmaIds: ["07670098"], promotedEmaIds: ["07670099"], numPlayers: 8 });
+    assert.equal((await registrations.doc("07670099").get()).exists, false);
   });
 });

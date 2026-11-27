@@ -123,6 +123,7 @@ class CacheCoverageTest {
         "generateTournamentIdCards" to Cached,
         "generateTournamentIdList" to Cached,
         "generateTableQrCodes" to Cached,
+        "generateScoreSheets" to Cached,
         "generateEmaReport" to Cached,
         "generateIdCardProof" to Live("A proof of the editor's unsaved design."),
         "getIdCardStaffNames" to Live("Read when the ID cards dialog opens."),

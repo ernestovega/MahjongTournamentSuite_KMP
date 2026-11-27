@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
-import { before, describe, it } from "node:test";
+import { before, describe, it, mock } from "node:test";
+
+import { FieldValue } from "firebase-admin/firestore";
 
 import { db } from "../firebase";
 import { HttpError } from "../api/httpError";
@@ -143,6 +145,39 @@ describe("change of the number of players", () => {
     assert.equal(manifest.resources.draw.revision, 1);
   });
 
+  it("writes the old draw back when a write of the change fails", async () => {
+    const tag = String(Date.now()).slice(-6);
+    const { id, ref } = await create(16);
+    await assign(ref, 3, `3${tag}3`);
+    // The batch that writes the log fails, after the new slots and the new table are written.
+    const batch = db.batch.bind(db);
+    const failing = mock.method(db, "batch", () => {
+      const real = batch();
+      let writesLog = false;
+      const set = real.set.bind(real) as (...args: unknown[]) => FirebaseFirestore.WriteBatch;
+      (real as { set: unknown }).set = (docRef: FirebaseFirestore.DocumentReference, ...rest: unknown[]) => {
+        if (docRef.parent.id === "playerLog") writesLog = true;
+        return set(docRef, ...rest);
+      };
+      const commit = real.commit.bind(real);
+      real.commit = () => (writesLog ? Promise.reject(new Error("log unavailable")) : commit());
+      return real;
+    });
+    try {
+      await assert.rejects(run(id, 20), /log unavailable/);
+    } finally {
+      failing.mock.restore();
+    }
+
+    const slots = await slotsOf(ref);
+    assert.equal(slots.size, 16);
+    assert.equal(slots.get(3)?.assignedEmaId, `3${tag}3`);
+    const tables = await ref.collection("tables").get();
+    assert.deepEqual(tables.docs.map((doc) => doc.id).sort(), ["1_1", "1_2", "1_3", "1_4"]);
+    assert.equal((await ref.collection("tables").doc("1_1").collection("hands").get()).size, 16);
+    assert.equal((await ref.get()).get("numPlayers"), 16);
+  });
+
   it("refuses a tournament with table data, without changing anything", async () => {
     const { id, ref } = await create(20);
     await ref.update({ tablesWithProgress: 1 });
@@ -205,6 +240,30 @@ describe("change of the number of players with teams", () => {
     assert.equal(slots.get(5)?.team, 2);
     assert.ok([...slots.values()].every((slot) => slot.assignedEmaId !== `3${tag}6`));
     assert.equal((await ref.collection("emaPlayerAssignments").doc(`3${tag}6`).get()).exists, false);
+  });
+
+  it("reads slots, teams and tables that miss their fields", async () => {
+    const tag = String(Date.now()).slice(-6);
+    const { id, ref } = await create(20, { isTeams: true });
+    await assign(ref, 9, `4${tag}9`);
+    const strip = async (collection: string, fields: string[]) => {
+      const docs = await ref.collection(collection).get();
+      await Promise.all(docs.docs.map((doc) => doc.ref.update(Object.fromEntries(fields.map((field) => [field, FieldValue.delete()])))));
+    };
+    await strip("players", ["id", "name"]);
+    await strip("teams", ["id", "name"]);
+    await strip("tables", ["version"]);
+    await ref.update({ tablesWithProgress: FieldValue.delete(), hostCountry: FieldValue.delete(), contactEmail: FieldValue.delete() });
+
+    const result = await run(id, 16, { isTeams: true, removed: [5, 6, 7, 8] });
+
+    assert.equal(result.tournament.numPlayers, 16);
+    const slots = await slotsOf(ref);
+    assert.equal(slots.size, 16);
+    assert.equal(slots.get(5)?.assignedEmaId, `4${tag}9`);
+    assert.equal((await ref.collection("teams").get()).size, 4);
+    // A table without a version counts as version 0, so the table that keeps its key goes to 1.
+    assert.equal((await ref.collection("tables").doc("1_1").get()).get("version"), 1);
   });
 
   it("refuses part of a team and adds a new empty team", async () => {

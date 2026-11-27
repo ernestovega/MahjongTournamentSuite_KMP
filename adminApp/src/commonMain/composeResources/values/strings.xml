@@ -1257,4 +1257,16 @@ Reveal the results at the prize giving from Round control.</string>
     <string name="ranking_hidden_from_public_title">The results are hidden from the public</string>
     <string name="ranking_hidden_from_public_message">If this screen is in the room, everyone will see the ranking. Reveal the results from Round control at the prize giving.</string>
     <string name="show_ranking_here_anyway">Show here anyway</string>
+    <string name="projection_logo_show_while_running">Show while running</string>
+    <string name="score_sheets_title">Score sheets</string>
+    <string name="score_sheets_info">Score sheets to print on A4 and fill in at the tables. They are always in English.</string>
+    <string name="score_sheets_blank">Blank</string>
+    <string name="score_sheets_blank_info">One sheet to copy as many times as needed.</string>
+    <string name="score_sheets_tables">With round and table</string>
+    <string name="score_sheets_tables_info">One sheet for each table of each round, with its round and table written in (%1$d sheets).</string>
+    <string name="score_sheets_no_tables">The tournament has no tables yet.</string>
+    <string name="score_sheets_ema_logo">EMA logo</string>
+    <string name="score_sheets_chicken_on">It has a column for chicken hands, because the tournament counts them.</string>
+    <string name="score_sheets_chicken_off">It has no column for chicken hands, because the tournament does not count them.</string>
+    <string name="score_sheets_save">Save the score sheets</string>
 </resources>

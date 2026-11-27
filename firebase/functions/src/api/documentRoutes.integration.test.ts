@@ -66,6 +66,13 @@ describe("document routes", () => {
     assert.equal(response.status, 200, message(response.body));
   });
 
+  it("makes the score sheets, blank or for every table of every round", async () => {
+    const blank = await get("/score-sheets");
+    assert.equal(blank.status, 200, message(blank.body));
+    const tables = await get("/score-sheets?mode=tables&ema=false");
+    assert.equal(tables.status, 200, message(tables.body));
+  });
+
   it("makes the EMA report and refuses rows that are not rankings", async () => {
     const row = (playerId: number, place: number) => ({ playerId, place, tablePoints: 4, score: 10 });
     const post = (rows: unknown) => server.request("POST", `/tournaments/${tournamentId}/ema-report`, { token: admin.token, body: { rows } });

@@ -103,7 +103,7 @@ class AdminScreensScreenshotTest {
     @Test
     fun tournament() = adminScreenshots("tournament", ready = { waitForText("Madrid Open 2026") }) { nav -> TournamentScreen(nav, ONGOING) }
 
-    /** The "More" menu of the top bar of a tournament: Players, Tables IDs, Stats, EMA report and Activity. */
+    /** The "More" menu of the top bar of a tournament: Players, Tables IDs, Score sheets, Stats, EMA report and Activity. */
     @Test
     fun tournamentMoreMenu() = adminScreenshots(
         "tournament-more-menu",
@@ -286,7 +286,15 @@ class AdminScreensScreenshotTest {
     fun errors() = adminScreenshots("errors") { nav -> ErrorsScreen(nav) }
 
     @Test
-    fun timer() = adminScreenshots("timer", ready = { waitForText("2:00:00") }) { TimerStandaloneScreen(ONGOING, initialRound = 3) }
+    fun timer() = adminScreenshots(
+        "timer",
+        ready = {
+            waitForText("2:00:00")
+            // The tournament, and with it the EMA logo, loads in the background.
+            Thread.sleep(1_500)
+            waitForIdle()
+        },
+    ) { TimerStandaloneScreen(ONGOING, initialRound = 3) }
 
     @Test
     fun timerRunning() = adminScreenshots("timer-running", ready = { waitForText("1:30:00") }) {
@@ -301,16 +309,50 @@ class AdminScreensScreenshotTest {
     @Test
     fun timerIndependent() = adminScreenshots("timer-independent") { TimerStandaloneScreen(null) }
 
-    /** The Timer of a tournament shows the color of its main organizer, here a yellow that needs dark text. */
+    /**
+     * The Timer of a tournament, stopped: the logos of its main organizer and of the EMA, each with the switch that keeps
+     * it while the round runs, and the color of the organizer, here a yellow that needs dark text.
+     */
     @Test
     fun timerBranded() = adminScreenshots(
         "timer-branded",
-        modules = { adminModules(tournaments = BrandedTournamentRepository("#F9A825")) },
+        modules = { adminModules(tournaments = BrandedTournamentRepository("#F9A825", fakeClubLogo)) },
         variants = brandedVariants,
-        ready = { waitForText("2:00:00") },
+        ready = {
+            waitForText("2:00:00")
+            // The logo loads from disk in the background.
+            Thread.sleep(1_500)
+            waitForIdle()
+        },
     ) { TimerStandaloneScreen(ONGOING, initialRound = 3) }
 
-    /** The projected ranking, playing, with the logo of the main organizer of the tournament in the corner. */
+    /** The same Timer while the round runs: the logos stay and their switches hide. */
+    @Test
+    fun timerBrandedRunning() = adminScreenshots(
+        "timer-branded-running",
+        modules = { adminModules(tournaments = BrandedTournamentRepository("#F9A825", fakeClubLogo, runningClock = true)) },
+        variants = brandedVariants,
+        ready = {
+            waitForText("1:30:00")
+            Thread.sleep(1_500)
+            waitForIdle()
+        },
+    ) { TimerStandaloneScreen(ONGOING, initialRound = 3, deviceNowMs = { RUNNING_NOW_MS }) }
+
+    /** The projected ranking, paused: the logos of the main organizer and of the EMA, each with its switch. */
+    @Test
+    fun rankingStandaloneBrandedPaused() = adminScreenshots(
+        "ranking-standalone-branded-paused",
+        modules = { adminModules(tournaments = BrandedTournamentRepository("#1565C0", fakeClubLogo)) },
+        variants = brandedVariants,
+        ready = {
+            waitForText("LUCÍA MARTÍN", substring = true)
+            Thread.sleep(1_500)
+            waitForIdle()
+        },
+    ) { RankingStandaloneScreen(ONGOING, clock = FixedClock) }
+
+    /** The projected ranking, playing, after the switch of the EMA logo was turned off: only the organizer's logo stays. */
     @Test
     fun rankingStandaloneBranded() = adminScreenshots(
         "ranking-standalone-branded",
@@ -318,6 +360,8 @@ class AdminScreensScreenshotTest {
         variants = brandedVariants,
         ready = {
             waitForText("LUCÍA MARTÍN", substring = true)
+            // The second switch is the one under the EMA logo, at the right.
+            onAllNodesWithText(adminText("projection_logo_show_while_running"))[1].performClick()
             onNodeWithContentDescription(adminText("paging_start")).performClick()
             waitForIdle()
             // The logo loads from disk in the background.
@@ -327,19 +371,37 @@ class AdminScreensScreenshotTest {
     ) { RankingStandaloneScreen(ONGOING, clock = FixedClock) }
 
     @Test
-    fun rankingStandalone() = adminScreenshots("ranking-standalone", ready = { waitForText("LUCÍA MARTÍN", substring = true) }) {
+    fun rankingStandalone() = adminScreenshots(
+        "ranking-standalone",
+        ready = {
+            waitForText("LUCÍA MARTÍN", substring = true)
+            // The EMA logo loads in the background.
+            Thread.sleep(1_500)
+            waitForIdle()
+        },
+    ) {
         RankingStandaloneScreen(ONGOING, clock = FixedClock)
     }
 }
 
-/** The tournaments of the screenshots, with [ONGOING] organized by a club of the color [hex]. */
-private class BrandedTournamentRepository(hex: String, logoUrl: String? = null) : ScreenshotTournamentRepository(
+/**
+ * The tournaments of the screenshots, with [ONGOING] organized by a club of the color [hex]. With [runningClock], round 3
+ * has run for 30 minutes.
+ */
+private class BrandedTournamentRepository(
+    hex: String,
+    logoUrl: String? = null,
+    private val runningClock: Boolean = false,
+) : ScreenshotTournamentRepository(
     ScreenshotData.tournaments.map { tournament ->
         if (tournament.id != ONGOING) return@map tournament
         val organizers = tournament.organizers.mapIndexed { index, organizer -> if (index == 0) organizer.copy(primaryColor = hex, logoUrl = logoUrl) else organizer }
         tournament.copy(primaryColor = hex, organizers = organizers)
     },
-)
+) {
+    override suspend fun getRoundClocks(tournamentId: String): AppResult<RoundClocks> =
+        if (runningClock) RunningClockTournamentRepository().getRoundClocks(tournamentId) else super.getRoundClocks(tournamentId)
+}
 
 /** A club logo on disk, so the screenshot needs no network. */
 private val fakeClubLogo: String = checkNotNull(BrandedTournamentRepository::class.java.getResource("/fake-club-logo.png")).toString()

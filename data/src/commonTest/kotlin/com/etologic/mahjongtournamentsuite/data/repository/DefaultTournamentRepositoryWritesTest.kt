@@ -62,7 +62,7 @@ class DefaultTournamentRepositoryWritesTest {
                 path.endsWith("/rounds") -> jsonResponse("""{"rounds":[{"roundId":1},{"roundId":2}]}""")
                 path.endsWith("/complete-open-tables") -> jsonResponse("""{"completed":3}""")
                 path.endsWith("/clock") || path.endsWith("/control") || path.endsWith("/round-clocks") -> jsonResponse(CLOCKS)
-                path.endsWith("/table-qr-codes") || path.endsWith("/id-list") ->
+                path.endsWith("/table-qr-codes") || path.endsWith("/id-list") || path.endsWith("/score-sheets") ->
                     respond(ByteReadChannel("%PDF $path"), HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/pdf"))
                 path == "/me" -> jsonResponse(
                     """{"emaId":"10000001","tournaments":[{"tournamentId":"t1","playerId":7,"teamId":2}],""" +
@@ -314,6 +314,22 @@ class DefaultTournamentRepositoryWritesTest {
         assertEquals("%PDF /tournaments/t1/table-qr-codes", cards.decodeToString())
         assertEquals("%PDF /tournaments/t1/id-list", list.decodeToString())
         assertEquals(listOf("GET /tournaments/t1/table-qr-codes?perSheet=4"), server.requests.filter { "table-qr-codes" in it })
+    }
+
+    @Test
+    fun theScoreSheetsAreDownloadedOnceForEachChoice() = runTest {
+        val server = Server()
+        val repository = repository(server)
+
+        val blank = assertIs<AppResult.Success<ByteArray>>(repository.generateScoreSheets("t1", perTable = false, emaLogo = true)).value
+        assertIs<AppResult.Success<ByteArray>>(repository.generateScoreSheets("t1", perTable = false, emaLogo = true))
+        assertIs<AppResult.Success<ByteArray>>(repository.generateScoreSheets("t1", perTable = true, emaLogo = false))
+
+        assertEquals("%PDF /tournaments/t1/score-sheets", blank.decodeToString())
+        assertEquals(
+            listOf("GET /tournaments/t1/score-sheets?mode=blank&ema=true", "GET /tournaments/t1/score-sheets?mode=tables&ema=false"),
+            server.requests.filter { "score-sheets" in it },
+        )
     }
 
     private companion object {
