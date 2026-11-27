@@ -144,10 +144,13 @@ class RoundTimerController(
      */
     private var followRunningRound = tournamentId != null
 
-    /** Loads the tournament and the clocks. The screen calls it at start and then every few seconds. */
-    suspend fun refresh() {
+    /**
+     * Loads the tournament and the clocks. The screen calls it at start and then every few seconds. The tournament is
+     * read once, unless [reloadTournament] asks for it again after a change of its own, such as revealing the results.
+     */
+    suspend fun refresh(reloadTournament: Boolean = false) {
         val tournamentId = tournamentId ?: return
-        if (mutableState.value.tournament == null) {
+        if (reloadTournament || mutableState.value.tournament == null) {
             when (val result = repository.listTournaments(RefreshMode.IF_CHANGED)) {
                 is AppResult.Success -> {
                     val tournament = result.value.firstOrNull { it.id == tournamentId }
@@ -160,7 +163,7 @@ class RoundTimerController(
                         )
                     }
                 }
-                is AppResult.Failure -> mutableState.update { it.copy(loadFailed = true) }
+                is AppResult.Failure -> mutableState.update { it.copy(loadFailed = it.tournament == null) }
             }
         }
         // An action that waits for the network goes first. The clocks of the server would undo it on screen.

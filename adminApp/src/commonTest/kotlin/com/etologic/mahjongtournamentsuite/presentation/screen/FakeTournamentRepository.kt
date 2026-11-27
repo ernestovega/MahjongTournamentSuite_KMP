@@ -212,6 +212,9 @@ internal class FakeTournamentRepository : TournamentRepository {
     /** Fails the clock requests with this error, for example [AppError.Network]. */
     var clockError: AppError? = null
 
+    /** A failure of the list of tournaments. */
+    var tournamentsError: AppError? = null
+
     /** A reset without force of a round with hands answers with a conflict, as the server does. */
     var roundsWithHands: Set<Int> = emptySet()
 
@@ -298,6 +301,7 @@ internal class FakeTournamentRepository : TournamentRepository {
 
     override suspend fun listTournaments(refreshMode: RefreshMode): AppResult<List<Tournament>> {
         calls += "tournaments $refreshMode"
+        tournamentsError?.let { return AppResult.Failure(it) }
         return AppResult.Success(tournaments)
     }
 

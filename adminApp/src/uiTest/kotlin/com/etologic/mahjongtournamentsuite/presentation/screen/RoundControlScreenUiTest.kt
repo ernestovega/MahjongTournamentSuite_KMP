@@ -9,7 +9,9 @@ import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.filterToOne
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onChildren
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -18,6 +20,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.runComposeUiTest
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
+import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClock
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClockAction
@@ -59,7 +62,11 @@ class RoundControlScreenUiTest {
         seed(syncTable(tableId = 4))
     }
 
-    private fun ComposeUiTest.show(server: FakeTournamentRepository, round: Int = 1): RoundTimerController {
+    private fun ComposeUiTest.show(
+        server: FakeTournamentRepository,
+        round: Int = 1,
+        setResultsRevealed: suspend (Boolean) -> AppResult<Unit> = { AppResult.Success(Unit) },
+    ): RoundTimerController {
         val controller = RoundTimerController(server, "t1", round, deviceNowMs = { now })
         setContent {
             MtsTheme(useDarkTheme = false) {
@@ -68,6 +75,7 @@ class RoundControlScreenUiTest {
                     loadTables = { mode -> server.listTournamentTables("t1", null, mode) },
                     loadRoundHands = { roundId -> server.getRoundTablesWithHands("t1", roundId, RefreshMode.FORCE) },
                     onBack = {},
+                    setResultsRevealed = setResultsRevealed,
                     deviceNowMs = { now },
                 )
             }
@@ -496,5 +504,64 @@ class RoundControlScreenUiTest {
 
         onNodeWithTag("round_chip_1_open_tables", useUnmergedTree = true).assertDoesNotExist()
         onNodeWithTag("finished_rounds_open_tables").assertDoesNotExist()
+    }
+
+    @Test
+    fun theResultsHiddenFromARoundAreRevealedAndHiddenAgainAfterAsking() = runComposeUiTest {
+        val server = server()
+        server.tournaments = server.tournaments.map { it.copy(hideResultsFromRound = 3) }
+        val reveals = mutableListOf<Boolean>()
+        show(server) { revealed ->
+            reveals += revealed
+            server.tournaments = server.tournaments.map { it.copy(resultsRevealed = revealed) }
+            AppResult.Success(Unit)
+        }
+
+        onNodeWithText("Players and the public do not see the results from round 3 on. Only admins see them.").assertExists()
+        onNodeWithText("Reveal results").performClick()
+        settle()
+        onNodeWithText("Reveal the results?").assertExists()
+        onAllNodesWithText("Reveal results").onLast().performClick()
+        settle()
+        assertEquals(listOf(true), reveals)
+        onNodeWithText("The results are revealed: everyone sees the ranking.").assertExists()
+
+        onNodeWithText("Hide again").performClick()
+        settle()
+        onNodeWithText("Hide the results again?").assertExists()
+        onNodeWithText("Cancel").performClick()
+        settle()
+        onNodeWithText("Hide the results again?").assertDoesNotExist()
+        onNodeWithText("Hide again").performClick()
+        settle()
+        onAllNodesWithText("Hide again").onLast().performClick()
+        settle()
+        assertEquals(listOf(true, false), reveals)
+        onNodeWithText("Players and the public do not see the results from round 3 on. Only admins see them.").assertExists()
+    }
+
+    @Test
+    fun aRevealThatFailsShowsTheError() = runComposeUiTest {
+        val server = server()
+        server.tournaments = server.tournaments.map { it.copy(hideResultsFromRound = 2) }
+        show(server) { AppResult.Failure(AppError.Network) }
+
+        onNodeWithText("Reveal results").performClick()
+        settle()
+        onAllNodesWithText("Reveal results").onLast().performClick()
+        settle()
+        onNodeWithText("Players and the public do not see the results from round 2 on. Only admins see them.").assertExists()
+        onNodeWithText("Reveal the results?").assertDoesNotExist()
+    }
+
+    @Test
+    fun aClockChangeWithoutNetworkWaitsAndSaysSo() = runComposeUiTest {
+        val server = server().apply { clockError = AppError.Network }
+        show(server)
+
+        onNodeWithText("Start").performClick()
+        settle()
+
+        onNodeWithText("No connection. The Timer sends the change when the network is back.").assertExists()
     }
 }

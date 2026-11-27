@@ -254,7 +254,7 @@ internal fun RoundControlContent(
         busy = true
         scope.launch {
             val result = setResultsRevealed(revealed)
-            controller.refresh()
+            controller.refresh(reloadTournament = true)
             busy = false
             if (result is AppResult.Failure) error = result.error
         }

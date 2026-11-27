@@ -365,4 +365,34 @@ class RoundTimerControllerTest {
 
         assertTrue(controller.changeControl(RoundControlChange(hands = ControlMode.OPEN)) is AppResult.Failure)
     }
+
+    @Test
+    fun theTournamentIsReadOnceAndAgainOnlyWhenAsked() = runTest {
+        val (repository, controller) = setup()
+        controller.refresh()
+        repository.tournaments = repository.tournaments.map { it.copy(resultsRevealed = true) }
+
+        controller.refresh()
+        assertFalse(controller.state.value.tournament!!.resultsRevealed)
+        controller.refresh(reloadTournament = true)
+        assertTrue(controller.state.value.tournament!!.resultsRevealed)
+
+        // A failed reload keeps the tournament on screen.
+        repository.tournamentsError = AppError.Network
+        controller.refresh(reloadTournament = true)
+        assertFalse(controller.state.value.loadFailed)
+        assertTrue(controller.state.value.tournament!!.resultsRevealed)
+    }
+
+    @Test
+    fun aFirstReadThatFailsIsTriedAgainOnTheNextRefresh() = runTest {
+        val (repository, controller) = setup()
+        repository.tournamentsError = AppError.Network
+        controller.refresh()
+        assertEquals(null, controller.state.value.tournament)
+
+        repository.tournamentsError = null
+        controller.refresh()
+        assertEquals("t", controller.state.value.tournament?.id)
+    }
 }
