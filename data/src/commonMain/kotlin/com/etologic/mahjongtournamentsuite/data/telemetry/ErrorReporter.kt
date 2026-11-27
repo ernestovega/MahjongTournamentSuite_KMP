@@ -49,7 +49,7 @@ class ErrorReporter(
         val failure = throwable.classify() ?: return
         sent += 1
         val reportId = newId()
-        val status = (throwable as? BackendHttpException)?.status?.value
+        val status = (throwable as? BackendHttpException)?.let { it.status.value }
         analytics.event(
             TelemetryEvent.APP_ERROR,
             mapOf(

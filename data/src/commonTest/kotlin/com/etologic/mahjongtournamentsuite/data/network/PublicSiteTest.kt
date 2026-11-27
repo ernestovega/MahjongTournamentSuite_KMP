@@ -14,10 +14,12 @@ class PublicSiteTest {
     fun stagingGoesThroughItsFirebaseSite() {
         val staging = "https://europe-southwest1-mts---staging.cloudfunctions.net/api"
         assertEquals("https://mts---staging.web.app/api", PublicSite.apiThroughHosting(staging))
+        assertEquals("https://mts---staging.web.app", PublicSite.ofBackend(staging))
     }
 
     @Test
     fun aLocalBackendOfTheTestsStaysAsItIs() {
         assertEquals("http://10.0.2.2:5999/api", PublicSite.apiThroughHosting("http://10.0.2.2:5999/api"))
+        assertEquals(PublicSite.PRODUCTION, PublicSite.ofBackend("http://10.0.2.2:5999/api"), "a backend without a project links to production")
     }
 }

@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.data.repository
 
+import com.etologic.mahjongtournamentsuite.data.backend.dto.DataVersionsManifestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundControlDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TableControlDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentDto
@@ -8,6 +9,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.OrganizationType
 import com.etologic.mahjongtournamentsuite.domain.model.RegistrationPhase
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClockAction
 import com.etologic.mahjongtournamentsuite.domain.model.RoundControlChange
+import com.etologic.mahjongtournamentsuite.domain.model.TableKey
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentManifest
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -79,5 +82,13 @@ class TournamentMappersTest {
         assertEquals(true, RoundClockAction.Reset(force = true).toDto().force)
         assertEquals(600L, RoundClockAction.SetRemaining(600).toDto().remainingSeconds)
         assertEquals("stop", RoundClockAction.Stop.toDto().action)
+    }
+
+    @Test
+    fun aManifestOfAnOldServerHasEveryRevisionAtZeroAndSkipsUnknownTableKeys() {
+        val manifest = DataVersionsManifestDto(tableVersions = mapOf("1_2" to 3L, "not-a-table" to 9L)).toDomain()
+
+        assertEquals(TournamentManifest(tablesRevision = 0, tableVersions = mapOf(TableKey(1, 2) to 3L)), manifest)
+        assertEquals(0L, DataVersionsManifestDto().drawRevision())
     }
 }

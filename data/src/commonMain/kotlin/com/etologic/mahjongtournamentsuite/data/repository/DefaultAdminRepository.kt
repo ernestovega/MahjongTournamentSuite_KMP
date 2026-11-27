@@ -74,8 +74,10 @@ class DefaultAdminRepository(
             role = GlobalUserRole.valueOf(status.role.name),
             roles = roles,
             adminOrganizations = status.adminOrganizations.toSet(),
-            permissions = status.permissions?.let { Permission.fromKeys(it) }
-                ?: roles.flatMapTo(mutableSetOf()) { Permission.defaultsOf(it) },
+            // An older server sends no permissions: each role gets its defaults.
+            permissions = status.permissions.let { keys ->
+                if (keys == null) roles.flatMapTo(mutableSetOf()) { Permission.defaultsOf(it) } else Permission.fromKeys(keys)
+            },
         )
     }
 

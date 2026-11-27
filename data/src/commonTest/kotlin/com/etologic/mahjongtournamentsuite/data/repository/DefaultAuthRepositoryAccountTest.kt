@@ -49,6 +49,7 @@ class DefaultAuthRepositoryAccountTest {
 
     private val requests = mutableListOf<String>()
     private var refuse = false
+    private var manifest = """{"resources":{"users":{"revision":3}},"tableVersions":{}}"""
     private val credentials = MemoryCredentials()
 
     private fun repository(stored: StoredAuthSession? = StoredAuthSession("u1", "id-1", "refresh-1")) = MemoryStore(stored).let { store ->
@@ -58,7 +59,7 @@ class DefaultAuthRepositoryAccountTest {
                 val body = (request.body as? OutgoingContent.ByteArrayContent)?.bytes()?.decodeToString().orEmpty()
                 requests += "${request.method.value} $path $body".trim()
                 when {
-                    path.endsWith("/sync/manifest") -> jsonResponse("""{"resources":{"users":{"revision":3}},"tableVersions":{}}""")
+                    path.endsWith("/sync/manifest") -> jsonResponse(manifest)
                     refuse -> respond(ByteReadChannel("""{"error":"refused"}"""), HttpStatusCode.BadRequest)
                     path == "/auth/signIn" -> jsonResponse("""{"idToken":"id-2","refreshToken":"refresh-2","uid":"u2"}""")
                     path == "/auth/passwordReset" || (path == "/auth/me" && request.method.value == "DELETE") -> jsonResponse("""{"ok":true}""")
@@ -121,6 +122,14 @@ class DefaultAuthRepositoryAccountTest {
         assertNull(me.photoUrl, "a blank photo is none")
         assertEquals(setOf(GlobalUserRole.EDITOR), me.roles)
         assertTrue(requests.any { it.startsWith("GET /auth/me") })
+    }
+
+    @Test
+    fun aServerWithoutTheRevisionOfTheAccountsStillGivesTheProfile() = runTest {
+        manifest = """{"resources":{}}"""
+        val (_, auth) = repository()
+
+        assertEquals("Ana", assertIs<AppResult.Success<UserProfile>>(auth.getMe(RefreshMode.IF_CHANGED)).value.alias)
     }
 
     @Test

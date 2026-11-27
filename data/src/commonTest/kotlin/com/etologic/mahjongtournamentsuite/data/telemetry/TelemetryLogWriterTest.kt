@@ -4,6 +4,7 @@ import co.touchlab.kermit.Severity
 import com.etologic.mahjongtournamentsuite.data.backend.BackendHttpException
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
+import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.CancellationException
 import kotlin.test.Test
@@ -33,6 +34,16 @@ class TelemetryLogWriterTest {
         warn(RuntimeException("Failed to fetch"))
         assertEquals(listOf("auth", "conflict", "client_error", "network"), reasons())
         assertTrue(telemetry.errors.isEmpty())
+    }
+
+    @Test
+    fun aTimeoutAndAForbiddenAnswerAreExpectedAndARedirectIsABug() {
+        warn(HttpRequestTimeoutException("https://api.test/tournaments", 1_000L))
+        warn(BackendHttpException(HttpStatusCode.Forbidden, ""))
+        warn(BackendHttpException(HttpStatusCode.Found, ""))
+
+        assertEquals(listOf("timeout", "auth", "server_error"), reasons())
+        assertEquals(1, telemetry.errors.size)
     }
 
     @Test
