@@ -80,6 +80,7 @@ kotlin {
         }
         jvmTest.dependencies {
             implementation(projects.screenshotTesting)
+            implementation(libs.ktor.client.mock)
             implementation(compose.desktop.currentOs)
             implementation(libs.compose.ui.test.junit4.desktop)
             implementation(libs.koin.test)

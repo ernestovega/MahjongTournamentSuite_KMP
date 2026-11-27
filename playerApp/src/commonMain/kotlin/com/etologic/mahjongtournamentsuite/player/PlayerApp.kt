@@ -50,6 +50,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.app_logo_dark
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.getKoin
 import org.koin.compose.koinInject
+import org.koin.core.module.Module
 import org.koin.dsl.module
 
 @Serializable
@@ -142,8 +143,10 @@ fun PlayerApp(
     webApps: WebApps? = null,
     /** True when the address was `/download`: the app opens the page of the apps over the tournaments. */
     openApps: Boolean = false,
+    /** The graph of the app. Tests put fakes over the edges of the real one. */
+    modules: List<Module> = playerAppModules,
 ) {
-    AppKoin(isolatedKoin, playerAppModules) {
+    AppKoin(isolatedKoin, modules) {
         val themeController = rememberThemeController()
         CompositionLocalProvider(
             LocalTelemetry provides (getKoin().getOrNull<Telemetry>() ?: NoTelemetry),
