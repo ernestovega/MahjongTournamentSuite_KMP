@@ -7,7 +7,7 @@ import { createAccount, requireAuthEmulator, seatEmaId, startServer, type TestAc
 import { validDrawTables } from "../testing/draw";
 import { fullRoundSchedules } from "../testing/schedule";
 
-/** The people routes of a tournament: the substitution of a player, set and removed, and the lookup of an account. */
+/** The people routes of a tournament: the substitution of a player, set and removed, the lookup of an account, and the rename. */
 describe("people routes", () => {
   let server: TestServer;
   let admin: TestAccount;
@@ -61,5 +61,12 @@ describe("people routes", () => {
   it("finds an account by its email for the members of the tournament", async () => {
     const found = await server.request("GET", `/tournaments/${tournamentId}/users/lookup?email=${encodeURIComponent(admin.email)}`, { token: admin.token });
     assert.equal(found.status, 200, JSON.stringify(found.body));
+  });
+
+  it("renames the tournament and refuses an empty name", async () => {
+    const rename = (name: unknown) => server.request("PUT", `/tournaments/${tournamentId}`, { token: admin.token, body: { name } });
+    assert.equal((await rename("  People cup  ")).status, 200);
+    assert.equal((await db.doc(`tournaments/${tournamentId}`).get()).get("name"), "People cup");
+    assert.equal((await rename(" ")).status, 400);
   });
 });
