@@ -130,6 +130,9 @@ data class MtsColors(
     val changed: Color,
     /** Something the user should check. */
     val warning: Color,
+    /** The background of a notice that warns, like the hidden results of Round control (Ernesto, 2026-11-27), and its text. */
+    val warningContainer: Color,
+    val onWarningContainer: Color,
     /** Neutral information, like an upcoming tournament. */
     val info: Color,
     val onInfo: Color,
@@ -212,6 +215,9 @@ internal val LightMtsColors = MtsColors(
     scoreWarning = Warning,
     changed = MahjongGreenDark,
     warning = Warning,
+    // Amber in both themes: dark text reads at more than 7:1 on it.
+    warningContainer = Color(0xFFFFB300),
+    onWarningContainer = Color(0xFF1F1400),
     info = Color(0xFF1565C0),
     onInfo = Color.White,
     selfPick = MahjongGreen,
