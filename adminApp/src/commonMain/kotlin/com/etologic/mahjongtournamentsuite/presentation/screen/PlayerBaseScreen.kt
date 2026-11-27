@@ -2,7 +2,6 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.material.icons.filled.PersonAdd
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -176,6 +174,7 @@ import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsFilterChip as FilterChip
 
 /** Shared player base. All signed-in users can read it. Only admins can change it. */
 @Composable
@@ -815,9 +814,8 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                                             countryName,
                                                         )
                                                         AppTooltipBox(pluralStringResource(Res.plurals.country_players_count, countryPlayerCount, countryName, countryPlayerCount)) {
-                                                            FilterPillButton(
+                                                            FilterChip(
                                                                 selected = isSelected,
-                                                                description = filterDescription,
                                                                 onClick = {
                                                                     selectedCountryCodes = if (isSelected) {
                                                                         selectedCountryCodes - code
@@ -825,24 +823,21 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                                                         selectedCountryCodes + code
                                                                     }
                                                                 },
-                                                            ) {
-                                                                CountryFlag(code = code)
-                                                                Spacer(Modifier.width(4.dp))
-                                                                ButtonText("$code ($countryPlayerCount)")
-                                                            }
+                                                                label = { Text("$code ($countryPlayerCount)") },
+                                                                modifier = Modifier.semantics { contentDescription = filterDescription },
+                                                                leadingIcon = { CountryFlag(code = code) },
+                                                            )
                                                         }
                                                     }
                                                 }
                                             }
                                             FilterGroup(stringResource(Res.string.photo)) {
                                                 val photoCount = players.count { !it.photoUrl.isNullOrBlank() }
-                                                FilterPillButton(
+                                                FilterChip(
                                                     selected = withPhotoOnly,
-                                                    description = stringResource(Res.string.filter_with_photo),
                                                     onClick = { withPhotoOnly = !withPhotoOnly },
-                                                ) {
-                                                    ButtonText(stringResource(Res.string.filter_with_photo) + " ($photoCount)")
-                                                }
+                                                    label = { Text(stringResource(Res.string.filter_with_photo) + " ($photoCount)") },
+                                                )
                                             }
                                         }
                                     }
@@ -1227,35 +1222,3 @@ private fun validatePlayerPhoto(image: SelectedImage): UiText? = when {
 
 /** A player has the three-letter code of the EMA, or an empty code when they have no country (a guest). */
 private fun isValidPlayerCountry(code: String): Boolean = code.trim().let { it.isEmpty() || it.matches(Regex("^[A-Za-z]{3}$")) }
-
-/** A round filter button of the players list: filled with the primary colour while [selected]. */
-@Composable
-private fun FilterPillButton(
-    selected: Boolean,
-    description: String,
-    onClick: () -> Unit,
-    content: @Composable RowScope.() -> Unit,
-) {
-    TextButton(
-        onClick = onClick,
-        buttonModifier = Modifier.semantics { contentDescription = description },
-        shape = CircleShape,
-        colors = if (selected) {
-            ButtonDefaults.textButtonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-            )
-        } else {
-            ButtonDefaults.textButtonColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        },
-        border = BorderStroke(
-            width = if (selected) 2.dp else 1.dp,
-            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-        ),
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-        content = content,
-    )
-}

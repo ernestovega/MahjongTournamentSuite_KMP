@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
@@ -270,8 +272,8 @@ class RoleGatingUiTest {
 
         awaitText("10002")
         onNodeWithContentDescription("10002", substring = true).performClick()
-        // The small test window may show the third row only after a scroll.
-        onNodeWithContentDescription("10003", substring = true).performScrollTo().performClick()
+        // The small test window shows only the top of the third row, under the filters: its click action is run directly.
+        onNodeWithContentDescription("10003", substring = true).performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
         onNodeWithText("Delete players (2)").performClick()
         awaitText("Delete the EMA players?")
         // The warning names the player with data and its tournaments: it is deactivated, not deleted.
