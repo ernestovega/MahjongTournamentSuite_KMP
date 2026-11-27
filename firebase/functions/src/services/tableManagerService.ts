@@ -180,7 +180,7 @@ export async function getTableWithHands(params: {
   const tableRef = db.collection("tournaments").doc(params.tournamentId).collection("tables").doc(tableDocId);
   const tableSnap = await tableRef.get();
   if (!tableSnap.exists) throw notFound("Table not found");
-  const data = tableSnap.data() ?? {};
+  const data = tableSnap.data() as Data;
   const hands = handsFromCopy(data) ?? handsFromData((await tableRef.collection("hands").get()).docs.map((doc) => doc.data()));
   return { table: tableStateFromData(data), hands };
 }
@@ -227,7 +227,7 @@ async function readTablesWithHands(
     const tablePath = handSnap.ref.parent.parent?.path;
     if (!handSnap.exists || tablePath == null) continue;
     const hands = handsByTable.get(tablePath) ?? [];
-    hands.push(handSnap.data() ?? {});
+    hands.push(handSnap.data() as Data);
     handsByTable.set(tablePath, hands);
   }
   const tables = tableDocs.map((tableSnap) => ({
@@ -415,24 +415,24 @@ export async function saveTableStateInTransaction(
   const handSnapshots = await transaction.getAll(...handRefsOf(tableRef));
   if (handSnapshots.some((snapshot) => !snapshot.exists)) throw notFound("Hands not found");
   const handsBefore = new Map<string, Data>(
-    handSnapshots.map((snapshot) => [snapshot.id, snapshot.data() ?? {}] as [string, Data]),
+    handSnapshots.map((snapshot) => [snapshot.id, snapshot.data() as Data] as [string, Data]),
   );
   if (params.handPatches.some((item) => !handsBefore.has(String(item.handId)))) {
     throw notFound("Hand not found");
   }
 
-  const tableBefore = tableSnapshot.data() ?? {};
+  const tableBefore = tableSnapshot.data() as Data;
   const mergedTable: Data = { ...tableBefore, ...params.tablePatch };
   const handsAfter = new Map(handsBefore);
   params.handPatches.forEach((item) => {
     const key = String(item.handId);
-    handsAfter.set(key, { ...(handsBefore.get(key) ?? {}), ...item.patch, handId: item.handId });
+    handsAfter.set(key, { ...handsBefore.get(key), ...item.patch, handId: item.handId });
   });
   // A hand can be done only with a result that counts (0 for a draw) and complete penalties. Only the hands of this
   // save are checked, so an old hand saved before the rule does not block other changes of the table.
   const seats = seatIdsOf(mergedTable);
   params.handPatches.forEach((item) => {
-    const hand = handsAfter.get(String(item.handId)) ?? {};
+    const hand = handsAfter.get(String(item.handId)) as Data;
     if (Boolean(hand.isDone) && (seats == null || !canBeDone(hand, seats))) {
       throw badRequest(`Hand ${item.handId} cannot be done: it needs a valid result and complete penalties`);
     }
@@ -440,7 +440,7 @@ export async function saveTableStateInTransaction(
   const stamps = doneStamps(handsBefore, handsAfter, params.handPatches.map((item) => item.handId), Date.now());
   stamps.forEach((doneAtMs, handId) => {
     const key = String(handId);
-    handsAfter.set(key, { ...(handsAfter.get(key) ?? {}), doneAtMs });
+    handsAfter.set(key, { ...handsAfter.get(key), doneAtMs });
   });
   // A table with every hand done is completed, whether the hands come from the editor or from a phone. The organizer
   // does not need the Completed switch for it. A totals-only table has no hands to count.
@@ -630,9 +630,9 @@ export async function resetTable(params: {
     if (!tableSnap.exists) throw notFound("Table not found");
     const handSnapshots = await transaction.getAll(...handRefsOf(tableRef));
     if (handSnapshots.some((snapshot) => !snapshot.exists)) throw notFound("Hands not found");
-    const tableBefore = tableSnap.data() ?? {};
+    const tableBefore = tableSnap.data() as Data;
     const nextVersion = Number(tableBefore.version ?? 0) + 1;
-    const previous = calculateTableSummary(tableBefore, handSnapshots.map((hand) => hand.data() ?? {}));
+    const previous = calculateTableSummary(tableBefore, handSnapshots.map((hand) => hand.data() as Data));
     const statsPlan = Boolean(tableBefore.isCompleted)
       ? await prepareTableStats(transaction, {
         tournamentId: params.tournamentId,
