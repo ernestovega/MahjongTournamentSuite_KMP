@@ -134,5 +134,5 @@ private fun HandPreviewDto.toDomain() = HandPreview(
 
 /** Reads the `message` of a backend error body. It falls back to a fixed text. */
 private fun String.backendMessage(): String =
-    Regex("\"message\"\\s*:\\s*\"([^\"]*)\"").find(this)?.groupValues?.getOrNull(1)?.takeIf { it.isNotBlank() }
+    Regex("\"message\"\\s*:\\s*\"([^\"]*)\"").find(this)?.let { it.groupValues[1] }?.takeIf { it.isNotBlank() }
         ?: "The table changed on the server."

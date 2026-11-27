@@ -43,7 +43,7 @@ internal fun Throwable.toRepositoryAppError(
     )
     else -> if (isConnectionFailure()) AppError.Network else {
         val kind = this::class.simpleName ?: "Error"
-        val details = message?.trim()?.takeIf(String::isNotBlank)?.let { ": $it" } ?: ""
+        val details = message?.trim().orEmpty().let { if (it.isBlank()) "" else ": $it" }
         AppError.Unexpected(if (details.isEmpty()) fallbackMessage ?: kind else "$kind$details")
     }
 }
@@ -56,16 +56,16 @@ internal fun Throwable.codedConflictOrNull(): AppError.Conflict? {
     if (this !is BackendHttpException || status != HttpStatusCode.Conflict) return null
     val body = runCatching { Json.parseToJsonElement(responseBody).jsonObject }.getOrNull() ?: return null
     val details = runCatching { body["details"]?.jsonObject }.getOrNull() ?: return null
-    val code = runCatching { details["code"]?.jsonPrimitive?.contentOrNull }.getOrNull()
+    val code = runCatching { details["code"]?.let { it.jsonPrimitive.contentOrNull } }.getOrNull()
         ?.let { name -> ConflictCode.entries.firstOrNull { it.name == name } } ?: return null
-    val message = runCatching { body["message"]?.jsonPrimitive?.contentOrNull }.getOrNull().orEmpty()
+    val message = runCatching { body["message"]?.let { it.jsonPrimitive.contentOrNull } }.getOrNull().orEmpty()
     val args = when (code) {
-        ConflictCode.ASSIGNMENTS_MISSING -> listOfNotNull(runCatching { details["missing"]?.jsonPrimitive?.contentOrNull }.getOrNull())
+        ConflictCode.ASSIGNMENTS_MISSING -> listOfNotNull(runCatching { details["missing"]?.let { it.jsonPrimitive.contentOrNull } }.getOrNull())
         // The round before, its open tables and whether it started: "2", "3, 5", "true".
         ConflictCode.PREVIOUS_ROUND_IN_PLAY, ConflictCode.PREVIOUS_ROUND_OPEN_TABLES -> listOf(
-            runCatching { details["roundId"]?.jsonPrimitive?.contentOrNull }.getOrNull().orEmpty(),
-            runCatching { details["tables"]?.jsonArray?.joinToString(", ") { it.jsonPrimitive.content } }.getOrNull().orEmpty(),
-            runCatching { details["started"]?.jsonPrimitive?.contentOrNull }.getOrNull() ?: "true",
+            runCatching { details["roundId"]?.let { it.jsonPrimitive.contentOrNull } }.getOrNull().orEmpty(),
+            runCatching { details["tables"]?.let { list -> list.jsonArray.joinToString(", ") { it.jsonPrimitive.content } } }.getOrNull().orEmpty(),
+            runCatching { details["started"]?.let { it.jsonPrimitive.contentOrNull } }.getOrNull() ?: "true",
         )
         else -> emptyList()
     }

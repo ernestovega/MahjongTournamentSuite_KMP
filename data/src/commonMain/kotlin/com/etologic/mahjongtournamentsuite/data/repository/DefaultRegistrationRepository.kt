@@ -369,15 +369,15 @@ private fun OwnRegistrationDto.toDomain() = OwnRegistration(
 internal fun Throwable.registrationAppErrorOrNull(): AppError.Registration? {
     if (this !is BackendHttpException || status.value !in 400..499) return null
     val details = runCatching { Json.parseToJsonElement(responseBody).jsonObject["details"]?.jsonObject }.getOrNull() ?: return null
-    val code = runCatching { details["code"]?.jsonPrimitive?.contentOrNull }.getOrNull()
+    val code = runCatching { details["code"]?.let { it.jsonPrimitive.contentOrNull } }.getOrNull()
         ?.let { name -> RegistrationErrorCode.entries.firstOrNull { it.name == name } } ?: return null
     return AppError.Registration(code, details.args(code))
 }
 
 private fun JsonObject.args(code: RegistrationErrorCode): List<String> = runCatching {
     when (code) {
-        RegistrationErrorCode.INCOMPLETE_TEAMS -> get("emaIds")?.jsonArray?.map { it.jsonPrimitive.content }.orEmpty()
-        RegistrationErrorCode.BAD_PLAYER_COUNT -> listOfNotNull(get("confirmed")?.jsonPrimitive?.contentOrNull)
+        RegistrationErrorCode.INCOMPLETE_TEAMS -> get("emaIds")?.let { list -> list.jsonArray.map { it.jsonPrimitive.content } }.orEmpty()
+        RegistrationErrorCode.BAD_PLAYER_COUNT -> listOfNotNull(get("confirmed")?.let { it.jsonPrimitive.contentOrNull })
         else -> emptyList()
     }
 }.getOrDefault(emptyList())

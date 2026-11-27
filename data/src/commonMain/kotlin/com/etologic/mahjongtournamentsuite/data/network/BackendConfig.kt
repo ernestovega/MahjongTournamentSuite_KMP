@@ -25,7 +25,7 @@ object PublicSite {
      * (staging) its Firebase address, `https://<project>.web.app`.
      */
     fun ofBackend(functionsBaseUrl: String): String {
-        val project = Regex("^https://[a-z0-9]+-[a-z0-9]+-(.+)\\.cloudfunctions\\.net").find(functionsBaseUrl)?.groupValues?.get(1)
+        val project = Regex("^https://[a-z0-9]+-[a-z0-9]+-(.+)\\.cloudfunctions\\.net").find(functionsBaseUrl)?.let { it.groupValues[1] }
         return if (project == null || project == PRODUCTION_PROJECT) PRODUCTION else "https://$project.web.app"
     }
 

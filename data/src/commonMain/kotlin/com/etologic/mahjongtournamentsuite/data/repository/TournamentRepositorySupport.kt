@@ -126,7 +126,7 @@ internal fun PlayerSubstitutionDto.toDomain(): PlayerSubstitution? {
 
 internal fun Throwable.toPlayerChangeError(): AppError {
     if (this is BackendHttpException && status == HttpStatusCode.Conflict) {
-        val reason = Regex("\"message\"\\s*:\\s*\"([^\"]*)\"").find(responseBody)?.groupValues?.getOrNull(1)
+        val reason = Regex("\"message\"\\s*:\\s*\"([^\"]*)\"").find(responseBody)?.let { it.groupValues[1] }
         codedConflictOrNull()?.let { return it }
         if (!reason.isNullOrBlank()) return AppError.Conflict(message = reason)
     }
