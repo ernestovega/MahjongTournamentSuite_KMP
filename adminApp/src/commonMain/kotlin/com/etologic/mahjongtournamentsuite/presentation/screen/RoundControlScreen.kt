@@ -28,7 +28,7 @@ import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.WarningAmber
 import com.etologic.mahjongtournamentsuite.presentation.components.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.HorizontalDivider
@@ -890,10 +890,10 @@ private fun FinishedRoundsNotice(openTables: List<TableKey>, enabled: Boolean, o
  */
 @Composable
 private fun HiddenResultsNotice(fromRound: Int, revealed: Boolean, enabled: Boolean, onReveal: () -> Unit, onHideAgain: () -> Unit) {
-    // Blue with an info icon, like the notice of the frozen ranking in the player app (Ernesto, 2026-11-27).
+    // Amber with a warning icon: the public does not see what the admins see (Ernesto, 2026-11-27).
     Surface(
-        color = MtsTheme.colors.info,
-        contentColor = MtsTheme.colors.onInfo,
+        color = MtsTheme.colors.warningContainer,
+        contentColor = MtsTheme.colors.onWarningContainer,
         shape = MaterialTheme.shapes.medium,
         modifier = Modifier.fillMaxWidth().testTag("hidden_results_notice"),
     ) {
@@ -902,7 +902,7 @@ private fun HiddenResultsNotice(fromRound: Int, revealed: Boolean, enabled: Bool
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Icon(Icons.Outlined.Info, contentDescription = null, Modifier.size(18.dp))
+            Icon(Icons.Outlined.WarningAmber, contentDescription = null, Modifier.size(18.dp))
             Text(
                 if (revealed) {
                     stringResource(Res.string.results_revealed_notice)
@@ -912,8 +912,9 @@ private fun HiddenResultsNotice(fromRound: Int, revealed: Boolean, enabled: Bool
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.weight(1f),
             )
-            // The button text goes on two lines, so the text on the left keeps its room on a phone (Ernesto, 2026-11-27).
-            val buttonModifier = Modifier.widthIn(max = HIDDEN_RESULTS_BUTTON_MAX_WIDTH)
+            // On a phone the button text goes on two lines, so the text on the left keeps its room. A wide screen has room
+            // for one line (Ernesto, 2026-11-27).
+            val buttonModifier = if (LocalCompactLayout.current) Modifier.widthIn(max = HIDDEN_RESULTS_BUTTON_MAX_WIDTH) else Modifier
             if (revealed) {
                 FocusedButton(enabled = enabled, onClick = onHideAgain, modifier = buttonModifier) {
                     ButtonText(stringResource(Res.string.hide_results_again), textAlign = TextAlign.Center)
