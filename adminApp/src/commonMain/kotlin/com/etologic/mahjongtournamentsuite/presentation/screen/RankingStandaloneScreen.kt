@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
@@ -276,7 +277,12 @@ private fun RankingStandaloneContent(
                     val compact = LocalCompactLayout.current
                     // On a phone the switches under the logos would cover the first rows: while paused, the table
                     // goes down to leave them room.
-                    val compactTop = if (!playing && snapshot?.tournament != null) COMPACT_TOP_WITH_SWITCHES else 24.dp
+                    // On a phone the title goes between the logos (Ernesto, 2026-11-27), in the band they take: the
+                    // logos and, while paused, their switches. The table starts under that band.
+                    val hasLogos = snapshot?.tournament != null
+                    val compactBand = if (playing) COMPACT_LOGO_SIZE else COMPACT_LOGO_BAND_WITH_SWITCHES
+                    val compactTop = if (hasLogos) COMPACT_LOGO_TOP + compactBand + 8.dp else 24.dp
+                    val showsPage = currentPage != null && !(snapshot?.tournament?.resultsHiddenFromRound != null && !showHiddenResults)
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -313,11 +319,24 @@ private fun RankingStandaloneContent(
                             }
                             else -> RankingPage(
                                 page = currentPage,
+                                showTitle = !(compact && hasLogos),
                                 listState = listState,
                                 rowsPerScroll = rowsPerScroll,
                                 onMaxRowsChanged = { maxRowsPerScreen = it },
                                 modifier = Modifier.weight(1f),
                             )
+                        }
+                    }
+                    if (compact && hasLogos && showsPage && currentPage != null) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .padding(top = COMPACT_LOGO_TOP, start = COMPACT_TITLE_SIDE, end = COMPACT_TITLE_SIDE)
+                                .height(compactBand)
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            RankingTitle(currentPage.title, compact = true)
                         }
                     }
                     snapshot?.let { held ->
@@ -339,7 +358,7 @@ private fun RankingStandaloneContent(
                                 onShowWhileRunningChange = { showOrganizerLogo = it },
                                 modifier = Modifier
                                     .align(Alignment.TopStart)
-                                    .padding(start = if (compact) 8.dp else 24.dp, top = if (compact) MtsTheme.spacing.xl else 40.dp),
+                                    .padding(start = if (compact) 8.dp else 24.dp, top = if (compact) COMPACT_LOGO_TOP else 40.dp),
                             ) {
                                 OrganizationLogo(
                                     name = tournament.mainOrganizerName(),
@@ -355,7 +374,7 @@ private fun RankingStandaloneContent(
                             onShowWhileRunningChange = { showEmaLogo = it },
                             // On a wide screen at the bottom left, under the controls, so the table keeps its width.
                             modifier = if (compact) {
-                                Modifier.align(Alignment.TopEnd).padding(end = 8.dp, top = MtsTheme.spacing.xl)
+                                Modifier.align(Alignment.TopEnd).padding(end = 8.dp, top = COMPACT_LOGO_TOP)
                             } else {
                                 Modifier.align(Alignment.BottomStart).padding(start = 24.dp, bottom = 24.dp)
                             },
@@ -624,6 +643,19 @@ private fun RankingControls(
     }
 }
 
+/** The title of a page of the ranking: Players, Teams... */
+@Composable
+private fun RankingTitle(title: String, compact: Boolean, modifier: Modifier = Modifier) {
+    Text(
+        text = title,
+        style = (if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium).copy(fontWeight = FontWeight.Bold),
+        textAlign = TextAlign.Center,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier,
+    )
+}
+
 @Composable
 private fun RankingPage(
     page: RankingPage,
@@ -631,6 +663,8 @@ private fun RankingPage(
     rowsPerScroll: Int,
     onMaxRowsChanged: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    /** False when the title goes elsewhere: between the logos on a phone. */
+    showTitle: Boolean = true,
 ) {
     // A phone reads the ranking in the hand: a normal text size, the full width, and the name column takes the space left.
     val compact = LocalCompactLayout.current
@@ -639,11 +673,7 @@ private fun RankingPage(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(
-            text = page.title,
-            style = (if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium).copy(fontWeight = FontWeight.Bold),
-            modifier = Modifier.padding(bottom = 8.dp),
-        )
+        if (showTitle) RankingTitle(page.title, compact, Modifier.padding(bottom = 8.dp))
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1130,5 +1160,11 @@ private const val TEAM_TEXT_SCALE = 0.45f
 private val LOGO_SIZE = 120.dp
 private val COMPACT_LOGO_SIZE = 44.dp
 
-/** The top of the ranking on a phone while paused: under the small logos and their switches. */
-private val COMPACT_TOP_WITH_SWITCHES = 128.dp
+/** Where the small logos start on a phone: under the line that says which data the screen shows. */
+private val COMPACT_LOGO_TOP = 24.dp
+
+/** The height of a small logo with its switch under it, while paused. */
+private val COMPACT_LOGO_BAND_WITH_SWITCHES = 108.dp
+
+/** The room the title keeps on each side for the logos and their switches. */
+private val COMPACT_TITLE_SIDE = 104.dp

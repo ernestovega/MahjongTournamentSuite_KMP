@@ -86,13 +86,16 @@ fun organizationColor(hex: String): Color {
     return Color(0xFF000000 or value)
 }
 
-/** The logo of the European Mahjong Association, shown on the screens that the venue projects. */
+/**
+ * The logo of the European Mahjong Association, shown on the screens that the venue projects. Its white is
+ * transparent in the image, so it sits on a white circle: on a dark page it would vanish.
+ */
 @Composable
 fun EmaLogo(size: Dp, modifier: Modifier = Modifier) {
     Image(
         painter = painterResource(Res.drawable.logo_ema),
         contentDescription = "European Mahjong Association",
         contentScale = ContentScale.Fit,
-        modifier = modifier.size(size),
+        modifier = modifier.size(size).clip(CircleShape).background(Color.White),
     )
 }
