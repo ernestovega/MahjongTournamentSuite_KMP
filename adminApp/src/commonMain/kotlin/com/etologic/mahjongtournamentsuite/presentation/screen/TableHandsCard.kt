@@ -181,13 +181,15 @@ internal fun TableHandsCard(
         val seatShortNames = seatFullNames.map { it.substringBefore(' ') }
         // One hand is open: the first one that is not done. Ticking Done closes it and opens the next one.
         val doneStates = editor.hands.map { it.isDone }
-        var expandedIds by remember { mutableStateOf(setOfNotNull(editor.hands.firstOrNull { !it.isDone }?.handId)) }
-        var previousDone by remember { mutableStateOf(doneStates) }
+        // Null until the user or Done changes it: the hands can arrive after the first composition.
+        var chosenExpandedIds by remember(editor) { mutableStateOf<Set<Int>?>(null) }
+        val expandedIds = chosenExpandedIds ?: setOfNotNull(editor.hands.firstOrNull { !it.isDone }?.handId)
+        var previousDone by remember(editor) { mutableStateOf(doneStates) }
         LaunchedEffect(doneStates) {
             val newlyDone = editor.hands.filterIndexed { i, hand -> hand.isDone && previousDone.getOrNull(i) == false }
             if (newlyDone.isNotEmpty() && previousDone.size == doneStates.size) {
                 val next = editor.hands.firstOrNull { !it.isDone }?.handId
-                expandedIds = expandedIds - newlyDone.map { it.handId }.toSet() + setOfNotNull(next)
+                chosenExpandedIds = expandedIds - newlyDone.map { it.handId }.toSet() + setOfNotNull(next)
             }
             previousDone = doneStates
         }
@@ -238,7 +240,7 @@ internal fun TableHandsCard(
                         subtotal = handSubtotals.getOrNull(index) ?: SeatTextValues.EMPTY,
                         preview = if (hand.handId in expandedIds) editor.previewFor(index) else null,
                         expanded = hand.handId in expandedIds,
-                        onExpandedChange = { open -> expandedIds = if (open) expandedIds + hand.handId else expandedIds - hand.handId },
+                        onExpandedChange = { open -> chosenExpandedIds = if (open) expandedIds + hand.handId else expandedIds - hand.handId },
                         wide = !compact,
                         navigation = rowNavigators.getOrNull(index) ?: HandRowKeyboardNavigator(),
                         previousNavigation = rowNavigators.getOrNull(index - 1),

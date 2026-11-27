@@ -129,7 +129,11 @@ class TournamentJourneyTest : AdminE2eTest() {
 
     /** Writes the last hand of the table in the editor: [winner] wins with 8 from the discard of [loser]. */
     private fun writeTheLastHandInTheEditor(winner: Int, loser: Int) {
-        // Hand 16 is the open hand: a button for each seat, tagged with the id of its player.
+        // Hand 16 is the open hand: a button for each seat, tagged with the id of its player. Opened here if it is folded.
+        if (c.onAllNodes(hasTestTag("hand-16-score"), useUnmergedTree = true).fetchSemanticsNodes().isEmpty()) {
+            c.onNode(hasTestTag("hand-16-toggle"), useUnmergedTree = true).performScrollTo().performClick()
+            c.waitUntil(5_000) { c.onAllNodes(hasTestTag("hand-16-score"), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
+        }
         c.onNode(hasTestTag("hand-16-winner-$winner"), useUnmergedTree = true).performScrollTo().performClick()
         c.onNode(hasTestTag("hand-16-loser-$loser"), useUnmergedTree = true).performScrollTo().performClick()
         c.onNode(hasSetTextAction() and hasAnyAncestor(hasTestTag("hand-16-score")), useUnmergedTree = true).performTextInput("8")
