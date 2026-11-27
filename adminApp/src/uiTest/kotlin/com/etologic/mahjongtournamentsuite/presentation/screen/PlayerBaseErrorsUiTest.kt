@@ -93,6 +93,11 @@ private class PhotoFailingRegistry(private val players: List<Player>) : PlayerRe
     }
 }
 
+/** A registry where the check before a delete works and the delete itself fails. */
+private class DeleteFailingRegistry(players: List<Player>) : PlayerRepository by FailingRegistry(players) {
+    override suspend fun tournamentsOfEmaPlayers(emaIds: List<String>): AppResult<List<EmaPlayerTournaments>> = AppResult.Success(emptyList())
+}
+
 /** A registry where the saves work and every read of the list after the first one fails. */
 private class ReloadFailingRegistry(players: List<Player>) : PlayerRepository by FailingRegistry(players, loadsBeforeFailing = 1) {
     override suspend fun updatePlayer(previousEmaId: String, player: Player): AppResult<Unit> = AppResult.Success(Unit)
@@ -336,5 +341,18 @@ class PlayerBaseErrorsUiTest {
         waitForIdle()
         onAllNodes(hasText("Delete players (1)") and hasClickAction()).onFirst().press()
         awaitText("OK")
+    }
+
+    @Test
+    fun aDeleteThatFailsAfterTheConfirmationShowsTheError() = runComposeUiTest {
+        show(DeleteFailingRegistry(listOf(ada, babbage)))
+        awaitText("10001")
+        onAllNodes(hasContentDescription("00010001", substring = true) and isToggleable()).onFirst().press()
+        waitForIdle()
+        onAllNodes(hasText("Delete players (1)") and hasClickAction()).onFirst().press()
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(hasText("Delete players (1)") and hasAnyAncestor(isDialog())).fetchSemanticsNodes().isNotEmpty() }
+        onAllNodes(hasText("Delete players (1)") and hasClickAction() and hasAnyAncestor(isDialog())).onLast().press()
+        awaitText("OK")
+        awaitText("10001")
     }
 }
