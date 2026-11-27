@@ -12,6 +12,7 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
@@ -89,6 +90,11 @@ private class PhotoFailingRegistry(private val players: List<Player>) : PlayerRe
         calls += "photo:$emaId"
         return AppResult.Failure(AppError.Network)
     }
+}
+
+/** A registry where the saves work and every read of the list after the first one fails. */
+private class ReloadFailingRegistry(players: List<Player>) : PlayerRepository by FailingRegistry(players, loadsBeforeFailing = 1) {
+    override suspend fun updatePlayer(previousEmaId: String, player: Player): AppResult<Unit> = AppResult.Success(Unit)
 }
 
 /** The EMA registry screen tells what is wrong: a missing field, a wrong or taken EMA number, and a failed save. */
@@ -309,5 +315,23 @@ class PlayerBaseErrorsUiTest {
         onNode(hasText("Add player") and hasClickAction() and hasAnyAncestor(isDialog())).pressAction()
         awaitText("Network request failed.")
         assertEquals(listOf("create:00099999", "photo:00099999"), registry.calls)
+    }
+
+    @Test
+    fun aSavedPlayerWhoseListDoesNotLoadAgainSaysSo() = runComposeUiTest {
+        show(ReloadFailingRegistry(listOf(ada, babbage)))
+        selectAda()
+        field("First name").performTextReplacement("Augusta")
+        saveAndExpect("OK")
+    }
+
+    @Test
+    fun aDeleteWhoseCheckFailsShowsTheError() = runComposeUiTest {
+        show(FailingRegistry(listOf(ada, babbage)))
+        awaitText("10001")
+        onAllNodes(hasContentDescription("00010001", substring = true) and isToggleable()).onFirst().press()
+        waitForIdle()
+        onAllNodes(hasText("Delete players (1)") and hasClickAction()).onFirst().press()
+        awaitText("OK")
     }
 }

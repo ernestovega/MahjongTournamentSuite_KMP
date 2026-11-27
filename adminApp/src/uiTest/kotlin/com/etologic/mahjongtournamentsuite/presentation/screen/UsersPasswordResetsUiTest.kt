@@ -4,6 +4,12 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.state.ToggleableState
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -120,11 +126,15 @@ class UsersPasswordResetsUiTest {
     fun selectAllShownSelectsTheShownAccountsAndClearEmptiesTheSelection() = runComposeUiTest {
         show(adminWith(ann, bob, cy))
 
-        onNodeWithText("Select all shown (3)").performClick()
+        // The box in the header of the boxes selects every account shown, and a second tap clears them.
+        onNodeWithContentDescription("Select all shown (3)").assertIsOff().performClick()
         onNodeWithText("3 selected").assertExists()
-        onNodeWithText("Clear").performClick()
+        onNodeWithContentDescription("Select all shown (3)").assertIsOn().performClick()
         onNodeWithText("0 selected").assertExists()
         onNodeWithText("Send password reset (0)").assertIsNotEnabled()
+        // With some accounts selected, the box is half checked.
+        onNodeWithContentDescription("bob@example.test").performClick()
+        onNodeWithContentDescription("Select all shown (3)").assert(SemanticsMatcher.expectValue(SemanticsProperties.ToggleableState, ToggleableState.Indeterminate))
     }
 
     @Test
@@ -132,10 +142,10 @@ class UsersPasswordResetsUiTest {
         val admin = adminWith(ann, bob, cy)
         show(admin)
 
-        onNodeWithText("Select all shown (3)").performClick()
+        onNodeWithContentDescription("Select all shown (3)").performClick()
         onAllNodesWithText("Search", substring = true).onFirst().performTextInput("bob")
         waitForIdle()
-        onNodeWithText("Select all shown (1)").assertExists()
+        onNodeWithContentDescription("Select all shown (1)").assertIsOn()
         onNodeWithText("1 selected").assertExists()
         onNodeWithText("Send password reset (1)").performClick()
         onAllNodesWithText("Send password reset (1)").onLast().performClick()
@@ -151,7 +161,7 @@ class UsersPasswordResetsUiTest {
         admin.resetResults["p2"] = PasswordResetResult("p2", PasswordResetOutcome.FAILED, PasswordResetFailure.EMAIL_FAILED)
         show(admin)
 
-        onNodeWithText("Select all shown (3)").performClick()
+        onNodeWithContentDescription("Select all shown (3)").performClick()
         onNodeWithText("Send password reset (3)").performClick()
         onAllNodesWithText("Send password reset (3)").onLast().performClick()
         waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Not sent").fetchSemanticsNodes().isNotEmpty() }
@@ -170,7 +180,7 @@ class UsersPasswordResetsUiTest {
     fun anEditorSeesNoSelectionAndNoSendButton() = runComposeUiTest {
         show(adminWith(ann, bob, role = GlobalUserRole.EDITOR))
 
-        onAllNodesWithText("Select all shown", substring = true).assertCountEquals(0)
+        onAllNodesWithContentDescription("Select all shown", substring = true).assertCountEquals(0)
         onAllNodesWithContentDescription("ann@example.test").assertCountEquals(0)
         onAllNodesWithText("Send password reset", substring = true).assertCountEquals(0)
     }

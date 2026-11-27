@@ -49,19 +49,9 @@ gcloud secrets versions access latest --secret=REHEARSAL_PASSWORD --project=mts-
   each other (p95 2.3 s). The save reads the tournament outside the transaction now (playerHandService.ts, covered by
   playerHand.integration.test.ts: 48 saves at 16 tables take about 3 s in the emulator, about 35 s before).
 
-## The Mac part
+## Bots from a computer
 
-Start four emulators, then from the project folder, with Node 22:
-
-```bash
-export STAGING_ADMIN_EMAIL=<the staging admin email>
-export REHEARSAL_PASSWORD="$(gcloud secrets versions access latest --secret=REHEARSAL_PASSWORD --project=mts---staging)"
-scripts/rehearsal/mac.sh 2026-11-19T19:45:00+01:00
-```
-
-It builds the staging app with its automatic player, puts slots 2-5 on the emulators
-(`scripts/rehearsal/emulator-player.sh`), and runs the bots 49-60. The logs and reports go to `build/rehearsal`.
-The bots alone:
+The app on emulators: `scripts/rehearsal/emulator-player.sh`. The bots alone:
 
 ```bash
 node scripts/rehearsal/bots.mjs --tournament="Ensayo General MTS 2026" --slots=49-60 \

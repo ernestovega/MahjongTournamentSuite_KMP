@@ -8,7 +8,7 @@ import { historyExpireAt } from "../services/historyRetention";
  * which script, who ran it on which machine user, with which arguments, and how it ended. The admin app shows it in
  * the Activity screen. A run that only previews writes nothing, so it leaves no record.
  *
- * This module does not import "../firebase", so a script with its own Firebase app (resetAccess) can use it too.
+ * This module does not import "../firebase", so a script with its own Firebase app can use it too.
  */
 
 /** The activity log collection. It is the same as ACTIVITY_COLLECTION in services/activityLog. */

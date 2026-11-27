@@ -436,6 +436,7 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
                                     showDelete = access?.canDeleteUsers == true,
                                     onDelete = { confirmDeleteOpen = true },
                                     showSend = !compact,
+                                    showSelectAll = compact,
                                 )
                             }
                         }
@@ -444,6 +445,9 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
                         bottomPadding = if (canCreateUsers || compact) 88.dp else 24.dp,
                         selectable = canReset,
                         selectedUids = selectedUids,
+                        selectedCount = chosenUids.size,
+                        onSelectAllShown = { selectedUids = filteredUsers.map { it.uid }.toSet() },
+                        onClearSelection = { selectedUids = emptySet() },
                         onToggleSelected = { uid -> selectedUids = if (uid in selectedUids) selectedUids - uid else selectedUids + uid },
                         countryByEmaId = emaPlayers.associate { it.emaId to it.country },
                         enabled = !loading && !saving,

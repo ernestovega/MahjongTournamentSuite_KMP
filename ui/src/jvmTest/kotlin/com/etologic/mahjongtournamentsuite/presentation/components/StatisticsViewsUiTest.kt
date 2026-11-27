@@ -34,6 +34,8 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import java.io.File
 import javax.imageio.ImageIO
 import kotlin.test.Test
+import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.onNodeWithContentDescription
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
@@ -219,6 +221,48 @@ class StatisticsViewsUiTest {
         onNodeWithText("Result").assertIsDisplayed()
         onNodeWithText("Deal-ins").assertIsDisplayed()
         snapshot("statistics-table", onRoot().captureToImage())
+    }
+
+    @Test
+    fun anOpenOrTotalsOnlyTableAndAShortChartSaySo() = runComposeUiTest {
+        val table = CalculateStatisticsUseCase()(players, tables()).tables.first()
+        setContent {
+            MtsTheme(useDarkTheme = false) {
+                Column(Modifier.width(520.dp).padding(16.dp)) {
+                    TableStatisticsPanel(table.copy(isCompleted = false), names)
+                    TableStatisticsPanel(table.copy(hasHands = false), emptyMap())
+                    LineChart(listOf("Player 1" to listOf(3)))
+                }
+            }
+        }
+        onNodeWithText("This table is not completed yet.").assertExists()
+        onNodeWithText("This table has no entered hands, so it has no hand statistics.").assertExists()
+        onNodeWithText("Not enough data for a chart.").assertExists()
+    }
+
+    @Test
+    fun theHeadersShowThePhotoAndTheLogoOrAnEmptyPlace() = runComposeUiTest {
+        var chosen by mutableStateOf<Int?>(null)
+        setContent {
+            MtsTheme(useDarkTheme = false) {
+                Column {
+                    PlayerStatisticsHeader(PlayerProfile("Ana", emaId = "", country = "", photoUrl = "https://example.test/ana.png"))
+                    PlayerStatisticsHeader(PlayerProfile("Guest", emaId = "", country = "", photoUrl = null), fillWidth = false)
+                    PlayerCountryAndEma(country = "", emaId = "")
+                    PlayerCountryAndEma(country = "ES", emaId = "01000001")
+                    TournamentStatisticsHeader(Tournament(id = "t1", name = "Logo Open", isTeams = false, numPlayers = 4, numRounds = 1, associationLogoUrl = "https://example.test/logo.png"))
+                    PlayerDropdownField(names, chosen, { chosen = it })
+                }
+            }
+        }
+        onNodeWithContentDescription("Photo of Ana").assertExists()
+        onNodeWithContentDescription("No player photo").assertExists()
+        onNodeWithContentDescription("Logo of Logo Open").assertExists()
+        onAllNodesWithText("Player")[0].performClick()
+        waitForIdle()
+        onAllNodesWithText("Player 3").onLast().performClick()
+        waitForIdle()
+        assertEquals(3, chosen)
     }
 
     @Test
