@@ -400,7 +400,10 @@ class AdminScreensScreenshotTest {
             Thread.sleep(1_500)
             waitForIdle()
         },
-    ) { RankingStandaloneScreen(ONGOING, clock = FixedClock, separateControls = false) }
+    ) {
+        // Before the decisive round the top three shows: the organizer hid it for the reveal.
+        RankingStandaloneScreen(ONGOING, clock = FixedClock, separateControls = false, initialControl = RankingDisplayControl(playing = false, showTopThree = false))
+    }
 
     /**
      * The projected ranking run from "Ranking control" in another window: no buttons, the third place revealed. The
@@ -417,7 +420,7 @@ class AdminScreensScreenshotTest {
     ) {
         remember {
             RankingDisplayLink.reset()
-            RankingDisplayLink.setControl(ONGOING, RankingDisplayControl(playing = false).reveal("players"))
+            RankingDisplayLink.setControl(ONGOING, RankingDisplayControl(playing = false, showTopThree = false).reveal("players"))
         }
         RankingStandaloneScreen(ONGOING, clock = FixedClock, separateControls = true)
     }
@@ -447,6 +450,7 @@ class AdminScreensScreenshotTest {
                     pageIndex = 0,
                     remainingSeconds = 7,
                     resultsHidden = true,
+                    podiumSecret = true,
                 ),
             )
         }

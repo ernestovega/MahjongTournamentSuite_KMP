@@ -269,10 +269,11 @@ class RankingScreenUiTest {
         assertTrue(shown("PLAYER 1"))
         assertTrue(shown("Podium revealed"))
 
-        // Next list from the control screen.
-        onAllNodesWithContentDescription("Next ranking list").onFirst().performClick()
+        // The button of a list puts it on the screen.
+        onNodeWithTag("ranking_control_page_chicken-hands").performClick()
         mainClock.advanceTimeBy(600)
         waitForIdle()
+        onAllNodesWithText("On screen: Chicken hands").onFirst().assertExists()
         RankingDisplayLink.reset()
     }
 

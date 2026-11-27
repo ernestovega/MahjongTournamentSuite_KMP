@@ -30,6 +30,15 @@ data class RankingSnapshot(
 ) {
     /** The data revision of the tables behind these rankings. See [tournamentDataRevision]. */
     val dataRevision: Long get() = tournamentDataRevision(rankingTables.map { it.table.version })
+
+    /**
+     * The round that decides the prize giving has results: the last round, or the first round that the tournament
+     * hides from the public. The projected ranking then hides its top three by default, for the reveal.
+     */
+    val podiumSecret: Boolean get() {
+        val decisiveRound = tournament.hideResultsFromRound?.takeIf { it in 1..tournament.numRounds } ?: tournament.numRounds
+        return rankingTables.any { it.table.roundId >= decisiveRound && it.hasResult }
+    }
 }
 
 class RankingPresenter(

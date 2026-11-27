@@ -1329,17 +1329,19 @@
     <string name="ranking_control">Управление рейтингом</string>
     <string name="ranking_control_not_open_title">Проецируемый рейтинг не открыт</string>
     <string name="ranking_control_not_open_message">Откройте его и перетащите окно на проектор. Управляйте им отсюда.</string>
-    <string name="open_projected_ranking">Открыть проецируемый рейтинг</string>
+    <string name="open_projected_ranking">Проецировать рейтинг</string>
     <string name="ranking_control_on_screen">На экране: %1$s</string>
     <string name="ranking_control_next_in">Далее через %1$d с</string>
     <string name="ranking_control_paused">Пауза</string>
     <string name="ranking_control_playback">Пролистывание</string>
     <string name="ranking_control_lists">Списки</string>
-    <string name="show_on_screen">Показать</string>
     <string name="podium_revealed">Подиум открыт</string>
     <string name="ranking_control_show_hidden">Показать рейтинг в зале</string>
     <string name="ranking_control_display">Экран</string>
     <string name="organizer_logo_on_screen">Логотип организатора</string>
     <string name="ema_logo_on_screen">Логотип EMA</string>
     <string name="ranking_control_hidden_message">Публика пока не видит результаты этого турнира. Зал увидит этот рейтинг, только когда вы это включите.</string>
+    <string name="on_screen_badge">На экране</string>
+    <string name="ranking_rows_per_screen">Строк на экране</string>
+    <string name="ranking_seconds_per_page">Секунд на страницу</string>
 </resources>

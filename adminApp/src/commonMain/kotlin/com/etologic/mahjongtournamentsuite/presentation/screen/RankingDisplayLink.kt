@@ -26,7 +26,11 @@ data class RankingDisplayControl(
     val playing: Boolean = true,
     val rowsPerScroll: Int = DEFAULT_ROWS_PER_SCROLL,
     val intervalSeconds: Int = DEFAULT_INTERVAL_SECONDS,
-    val showTopThree: Boolean = false,
+    /**
+     * Null: automatic, the top three shows until the round that decides the prize giving has results
+     * ([RankingDisplayStatus.podiumSecret]). True or false: the organizer chose.
+     */
+    val showTopThree: Boolean? = null,
     /** How many places of the hidden top three each list shows, from the third up, by page key. */
     val revealed: Map<String, Int> = emptyMap(),
     /** While the public cannot see the results, the room sees the ranking only after the organizer allows it. */
@@ -40,8 +44,11 @@ data class RankingDisplayControl(
     val pageRequest: Int = 0,
 ) {
     /** The place (3, 2 or 1) that the next reveal of [page] shows, or null when its top three shows. */
-    fun nextReveal(page: RankingDisplayPage): Int? {
-        if (showTopThree) return null
+    /** Whether the room sees the top three, by the choice of the organizer or, by default, by [podiumSecret]. */
+    fun showsTopThree(podiumSecret: Boolean): Boolean = showTopThree ?: !podiumSecret
+
+    fun nextReveal(page: RankingDisplayPage, podiumSecret: Boolean): Int? {
+        if (showsTopThree(podiumSecret)) return null
         val shown = (revealed[page.key] ?: 0).coerceIn(0, 3)
         return minOf(page.podium, 3 - shown).takeIf { it > 0 }
     }
@@ -73,6 +80,13 @@ data class RankingDisplayStatus(
     /** The tournament hides its results now, so the room needs [RankingDisplayControl.showHiddenResults]. */
     val resultsHidden: Boolean = false,
     val loading: Boolean = false,
+    /**
+     * The round that decides the prize giving has results: the last round, or the first round that the tournament hides
+     * from the public. From then on the top three hides by default, for the reveal (Ernesto, 2026-11-27).
+     */
+    val podiumSecret: Boolean = false,
+    /** Which data the projection shows and when it loaded it, such as "Results r164 · loaded 10:00". */
+    val dataStatus: String? = null,
 )
 
 @Serializable

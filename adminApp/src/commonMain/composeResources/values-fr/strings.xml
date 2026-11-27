@@ -1275,17 +1275,19 @@ Les résultats se révèlent à la remise des prix depuis le Contrôle du tour.<
     <string name="ranking_control">Contrôle du classement</string>
     <string name="ranking_control_not_open_title">Le classement projeté n'est pas ouvert</string>
     <string name="ranking_control_not_open_message">Ouvrez-le et placez sa fenêtre sur le projecteur. Vous le pilotez d'ici.</string>
-    <string name="open_projected_ranking">Ouvrir le classement projeté</string>
+    <string name="open_projected_ranking">Projeter le classement</string>
     <string name="ranking_control_on_screen">À l'écran : %1$s</string>
     <string name="ranking_control_next_in">Suivant dans %1$d s</string>
     <string name="ranking_control_paused">En pause</string>
     <string name="ranking_control_playback">Défilement</string>
     <string name="ranking_control_lists">Listes</string>
-    <string name="show_on_screen">Afficher</string>
     <string name="podium_revealed">Podium révélé</string>
     <string name="ranking_control_show_hidden">Afficher le classement dans la salle</string>
     <string name="ranking_control_display">Affichage</string>
     <string name="organizer_logo_on_screen">Logo de l'organisateur</string>
     <string name="ema_logo_on_screen">Logo de l'EMA</string>
     <string name="ranking_control_hidden_message">Le public ne voit pas encore les résultats de ce tournoi. La salle ne voit ce classement que si vous activez ceci.</string>
+    <string name="on_screen_badge">À l'écran</string>
+    <string name="ranking_rows_per_screen">Lignes par écran</string>
+    <string name="ranking_seconds_per_page">Secondes par page</string>
 </resources>
