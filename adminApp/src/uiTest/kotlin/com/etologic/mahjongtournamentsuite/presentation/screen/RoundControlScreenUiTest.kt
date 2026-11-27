@@ -33,10 +33,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import kotlinx.coroutines.CompletableDeferred
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
 import kotlin.test.Test
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.TestTimeSource
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -96,11 +93,7 @@ class RoundControlScreenUiTest {
         return controller
     }
 
-    /** The buttons ignore a second press within a short time: each settle moves this clock past it. */
-    private val pressClock = TestTimeSource()
-
     private fun ComposeUiTest.settle() {
-        pressClock += 600.milliseconds
         mainClock.advanceTimeBy(600)
         waitForIdle()
     }
