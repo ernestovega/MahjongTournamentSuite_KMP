@@ -13,6 +13,7 @@ import androidx.compose.ui.SystemTheme
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -100,7 +101,7 @@ internal fun playerScreenshots(
     variants: List<Variant> = allVariants,
     ready: ComposeUiTest.() -> Unit = {},
     content: @Composable (NavHostController) -> Unit,
-) = screenshots(name, variants, ready) { variant -> PlayerFrame(modules, variant.dark, content) }
+) = screenshots(name, variants, ready) { variant -> PlayerFrame(modules, variant.dark, content = content) }
 
 /** The frame of the player app around [content]: its Koin graph over [modules], its theme ([dark] or light) and logos. */
 @OptIn(InternalComposeUiApi::class)
@@ -108,6 +109,8 @@ internal fun playerScreenshots(
 internal fun PlayerFrame(
     modules: () -> List<Module>,
     dark: Boolean,
+    /** More screens that [content] can open, for the tests that follow a tap. */
+    destinations: NavGraphBuilder.() -> Unit = {},
     content: @Composable (NavHostController) -> Unit,
 ) {
     val koin = remember { koinApplication { modules(modules()) }.koin }
@@ -126,6 +129,7 @@ internal fun PlayerFrame(
                     val navController = rememberNavController()
                     NavHost(navController, startDestination = "screen") {
                         composable("screen") { content(navController) }
+                        destinations()
                     }
                 }
             }

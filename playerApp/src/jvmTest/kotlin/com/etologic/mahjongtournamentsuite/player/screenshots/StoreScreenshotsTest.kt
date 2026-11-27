@@ -267,7 +267,7 @@ class StoreScreenshotsTest {
                     val file = File(dir, "${shot.number}-${shot.name}.png")
                     try {
                         runDesktopComposeUiTest(form.widthPx, form.heightPx) {
-                            setContent { StoreFrame(form, shot.captions.getValue(language)) { PlayerFrame(shot.modules, dark = false, shot.content) } }
+                            setContent { StoreFrame(form, shot.captions.getValue(language)) { PlayerFrame(shot.modules, dark = false, content = shot.content) } }
                             waitForIdle()
                             val notReady = runCatching { shot.ready(this) }.exceptionOrNull()
                             waitForIdle()
