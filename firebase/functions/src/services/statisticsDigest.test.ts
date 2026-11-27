@@ -107,17 +107,3 @@ test("digest keeps the biggest single penalty of a seat", () => {
   // A positive value is not a penalty.
   assert.equal(third.maxPenalty, 0);
 });
-
-test("a hand with only a penalty counts the penalty but is not a played or drawn hand", () => {
-  const digest = digestOf(table(), [
-    hand(1, "1", "2", "10"),
-    hand(2, "", "", "", { playerSouthPenalty: "-10" }),
-  ]);
-
-  const second = digest.results.find((result) => result.slotId === 2)!;
-  assert.equal(second.handsPlayed, 1);
-  assert.equal(second.penaltyCount, 1);
-  assert.equal(second.penaltyPoints, 10);
-  assert.equal(digest.tables[0].handsPlayed, 1);
-  assert.equal(digest.tables[0].drawnHands, 0);
-});

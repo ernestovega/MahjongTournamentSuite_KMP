@@ -1179,7 +1179,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
             for (attempt in 1..3) {
                 dismissTableUpdated()
                 // The message can come while the editor types: the change is lost, and the editor does it again.
-                val typed = runCatching { if (item.getString("kind") == "delete") deleteHand(handId) else editHand(handId, before) }
+                val typed = runCatching { if (item.getString("kind") == "delete") deleteHand(handId, before) else editHand(handId, before) }
                 if (tableUpdatedShown()) continue
                 typed.getOrThrow()
                 // Save shows only when the table has a change. A change that did not take (a poll drew the table again)
@@ -1428,13 +1428,18 @@ class ScenarioOrganizerTest : AdminE2eTest() {
     private fun scoreField(handId: Int) =
         c.onAllNodes(hasSetTextAction() and hasAnyAncestor(hasTestTag("hand-$handId-score")), useUnmergedTree = true).onFirst()
 
-    /** Picks "-" in the menu of a player cell: the open menu is the last one in the tree. */
-    private fun clearPlayer(handId: Int, field: String) {
-        tapCell(handId, field)
-        idle(1_000)
-        c.onAllNodes(hasText("-") and hasClickAction()).onLast().tap()
+    /** A second tap on the chosen seat button clears it. The buttons carry the id of their player. */
+    private fun clearPlayer(handId: Int, field: String, playerId: String) {
+        if (playerId.isBlank() || playerId == "-") return
+        tapCell(handId, "$field-$playerId")
         c.waitForIdle()
-        closeOpenMenu()
+    }
+
+    /** A closed hand shows only its summary: its arrow opens it. */
+    private fun openHand(handId: Int) {
+        if (c.onAllNodes(hasTestTag("hand-$handId-score"), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()) return
+        tapCell(handId, "toggle")
+        c.waitUntil(5_000) { c.onAllNodes(hasTestTag("hand-$handId-score"), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
     }
 
     /**
@@ -1456,6 +1461,7 @@ class ScenarioOrganizerTest : AdminE2eTest() {
     private fun unlockHand(handId: Int) {
         val open = hasSetTextAction() and hasAnyAncestor(hasTestTag("hand-$handId-score")) and isEnabled()
         repeat(3) {
+            openHand(handId)
             if (c.onAllNodes(open, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()) return
             setDone(handId, false)
             runCatching { c.waitUntil(5_000) { c.onAllNodes(open, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() } }
@@ -1480,10 +1486,10 @@ class ScenarioOrganizerTest : AdminE2eTest() {
     }
 
     /** The hand no longer counts: Done off, no winner, no loser, no score. */
-    private fun deleteHand(handId: Int) {
+    private fun deleteHand(handId: Int, before: JSONObject) {
         writeScore(handId, "")
-        clearPlayer(handId, "winner")
-        clearPlayer(handId, "loser")
+        clearPlayer(handId, "winner", before.optString("playerWinnerId"))
+        clearPlayer(handId, "loser", before.optString("playerLooserId"))
     }
 
     /** Another score that is valid for any hand, also a chicken hand (8 to 12). */
@@ -1493,6 +1499,8 @@ class ScenarioOrganizerTest : AdminE2eTest() {
         val score = newScoreOf(before)
         writeScore(handId, score)
         setDone(handId, true)
+        // Ticking Done closes the hand: it is opened again to read its score.
+        openHand(handId)
         // What Save sends: the new score in a hand that is done. Anything else is typed again.
         // A done hand is locked: its field has no text action, so the score is read from the cell.
         val shown = c.onAllNodes(hasAnyAncestor(hasTestTag("hand-$handId-score")), useUnmergedTree = true).fetchSemanticsNodes()

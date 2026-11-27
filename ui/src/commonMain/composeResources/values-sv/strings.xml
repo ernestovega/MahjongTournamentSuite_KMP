@@ -782,7 +782,7 @@ Den första som fungerar vinner</string>
     <!-- Sign-in of the web: the page of the apps -->
     <string name="sign_in_get_the_app">Hämta appen</string>
     <string name="consent_title">Anonym analys</string>
-    <string name="consent_message">Får appen skicka anonyma data om hur den används och om fel? De hjälper oss att förbättra den. Det är frivilligt: om du avböjer fungerar appen likadant.</string>
+    <string name="consent_message">Hjälper du oss att förbättra appen? Den skickar bara anonyma data om användningen och om fel.</string>
     <string name="consent_more_details">Mer information</string>
     <string name="consent_why_title">Varför</string>
     <string name="consent_why">För att hitta fel och se vilka delar av appen som används, så att vi vet vad vi ska rätta och förbättra.</string>

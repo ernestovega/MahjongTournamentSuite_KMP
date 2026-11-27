@@ -117,7 +117,7 @@ fun RankingApp(tournamentId: String, modules: List<Module> = adminAppModules) {
         ProvideAppLanguage {
             val themeController = rememberThemeController()
             CompositionLocalProvider(LocalThemeController provides themeController) {
-                MtsTheme(useDarkTheme = themeController.isDarkTheme, adminApp = true) {
+                MtsTheme(useDarkTheme = themeController.isDarkTheme) {
                     TrackedScreen("Rankings") { RankingStandaloneScreen(tournamentId) }
                 }
             }
@@ -137,7 +137,7 @@ fun TableQrApp(
 ) {
     AppWithModules(modules = modules) {
         ProvideAppLanguage {
-            MtsTheme(useDarkTheme = false, adminApp = true) {
+            MtsTheme(useDarkTheme = false) {
                 TrackedScreen("TableQrProjection") { TableQrProjectionScreen(tournamentName, link, logoUrl, organizerName, organizerColor) }
             }
         }

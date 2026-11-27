@@ -1,4 +1,4 @@
-import { handSeatScores, isPenaltyOnly, seatIdsOf, tablePointsOf, type SeatValues } from "./handScoring";
+import { handSeatScores, seatIdsOf, tablePointsOf, type SeatValues } from "./handScoring";
 
 type Data = Record<string, unknown>;
 
@@ -76,7 +76,7 @@ export type TableDigest = {
 };
 
 /** Change this number when the digest rules change. A stored table digest with another number counts as old. */
-export const DIGEST_VERSION = 7;
+export const DIGEST_VERSION = 8;
 
 const text = (value: unknown): string => String(value ?? "").trim();
 
@@ -166,11 +166,9 @@ export function buildTableDigest(params: {
       if (change != null) counted.push({ hand, change });
     }
   }
-  // A hand with only a penalty counts for the penalties, but it is not a played hand.
-  const played = counted.filter(({ hand }) => !isPenaltyOnly(hand)).length;
-  const hasHands = played > 0;
+  const hasHands = counted.length > 0;
   summary.hasHands = hasHands;
-  summary.handsPlayed = played;
+  summary.handsPlayed = counted.length;
 
   const zeros = () => [0, 0, 0, 0];
   const won = zeros(), selfDraws = zeros(), dealIns = zeros();
@@ -195,7 +193,6 @@ export function buildTableDigest(params: {
           penaltyPoints[seat] += -penalty;
         }
       });
-    if (isPenaltyOnly(hand)) continue;
     const winnerText = text(hand.playerWinnerId);
     const handLoserText = text(hand.playerLooserId) === "-" ? "" : text(hand.playerLooserId);
     for (let seat = 0; seat < 4; seat += 1) {
@@ -254,7 +251,7 @@ export function buildTableDigest(params: {
       points: zeroedSlots.has(ids[seat]) ? 0 : points[seat],
       countsForSlot: !uncountedSlots.has(ids[seat]),
       hasHands,
-      handsPlayed: played,
+      handsPlayed: hasHands ? counted.length : 0,
       handsWon: won[seat],
       selfDraws: selfDraws[seat],
       dealIns: dealIns[seat],

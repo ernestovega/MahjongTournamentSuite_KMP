@@ -81,13 +81,16 @@ class TableManagerEditorStateTest {
     }
 
     @Test
-    fun markingEmptyHandAsDoneSetsScoreToZero() {
+    fun anEmptyHandCannotBeDoneAndADrawNeedsAScoreOfZero() {
         val hand = HandDraftState.from(sampleHand(handId = 1))
 
         hand.updateDoneState(true)
+        assertFalse(hand.isDone)
+        assertEquals("", hand.handScore)
 
+        hand.updateHandScore("0")
+        hand.updateDoneState(true)
         assertTrue(hand.isDone)
-        assertEquals("0", hand.handScore)
     }
 
     @Test

@@ -783,7 +783,7 @@ The first one that works wins</string>
     <!-- Sign-in of the web: the page of the apps -->
     <string name="sign_in_get_the_app">Get the app</string>
     <string name="consent_title">Anonymous analytics</string>
-    <string name="consent_message">Can the app send anonymous data about how it is used and about its errors? It helps us improve it. It is optional: the app works the same if you decline.</string>
+    <string name="consent_message">Will you help us improve the app? It only sends anonymous data about how it is used and about its errors.</string>
     <string name="consent_more_details">More details</string>
     <string name="consent_why_title">Why</string>
     <string name="consent_why">To find errors and see which parts of the app people use, so we know what to fix and improve.</string>

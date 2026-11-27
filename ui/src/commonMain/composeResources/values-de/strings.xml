@@ -782,7 +782,7 @@ Die erste, die klappt, gewinnt</string>
     <!-- Sign-in of the web: the page of the apps -->
     <string name="sign_in_get_the_app">App herunterladen</string>
     <string name="consent_title">Anonyme Analyse</string>
-    <string name="consent_message">Darf die App anonyme Daten über die Nutzung und über Fehler senden? Sie helfen uns, die App zu verbessern. Das ist freiwillig: Wenn du ablehnst, funktioniert die App genauso.</string>
+    <string name="consent_message">Hilfst du uns, die App zu verbessern? Sie sendet nur anonyme Daten zur Nutzung und zu Fehlern.</string>
     <string name="consent_more_details">Mehr Details</string>
     <string name="consent_why_title">Warum</string>
     <string name="consent_why">Um Fehler zu finden und zu sehen, welche Teile der App genutzt werden, damit wir wissen, was wir beheben und verbessern sollen.</string>

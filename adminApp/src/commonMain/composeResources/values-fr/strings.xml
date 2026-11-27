@@ -459,6 +459,12 @@
     <string name="hand_score_whole">Le score doit être un nombre entier.</string>
     <string name="hand_score_minimum">Le score minimum pour gagner une main est 8.</string>
     <string name="hand_chicken_maximum">Une main poule ne peut pas valoir plus de 12 points.</string>
+    <string name="hand_self_draw">Du mur</string>
+    <string name="chicken_hand_two_lines">Main\npoule</string>
+    <string name="penalty_incomplete">La pénalité %1$d est incomplète : un joueur doit avoir une valeur négative, seule ou partagée entre les trois autres pour que la somme fasse zéro.</string>
+    <string name="hand_draw">Nulle</string>
+    <string name="open_hand_n">Ouvrir la main %1$d</string>
+    <string name="close_hand_n">Fermer la main %1$d</string>
     <string name="seat_positions_first">Sélectionnez d'abord les quatre positions</string>
     <string name="table_done">Terminée</string>
     <string name="edit_seats">Modifier les places</string>

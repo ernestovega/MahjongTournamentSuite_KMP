@@ -459,6 +459,12 @@
     <string name="hand_score_whole">Il punteggio deve essere un numero intero.</string>
     <string name="hand_score_minimum">Il punteggio minimo per vincere una mano è 8.</string>
     <string name="hand_chicken_maximum">Una mano pollo non può valere più di 12 punti.</string>
+    <string name="hand_self_draw">Dal muro</string>
+    <string name="chicken_hand_two_lines">Mano\npollo</string>
+    <string name="penalty_incomplete">La penalità %1$d è incompleta: un giocatore deve avere un valore negativo, da solo o diviso tra gli altri tre in modo che la somma sia zero.</string>
+    <string name="hand_draw">Patta</string>
+    <string name="open_hand_n">Apri la mano %1$d</string>
+    <string name="close_hand_n">Chiudi la mano %1$d</string>
     <string name="seat_positions_first">Seleziona prima tutte e quattro le posizioni</string>
     <string name="table_done">Concluso</string>
     <string name="edit_seats">Modifica i posti</string>

@@ -12,7 +12,6 @@ import { isValidIsoDate, isValidIsoDateRange } from "./tournamentDates";
 import {
   handScoreTotals,
   handSeatScores,
-  isPenaltyOnly,
   isResultSelectionInvalid,
   MAX_CHICKEN_HAND_SCORE,
   MIN_HAND_SCORE,
@@ -451,7 +450,7 @@ function checkTableScores(c: Collector, table: Data, hands: Array<{ id: string; 
       c.add("warning", "tables.handsNotCounted", "The table has hands, but none of them counts.", where);
     }
     if (isCompleted && counted != null) {
-      const done = ordered.filter((hand) => !isPenaltyOnly(hand) && handSeatScores(hand, seats) != null).length;
+      const done = ordered.filter((hand) => handSeatScores(hand, seats) != null).length;
       if (done < HANDS_PER_TABLE) c.add("info", "tables.fewHands", `The completed table has ${done} counted hands. A full game has ${HANDS_PER_TABLE}.`, where);
     }
   }

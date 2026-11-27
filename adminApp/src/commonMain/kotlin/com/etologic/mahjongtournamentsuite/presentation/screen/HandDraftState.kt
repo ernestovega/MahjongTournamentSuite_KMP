@@ -17,6 +17,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.hand_loser_without_wi
 import mahjongtournamentsuite.adminapp.generated.resources.hand_missing_fields
 import mahjongtournamentsuite.adminapp.generated.resources.hand_score_minimum
 import mahjongtournamentsuite.adminapp.generated.resources.hand_score_whole
+import mahjongtournamentsuite.adminapp.generated.resources.penalty_incomplete
 import org.jetbrains.compose.resources.stringResource
 
 @Stable
@@ -86,6 +87,24 @@ internal class HandDraftState private constructor(
     val showValidationError: Boolean
         get() = resultFieldsTouched && isResultSelectionInvalid
 
+    /** The numbers (from 1) of the penalties that are not complete. See [isPenaltyRowComplete]. */
+    val incompletePenaltyNumbers: List<Int>
+        get() = penaltyRows.indices.filter { row -> !isPenaltyRowComplete((0..3).map { penaltyRows[row].value(it) }) }.map { it + 1 }
+
+    /** One message for each penalty that is not complete. */
+    val penaltyMessages: List<UiText>
+        get() = incompletePenaltyNumbers.map { UiText.of(Res.string.penalty_incomplete, it) }
+
+    val hasIncompletePenalty: Boolean
+        get() = incompletePenaltyNumbers.isNotEmpty()
+
+    /**
+     * The hand can be marked done: it has a valid result (a draw needs a score of 0) and its penalties are complete.
+     * The editor also checks that the winner and the loser sit at the table.
+     */
+    val canBeDone: Boolean
+        get() = !isCompletelyEmpty && !isResultSelectionInvalid && !hasIncompletePenalty
+
     val validationErrorMessage: UiText?
         get() = when {
             !isResultSelectionInvalid -> null
@@ -150,7 +169,10 @@ internal class HandDraftState private constructor(
      * Done that the user forgot to mark again after a correction, so the editor asks before saving it.
      */
     val isChangedValidButNotDone: Boolean
-        get() = !isDone && !isBlank && !isResultSelectionInvalid && buildPatch().isNotEmpty()
+        get() = !isDone && !isCompletelyEmpty && !isResultSelectionInvalid && buildPatch().isNotEmpty()
+
+    val isIgnoredForCalculation: Boolean
+        get() = isResultSelectionInvalid || isCompletelyEmpty
 
     private val isCompletelyEmpty: Boolean
         get() = playerWinnerId.trim().isEmpty() && normalizedLoserId.isEmpty() && handScore.trim().isEmpty() &&
@@ -206,14 +228,11 @@ internal class HandDraftState private constructor(
             markResultFieldsTouched()
             return
         }
-        if (isResultSelectionInvalid) {
+        // A draw needs a score of 0: an empty hand cannot be done.
+        if (!canBeDone) {
             isDone = false
             markResultFieldsTouched()
             return
-        }
-        // A done hand with no winner, loser or score is a draw. It scores zero.
-        if (playerWinnerId.trim().isEmpty() && normalizedLoserId.isEmpty() && handScore.trim().isEmpty()) {
-            handScore = "0"
         }
         removeEmptyPenaltyRows()
         isDone = true
@@ -325,3 +344,23 @@ internal class HandDraftState private constructor(
         }
     }
 }
+
+/**
+ * True when one penalty (the values of the four seats) is complete: one player has a negative value and the others
+ * have nothing, or one player has a negative value and the other three have positive values that add up to zero with
+ * it (a shared penalty). A penalty with no value is no penalty. Anything else is incomplete. Same rule as the server
+ * (`isPenaltyRowComplete`), checked with the shared cases in testdata/scoring-cases.json.
+ */
+internal fun isPenaltyRowComplete(cells: List<String>): Boolean {
+    val values = cells.map { it.trim() }
+    if (values.all { it.isEmpty() || it.trimStart('-').all { c -> c == '0' } }) return true
+    val numbers = values.map { if (it.isEmpty()) 0 else it.toStrictIntOrNull() ?: return false }
+    val negatives = numbers.count { it < 0 }
+    val positives = numbers.count { it > 0 }
+    if (negatives != 1) return false
+    if (positives == 0) return true
+    return positives == 3 && numbers.sum() == 0
+}
+
+/** A whole number with an optional minus sign and nothing else, like the server reads penalties. */
+private fun String.toStrictIntOrNull(): Int? = if (Regex("-?\\d+").matches(this)) toIntOrNull() else null

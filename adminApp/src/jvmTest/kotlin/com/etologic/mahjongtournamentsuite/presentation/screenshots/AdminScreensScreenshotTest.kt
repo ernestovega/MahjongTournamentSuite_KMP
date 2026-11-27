@@ -288,11 +288,34 @@ class AdminScreensScreenshotTest {
     @Test
     fun timerIndependent() = adminScreenshots("timer-independent") { TimerStandaloneScreen(null) }
 
+    /** The Timer of a tournament shows the color of its main organizer, here a yellow that needs dark text. */
+    @Test
+    fun timerBranded() = adminScreenshots(
+        "timer-branded",
+        modules = { adminModules(tournaments = BrandedTournamentRepository("#F9A825")) },
+        variants = brandedVariants,
+        ready = { waitForText("2:00:00") },
+    ) { TimerStandaloneScreen(ONGOING, initialRound = 3) }
+
+    /** The projected ranking shows the color of the main organizer of the tournament, here a blue. */
+    @Test
+    fun rankingStandaloneBranded() = adminScreenshots(
+        "ranking-standalone-branded",
+        modules = { adminModules(tournaments = BrandedTournamentRepository("#1565C0")) },
+        variants = brandedVariants,
+        ready = { waitForText("LUCÍA MARTÍN", substring = true) },
+    ) { RankingStandaloneScreen(ONGOING, clock = FixedClock) }
+
     @Test
     fun rankingStandalone() = adminScreenshots("ranking-standalone", ready = { waitForText("LUCÍA MARTÍN", substring = true) }) {
         RankingStandaloneScreen(ONGOING, clock = FixedClock)
     }
 }
+
+/** The tournaments of the screenshots, with [ONGOING] organized by a club of the color [hex]. */
+private class BrandedTournamentRepository(hex: String) : ScreenshotTournamentRepository(
+    ScreenshotData.tournaments.map { if (it.id == ONGOING) it.copy(primaryColor = hex) else it },
+)
 
 /** The device and server time of the running Timer capture. */
 private const val RUNNING_NOW_MS = 1_779_000_000_000L
@@ -303,6 +326,9 @@ private class RunningClockTournamentRepository : ScreenshotTournamentRepository(
         RoundClocks(clocks = listOf(RoundClock(roundId = 3, startedAtMs = RUNNING_NOW_MS - 30 * 60_000L)), serverNowMs = RUNNING_NOW_MS),
     )
 }
+
+/** Phone and desktop, light and dark: enough to see the color of an organizer. */
+private val brandedVariants = listOf(ScreenSize.Phone, ScreenSize.Desktop).flatMap { listOf(Variant(it, false), Variant(it, true)) }
 
 /** A "loaded at" time that does not change between runs. */
 private object FixedClock : Clock {
