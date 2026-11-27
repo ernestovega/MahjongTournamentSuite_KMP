@@ -34,20 +34,20 @@ function readVersion(value: unknown): VersionStamp {
  * emaPlayers 2: 27-nov-2026, each player has the photo that everyone sees (publicPhotoUrl): the own photo of the
  * account first, none when the person hides it.
  */
-const ANSWER_FORMAT: Partial<Record<GlobalDataResource, number>> = { emaPlayers: 2 };
+const ANSWER_FORMAT: Record<GlobalDataResource, number> = { tournaments: 0, emaPlayers: 2, countries: 0, users: 0 };
 
 function withFormat(resource: GlobalDataResource, stamp: VersionStamp): VersionStamp {
-  return { ...stamp, revision: stamp.revision + (ANSWER_FORMAT[resource] ?? 0) };
+  return { ...stamp, revision: stamp.revision + ANSWER_FORMAT[resource] };
 }
 
 export async function getGlobalDataVersions(): Promise<Record<GlobalDataResource, VersionStamp>> {
   const snapshot = await db.collection("_meta").doc("dataVersions").get();
   const resources = snapshot.get("resources") as Record<string, unknown> | undefined ?? {};
   return {
-    tournaments: readVersion(resources.tournaments),
+    tournaments: withFormat("tournaments", readVersion(resources.tournaments)),
     emaPlayers: withFormat("emaPlayers", readVersion(resources.emaPlayers)),
-    countries: readVersion(resources.countries),
-    users: readVersion(resources.users),
+    countries: withFormat("countries", readVersion(resources.countries)),
+    users: withFormat("users", readVersion(resources.users)),
   };
 }
 
