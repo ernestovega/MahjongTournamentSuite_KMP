@@ -61,15 +61,14 @@ or an integration test is outside the folders of `npm run test:integration`. The
 
 ### The gate before production
 
-The repository variable `PROD_DEPLOY_GATE` turns the gate on (Settings > Secrets and variables > Actions > Variables,
-value `on`; planned for 23-dec-2026, Ernesto). Then each push to `main`:
+The gate is always on (Ernesto, 2026-11-27; there is no variable). Each push to `main`, and each run started by hand
+on `main`:
 
 1. runs the five checks of **Build and test** (without the version check: a push has no base branch);
 2. deploys `main` to staging (**Deploy to staging first**, the deploy job of `staging.yml`);
-3. deploys to production only when all of that passed.
+3. deploys to production, and on a run by hand publishes to Google Play, only when all of that passed.
 
-A failed test or a failed staging deploy stops the run, and production keeps the version it had. Remove the variable
-(or give it another value) to deploy without tests again. A run started by hand on `main` deploys without the gate.
+A failed test or a failed staging deploy stops the run, and production keeps the version it had.
 
 The deploy uses `--force`, so a function removed from the code is also deleted in Firebase. Two deploys never run at the same time: a newer push waits for the running one.
 
