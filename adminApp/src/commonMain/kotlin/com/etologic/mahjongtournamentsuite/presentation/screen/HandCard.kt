@@ -406,7 +406,7 @@ private fun ColumnScope.HandEditor(
 
     if (wide) {
         // Winner over loser on the left; the score and the chicken hand on their right.
-        Row(sidePadding, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+        Row(sidePadding, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(48.dp)) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 FieldLabel(stringResource(Res.string.winner))
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
