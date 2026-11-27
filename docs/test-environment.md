@@ -29,7 +29,7 @@ The test environment runs the web apps on a local backend with fake data. Use it
 
 ## How to use it
 
-1. Start the backend: `cd firebase/functions && npm run test-env:backend`.
+1. Start the backend: `cd firebase/functions && npm run e2e:backend`.
    In Android Studio, run the configuration **Test env - Backend**.
 2. Start a web app with the variable `MTS_API_TARGET=http://localhost:5055`.
    - Android Studio: run **Test env - Player Web** or **Test env - Admin Web**.

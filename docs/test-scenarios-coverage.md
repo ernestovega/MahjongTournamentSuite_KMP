@@ -261,7 +261,7 @@ The date to have it ready is 23 December 2026. Priority 1 is what can break a to
 
 ## 5. Test tournaments of the seed script
 
-The script `firebase/functions/src/scripts/seedTestTournaments.ts` writes 13 tournaments with fixed ids that start with `test-`.
+The script `firebase/functions/src/scripts/seedTestTournaments.ts` writes 13 tournaments with fixed ids that start with `test-`. Run it with `npm run seed:tournaments -- --target=<prod|staging|emulator> --set=<edge|production|testers> [--apply]` in `firebase/functions`: both options are required, so a run never writes to production by default.
 This part lists each scenario and the tournament that covers it. A scenario without a tournament is listed as a gap.
 
 ### Tournaments
