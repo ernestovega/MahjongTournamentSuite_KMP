@@ -46,6 +46,11 @@ In light mode the page is light grey (`background` and `surface`, #E9EBEE) and t
 (`surfaceContainerHigh` and `surfaceContainerHighest`), so a card stands out without a border (Ernesto, 24-nov-2026).
 The dark mode keeps its colors.
 
+No container is pale green (Ernesto, 27-nov-2026, for contrast). The light `secondaryContainer`,
+`tertiaryContainer` and `surfaceVariant` (selected chips, notices, placeholders, tracks, stat tiles) are the grey
+#D5D9DE (`AppLightGrayContainer`), a little darker than the page so they still show on it; the tooltips of the dark
+theme (`inverseSurface`) are the page grey #E9EBEE. The brand green stays for fills, borders and text.
+
 A screen whose content is a single list (Players, Teams, Tournaments, Users, Organizations, App errors) does not
 wrap it in a big card: it uses `SectionCard(container = false)`, which keeps the title, subtitle and actions but
 draws them straight on the screen background. Cards stay for screens with several sections or panels.
