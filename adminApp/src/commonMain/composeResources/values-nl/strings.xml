@@ -1242,6 +1242,21 @@ Wijzig de plaatsen bij Inschrijvingen.</string>
         <item quantity="one">%1$d land</item>
         <item quantity="other">%1$d landen</item>
     </plurals>
+    <string name="hide_results">Uitslagen verbergen tot de prijsuitreiking</string>
+    <string name="hide_results_description">Vanaf de gekozen ronde zien spelers en publiek de tafels zonder uitslagen, en blijft de stand zoals vóór die ronde. Elke speler ziet nog zijn eigen tafel. Beheerders zien alles.
+De uitslagen worden bij de prijsuitreiking onthuld via Rondebeheer.</string>
+    <string name="hide_results_from_round">Verbergen vanaf ronde</string>
+    <string name="results_hidden_notice">Spelers en publiek zien de uitslagen vanaf ronde %1$d niet. Alleen beheerders zien ze.</string>
+    <string name="results_revealed_notice">De uitslagen zijn onthuld: iedereen ziet de stand.</string>
+    <string name="reveal_results">Uitslagen onthullen</string>
+    <string name="reveal_results_confirm_title">Uitslagen onthullen?</string>
+    <string name="reveal_results_confirm_message">Spelers en publiek zien de eindstand en alle uitslagen binnen een minuut.</string>
+    <string name="hide_results_again">Weer verbergen</string>
+    <string name="hide_results_again_confirm_title">Uitslagen weer verbergen?</string>
+    <string name="hide_results_again_confirm_message">Voor een onthulling per ongeluk. Wie de stand al zag, kent hem al.</string>
+    <string name="ranking_hidden_from_public_title">De uitslagen zijn verborgen voor het publiek</string>
+    <string name="ranking_hidden_from_public_message">Staat dit scherm in de zaal, dan ziet iedereen de stand. Onthul de uitslagen bij de prijsuitreiking via Rondebeheer.</string>
+    <string name="show_ranking_here_anyway">Toch hier tonen</string>
     <string name="projection_logo_show_while_running">Tonen tijdens lopen</string>
     <string name="score_sheets_title">Scorebladen</string>
     <string name="score_sheets_info">Bladen om op A4 te printen en aan de tafels in te vullen. Ze zijn altijd in het Engels.</string>

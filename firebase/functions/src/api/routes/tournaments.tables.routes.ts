@@ -18,6 +18,8 @@ import { parseRoundClockAction } from "../../services/roundClock";
 import { parseRoundControlChange, parseTablesToComplete } from "../../services/roundControl";
 import { parseSaveTableRequest } from "../tableRequests";
 import { pathParam } from "../pathParam";
+import { setResultsRevealed } from "../../services/resultsVisibility";
+import { recordActivity, tournamentNameOf } from "../../services/activityLog";
 
 /**
  * Only a super admin or a club admin of the tournament changes the tables of a completed tournament, so late
@@ -100,6 +102,28 @@ export function registerRoundAndTableRoutes(router: Router): void {
           actor: actorFromToken(res.locals.auth),
         });
         res.status(200).json(answer);
+      } catch (e) {
+        next(e);
+      }
+    },
+  );
+
+  // The prize giving: an admin reveals the hidden results, or hides them again after a reveal by mistake.
+  router.post(
+    "/:tournamentId/results-visibility",
+    requireAuth,
+    requireTournamentPermission("tournament.roundControl"),
+    async (req, res, next) => {
+      try {
+        const revealed = req.body?.revealed;
+        if (typeof revealed !== "boolean") throw badRequest("revealed must be a boolean");
+        const tournamentId = pathParam(req, "tournamentId");
+        await setResultsRevealed(tournamentId, revealed);
+        await recordActivity({
+          action: "tournament.update", actor: actorFromToken(res.locals.auth), tournamentId,
+          target: await tournamentNameOf(tournamentId), details: { resultsRevealed: revealed },
+        });
+        res.status(200).json({ resultsRevealed: revealed });
       } catch (e) {
         next(e);
       }

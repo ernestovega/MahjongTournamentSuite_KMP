@@ -349,4 +349,9 @@ Aber eine E-Mail kann nur ein Konto in der App haben: Wer ein eigenes Konto möc
     <string name="apps_notice_later">Du findest sie später im Menü Mehr, unter App herunterladen.</string>
     <string name="apps_notice_close">Schließen</string>
     <string name="apps_notice_never">Nicht mehr anzeigen</string>
+    <string name="ranking_hidden_title">Rangliste bis zur Siegerehrung verborgen</string>
+    <string name="ranking_hidden_message">Der Veranstalter hält die Ergebnisse geheim und deckt sie bei der Siegerehrung auf.</string>
+    <string name="ranking_frozen_notice">Rangliste nach Runde %1$d eingefroren. Die Endergebnisse gibt es bei der Siegerehrung.</string>
+    <string name="table_results_hidden_title">Ergebnisse bis zur Siegerehrung verborgen</string>
+    <string name="table_results_hidden_message">Nur die Spieler dieses Tisches sehen seine Hände, bis der Veranstalter die Ergebnisse aufdeckt.</string>
 </resources>

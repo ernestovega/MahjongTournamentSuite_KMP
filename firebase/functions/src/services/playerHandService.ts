@@ -135,7 +135,7 @@ async function loadTableOf(
   }
   if (!tableSnap.exists) throw notFound("Table not found");
   if (tournamentSnap.get("isCompleted") === true) throw conflict("This tournament is completed", { code: "TOURNAMENT_COMPLETED" });
-  const table: Data = tableSnap.data() ?? {};
+  const table = tableSnap.data() as Data;
   if (Boolean(table.isCompleted)) throw conflict("This table is already completed", { code: "TABLE_COMPLETED" });
   if (Boolean(table.useTotalsOnly ?? false)) throw conflict("This table uses totals only. An editor enters its results", { code: "TOTALS_ONLY" });
   const hands = handsFromData(handSnaps.map((snap) => snap.data() ?? {}));

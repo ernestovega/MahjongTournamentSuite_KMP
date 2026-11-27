@@ -1242,6 +1242,21 @@ Cambia i posti in Iscrizioni.</string>
         <item quantity="one">%1$d paese</item>
         <item quantity="other">%1$d paesi</item>
     </plurals>
+    <string name="hide_results">Nascondi i risultati fino alla premiazione</string>
+    <string name="hide_results_description">Dal turno scelto, i giocatori e il pubblico vedono i tavoli senza risultati, e la classifica resta com'era prima di quel turno. Ogni giocatore vede ancora il proprio tavolo. Gli amministratori vedono tutto.
+I risultati si rivelano alla premiazione da Controllo del turno.</string>
+    <string name="hide_results_from_round">Nascondi dal turno</string>
+    <string name="results_hidden_notice">I giocatori e il pubblico non vedono i risultati dal turno %1$d. Solo gli amministratori li vedono.</string>
+    <string name="results_revealed_notice">I risultati sono rivelati: tutti vedono la classifica.</string>
+    <string name="reveal_results">Rivela i risultati</string>
+    <string name="reveal_results_confirm_title">Rivelare i risultati?</string>
+    <string name="reveal_results_confirm_message">I giocatori e il pubblico vedranno la classifica finale e tutti i risultati in meno di un minuto.</string>
+    <string name="hide_results_again">Nascondi di nuovo</string>
+    <string name="hide_results_again_confirm_title">Nascondere di nuovo i risultati?</string>
+    <string name="hide_results_again_confirm_message">Per una rivelazione per errore. Chi ha già visto la classifica la conosce.</string>
+    <string name="ranking_hidden_from_public_title">I risultati sono nascosti al pubblico</string>
+    <string name="ranking_hidden_from_public_message">Se questo schermo è in sala, tutti vedranno la classifica. Rivela i risultati da Controllo del turno alla premiazione.</string>
+    <string name="show_ranking_here_anyway">Mostra qui comunque</string>
     <string name="projection_logo_show_while_running">Mostra in corso</string>
     <string name="score_sheets_title">Fogli punteggio</string>
     <string name="score_sheets_info">Fogli da stampare in A4 e compilare ai tavoli. Sono sempre in inglese.</string>

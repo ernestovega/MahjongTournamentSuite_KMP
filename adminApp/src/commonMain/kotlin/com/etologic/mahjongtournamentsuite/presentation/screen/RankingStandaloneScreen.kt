@@ -20,6 +20,9 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.ui.platform.testTag
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import androidx.compose.material.icons.automirrored.filled.NavigateBefore
 import androidx.compose.material.icons.automirrored.filled.NavigateNext
 import androidx.compose.material.icons.filled.Add
@@ -28,6 +31,7 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -129,6 +133,9 @@ import mahjongtournamentsuite.adminapp.generated.resources.score
 import mahjongtournamentsuite.adminapp.generated.resources.seconds_short
 import mahjongtournamentsuite.adminapp.generated.resources.settings
 import mahjongtournamentsuite.adminapp.generated.resources.show_fewer_rows
+import mahjongtournamentsuite.adminapp.generated.resources.show_ranking_here_anyway
+import mahjongtournamentsuite.adminapp.generated.resources.ranking_hidden_from_public_message
+import mahjongtournamentsuite.adminapp.generated.resources.ranking_hidden_from_public_title
 import mahjongtournamentsuite.adminapp.generated.resources.show_first_3
 import mahjongtournamentsuite.adminapp.generated.resources.show_more_rows
 import mahjongtournamentsuite.adminapp.generated.resources.team
@@ -180,6 +187,8 @@ private fun RankingStandaloneContent(
     var remainingSeconds by remember { mutableIntStateOf(intervalSeconds) }
     var maxRowsPerScreen by remember { mutableIntStateOf(MAX_ROWS_PER_SCROLL) }
     var showTopThree by rememberSaveable { mutableStateOf(false) }
+    // While the public cannot see the results, this screen asks before it shows them to the room.
+    var showHiddenResults by rememberSaveable { mutableStateOf(false) }
     var playing by remember { mutableStateOf(false) }
     var showOrganizerLogo by rememberSaveable { mutableStateOf(true) }
     var showEmaLogo by rememberSaveable { mutableStateOf(true) }
@@ -288,6 +297,20 @@ private fun RankingStandaloneContent(
                                 message = stringResource(Res.string.the_ranking_shows_when_the_first),
                                 modifier = Modifier.weight(1f),
                             )
+                            snapshot?.tournament?.resultsHiddenFromRound != null && !showHiddenResults -> Column(
+                                modifier = Modifier.weight(1f).fillMaxWidth().testTag("ranking_hidden_results"),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                            ) {
+                                AppEmptyState(
+                                    icon = Icons.Default.VisibilityOff,
+                                    title = stringResource(Res.string.ranking_hidden_from_public_title),
+                                    message = stringResource(Res.string.ranking_hidden_from_public_message),
+                                )
+                                FocusedButton(onClick = { showHiddenResults = true }) {
+                                    ButtonText(stringResource(Res.string.show_ranking_here_anyway))
+                                }
+                            }
                             else -> RankingPage(
                                 page = currentPage,
                                 listState = listState,
@@ -317,7 +340,7 @@ private fun RankingStandaloneContent(
                                 onShowWhileRunningChange = { showOrganizerLogo = it },
                                 modifier = Modifier
                                     .align(Alignment.TopStart)
-                                    .padding(start = if (compact) 8.dp else 24.dp, top = if (compact) 20.dp else 40.dp),
+                                    .padding(start = if (compact) 8.dp else 24.dp, top = if (compact) MtsTheme.spacing.xl else 40.dp),
                             ) {
                                 OrganizationLogo(
                                     name = tournament.mainOrganizerName(),
@@ -333,7 +356,7 @@ private fun RankingStandaloneContent(
                             onShowWhileRunningChange = { showEmaLogo = it },
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
-                                .padding(end = if (compact) 8.dp else 24.dp, top = if (compact) 20.dp else 40.dp),
+                                .padding(end = if (compact) 8.dp else 24.dp, top = if (compact) MtsTheme.spacing.xl else 40.dp),
                         ) {
                             EmaLogo(size = logoSize)
                         }

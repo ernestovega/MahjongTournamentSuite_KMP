@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it, mock } from "node:test";
 
-import { CallerCheck, isOwnServiceAccount, registrationsHourHandler, registrationsHourUrl } from "./registrationHourRelay";
+import { GoogleAuth, OAuth2Client } from "google-auth-library";
+
+import { callRegistrationsHour, CallerCheck, isOwnServiceAccount, registrationsHourHandler, registrationsHourUrl } from "./registrationHourRelay";
 
 const OWN = "123-compute@developer.gserviceaccount.com";
 
@@ -80,5 +82,33 @@ describe("registrationHourRelay", () => {
     );
     assert.equal(get.state.status, 405);
     assert.equal(runs, 1);
+  });
+});
+
+describe("the Google side of the hourly relay, faked", () => {
+  it("calls Madrid with an ID token client, checks a token with Google and reads the own account from the metadata server", async () => {
+    const asked: Array<{ url: string; method?: string }> = [];
+    const idClient = mock.method(GoogleAuth.prototype, "getIdTokenClient", async () => ({
+      request: async (options: { url: string; method?: string }) => {
+        asked.push(options);
+        return { data: { ok: true } };
+      },
+    }) as never);
+    const payloads = [{ email: "functions@example.test", email_verified: true }];
+    const verify = mock.method(OAuth2Client.prototype, "verifyIdToken", async () => ({ getPayload: () => payloads.shift() }) as never);
+    const metadata = [new Response(" functions@example.test\n", { status: 200 }), new Response("no", { status: 500 })];
+    const fetching = mock.method(globalThis, "fetch", async () => metadata.shift() as Response);
+    try {
+      assert.deepEqual(await callRegistrationsHour(), { ok: true });
+      assert.equal(asked[0].method, "POST");
+      assert.match(asked[0].url, /registrationsHourRun$/);
+      assert.equal(await isOwnServiceAccount("Bearer token", "audience"), true);
+      payloads.push({ email: "functions@example.test", email_verified: true });
+      assert.equal(await isOwnServiceAccount("Bearer token", "audience"), false, "the metadata server failed");
+    } finally {
+      idClient.mock.restore();
+      verify.mock.restore();
+      fetching.mock.restore();
+    }
   });
 });

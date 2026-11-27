@@ -349,4 +349,9 @@ Ma un'email può avere un solo account nell'app: chi vuole un proprio account ha
     <string name="apps_notice_later">Più tardi le trovi nel menu Altro, alla voce Scarica l'app.</string>
     <string name="apps_notice_close">Chiudi</string>
     <string name="apps_notice_never">Non mostrare più</string>
+    <string name="ranking_hidden_title">Classifica nascosta fino alla premiazione</string>
+    <string name="ranking_hidden_message">L'organizzazione tiene segreti i risultati e li rivelerà alla premiazione.</string>
+    <string name="ranking_frozen_notice">Classifica bloccata dopo il turno %1$d. I risultati finali arriveranno alla premiazione.</string>
+    <string name="table_results_hidden_title">Risultati nascosti fino alla premiazione</string>
+    <string name="table_results_hidden_message">Solo i giocatori di questo tavolo vedono le sue mani finché l'organizzazione non rivela i risultati.</string>
 </resources>

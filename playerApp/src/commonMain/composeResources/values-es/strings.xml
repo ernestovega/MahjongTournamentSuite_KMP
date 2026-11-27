@@ -349,4 +349,9 @@ Pero un email solo puede tener una cuenta en la app: quien quiera su propia cuen
     <string name="apps_notice_later">Más tarde las encontrarás en el menú Más, en Descargar la app.</string>
     <string name="apps_notice_close">Cerrar</string>
     <string name="apps_notice_never">No volver a mostrar</string>
+    <string name="ranking_hidden_title">Clasificación oculta hasta la entrega de premios</string>
+    <string name="ranking_hidden_message">La organización mantiene los resultados en secreto y los revelará en la entrega de premios.</string>
+    <string name="ranking_frozen_notice">Clasificación congelada tras la ronda %1$d. Los resultados finales se conocerán en la entrega de premios.</string>
+    <string name="table_results_hidden_title">Resultados ocultos hasta la entrega de premios</string>
+    <string name="table_results_hidden_message">Solo los jugadores de esta mesa ven sus manos hasta que la organización revele los resultados.</string>
 </resources>

@@ -53,6 +53,9 @@ data class TournamentDto(
     val isPublic: Boolean = true,
     /** False hides the differences button on the table screen of the player app. */
     val showTableDiffs: Boolean = true,
+    val hideResultsFromRound: Int? = null,
+    val resultsRevealed: Boolean = false,
+    val resultsHiddenFromRound: Int? = null,
     val createdByUid: String? = null,
     val createdByName: String? = null,
     val createdAt: String? = null,
@@ -124,6 +127,8 @@ data class UpdateTournamentSettingsRequestDto(
     val countChickenHands: Boolean? = null,
     val isPublic: Boolean? = null,
     val showTableDiffs: Boolean? = null,
+    /** 0 turns the hidden results off, null keeps the setting. */
+    val hideResultsFromRound: Int? = null,
     val roundSchedules: List<TournamentRoundScheduleDto>? = null,
     val agendaItems: List<TournamentAgendaItemDto>? = null,
     /** Null keeps the stored value. */
@@ -483,6 +488,7 @@ data class TableStateDto(
     val isCompleted: Boolean = false,
     val useTotalsOnly: Boolean = false,
     val forcedZeroPlayerId: String = "",
+    val resultsHidden: Boolean = false,
 )
 
 @Serializable
@@ -510,6 +516,13 @@ data class TableWithHandsResponseDto(
 @Serializable
 data class RoundTablesWithHandsResponseDto(
     val tables: List<TableWithHandsResponseDto>,
+)
+
+/** The body and the answer of the reveal of the hidden results. */
+@Serializable
+data class ResultsVisibilityDto(
+    val revealed: Boolean? = null,
+    val resultsRevealed: Boolean? = null,
 )
 
 @Serializable

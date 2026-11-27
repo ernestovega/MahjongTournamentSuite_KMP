@@ -349,4 +349,9 @@ Mais un email ne peut avoir qu'un seul compte dans l'app : qui veut son propre c
     <string name="apps_notice_later">Vous les retrouverez plus tard dans le menu Plus, sous Télécharger l'app.</string>
     <string name="apps_notice_close">Fermer</string>
     <string name="apps_notice_never">Ne plus afficher</string>
+    <string name="ranking_hidden_title">Classement masqué jusqu'à la remise des prix</string>
+    <string name="ranking_hidden_message">L'organisation garde les résultats secrets et les révélera à la remise des prix.</string>
+    <string name="ranking_frozen_notice">Classement figé après le tour %1$d. Les résultats finaux seront dévoilés à la remise des prix.</string>
+    <string name="table_results_hidden_title">Résultats masqués jusqu'à la remise des prix</string>
+    <string name="table_results_hidden_message">Seuls les joueurs de cette table voient ses mains jusqu'à ce que l'organisation révèle les résultats.</string>
 </resources>
