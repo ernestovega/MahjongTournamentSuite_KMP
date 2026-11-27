@@ -274,21 +274,11 @@
     <string name="spreadsheet_chooser_filter">Файлы CSV и Excel</string>
     <string name="spreadsheet_error_read">Приложению не удалось прочитать файл. Выберите файл CSV или Excel и попробуйте снова.</string>
     <string name="spreadsheet_error_save">Приложению не удалось сохранить файл. Попробуйте снова.</string>
-    <string name="consent_title">Анонимная аналитика</string>
-    <string name="consent_intro">Это приложение собирает анонимные данные о том, как им пользуются, и об ошибках. Команда использует их только для поиска проблем и улучшения приложения.</string>
-    <string name="consent_collects">Приложение записывает следующие данные:\n• Экраны, диалоги и вкладки, которые вы открываете, и как долго.\n• Действия, которые вы выполняете, например сохранение стола.\n• Ошибки и сбои с техническими подробностями, например тип ошибки.</string>
-    <string name="consent_not_collected">Приложение не записывает ваше имя, адрес почты, номер EMA или любой введённый вами текст. По этим данным вас нельзя опознать.</string>
-    <string name="consent_required">Пользоваться приложением можно только с вашего согласия. Без согласия войти в приложение нельзя.</string>
-    <string name="consent_accept">Принять и продолжить</string>
-    <string name="consent_decline">Отклонить</string>
-    <string name="consent_declined_note">Без анонимной аналитики пользоваться приложением нельзя. Вы можете закрыть приложение или принять, чтобы продолжить.</string>
-    <string name="consent_withdraw">Отозвать согласие на аналитику</string>
     <string name="profile_delete_account">Удалить мою учётную запись</string>
     <string name="profile_delete_account_title">Удалить учётную запись?</string>
     <string name="profile_delete_account_message">Учётная запись удаляется навсегда: вход, адрес почты, псевдоним и фото. Ваш игрок EMA и результаты турниров сохраняются. Это действие нельзя отменить.</string>
     <string name="profile_delete_account_confirm">Удалить</string>
     <string name="privacy_policy">Политика конфиденциальности</string>
-    <string name="consent_withdraw_info">Приложение остановит аналитику и спросит вас снова. Пользоваться приложением можно будет только после согласия.</string>
     <string name="stat_best_hand_points">Больше всего очков за одну руку</string>
     <string name="stat_average_hands_per_table">Ср. раздач за столом</string>
     <string name="app_switch_to_admin">Приложение менеджера</string>
@@ -797,4 +787,19 @@
     <string name="update_available_later">Позже</string>
     <!-- Sign-in of the web: the page of the apps -->
     <string name="sign_in_get_the_app">Скачать приложение</string>
+    <string name="consent_title">Анонимная аналитика</string>
+    <string name="consent_message">Можно ли приложению отправлять анонимные данные об использовании и ошибках? Они помогают нам его улучшать. Это необязательно: если вы откажетесь, приложение работает так же.</string>
+    <string name="consent_more_details">Подробнее</string>
+    <string name="consent_why_title">Зачем</string>
+    <string name="consent_why">Чтобы находить ошибки и видеть, какими частями приложения пользуются, и понимать, что исправить и улучшить.</string>
+    <string name="consent_what_title">Что</string>
+    <string name="consent_what">Экраны и действия, которыми вы пользуетесь, и ошибки с техническими подробностями. Никогда ваше имя, почта, номер EMA или то, что вы вводите.</string>
+    <string name="consent_where_title">Куда</string>
+    <string name="consent_where">Данные об использовании уходят в Google Analytics for Firebase и хранятся 14 месяцев. Ошибки уходят в наш собственный журнал в Firebase, в ЕС, и удаляются через 30 дней.</string>
+    <string name="consent_change_title">Изменить потом</string>
+    <string name="consent_change">В вашем профиле, в любое время.</string>
+    <string name="consent_accept">Принять</string>
+    <string name="consent_decline">Отклонить</string>
+    <string name="profile_analytics">Отправлять анонимную аналитику</string>
+    <string name="profile_analytics_info">Анонимные данные о том, как вы пользуетесь приложением, и о его ошибках, никогда ваше имя, почта или номер EMA. Выключите, чтобы сразу всё остановить. Приложение работает так же.</string>
 </resources>

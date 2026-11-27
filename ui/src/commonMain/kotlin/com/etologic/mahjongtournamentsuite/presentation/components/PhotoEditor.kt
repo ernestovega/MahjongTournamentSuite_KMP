@@ -192,23 +192,14 @@ fun PhotoEditor(
     }
 
     if (showingNotice && uploadNotice != null) {
-        TrackedDialog("PhotoPublicNotice") {
-            AlertDialog(
-                modifier = Modifier.appFocusGroup(),
-                onDismissRequest = { showingNotice = false },
-                title = { MtsDialogTitle(stringResource(Res.string.photo_public_notice_title)) },
-                text = { MtsDialogText(uploadNotice) },
-                confirmButton = {
-                    MtsDialogButtons {
-                        FocusedButton(onClick = {
-                            showingNotice = false
-                            picker.launch()
-                        }) { ButtonText(stringResource(Res.string.photo_public_notice_accept)) }
-                        FocusedTextButton(onClick = { showingNotice = false }) { ButtonText(stringResource(Res.string.action_cancel)) }
-                    }
-                },
-            )
-        }
+        PhotoPublicNoticeDialog(
+            text = uploadNotice,
+            onAccept = {
+                showingNotice = false
+                picker.launch()
+            },
+            onDismiss = { showingNotice = false },
+        )
     }
 
     imageToCrop?.let { image ->
@@ -259,5 +250,24 @@ fun ProfilePhoto(photoUrl: String?, name: String, size: Dp = 120.dp) {
                 modifier = Modifier.size(size),
             )
         }
+    }
+}
+
+/** Tells the person, before choosing a new own photo, that the photo will be public. [onAccept] opens the image picker. */
+@Composable
+internal fun PhotoPublicNoticeDialog(text: String, onAccept: () -> Unit, onDismiss: () -> Unit) {
+    TrackedDialog("PhotoPublicNotice") {
+        AlertDialog(
+            modifier = Modifier.appFocusGroup(),
+            onDismissRequest = onDismiss,
+            title = { MtsDialogTitle(stringResource(Res.string.photo_public_notice_title)) },
+            text = { MtsDialogText(text) },
+            confirmButton = {
+                MtsDialogButtons {
+                    FocusedButton(onClick = onAccept) { ButtonText(stringResource(Res.string.photo_public_notice_accept)) }
+                    FocusedTextButton(onClick = onDismiss) { ButtonText(stringResource(Res.string.action_cancel)) }
+                }
+            },
+        )
     }
 }

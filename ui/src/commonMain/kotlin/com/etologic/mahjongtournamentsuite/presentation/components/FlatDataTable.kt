@@ -107,13 +107,16 @@ fun DataTableRow(
     val isHovered by interactionSource.collectIsHoveredAsState()
     val isFocused by interactionSource.collectIsFocusedAsState()
     val hoverColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
-    val resolvedBackgroundColor = if (isHovered || isFocused || highlighted) hoverColor else backgroundColor
+    // The focus lights the row only while the keyboard is in use: with the mouse only the hover shows.
+    val keyboard = keyboardInUse()
+    val resolvedBackgroundColor = if (isHovered || (isFocused && keyboard) || highlighted) hoverColor else backgroundColor
 
     val interactiveModifier = if (onClick == null) {
         Modifier.hoverable(interactionSource = interactionSource)
     } else {
         Modifier
             .hoverable(interactionSource = interactionSource)
+            .then(if (clickFocusable) Modifier.focusOnMousePress() else Modifier)
             .focusProperties { canFocus = clickFocusable }
             .onPreviewKeyEvent { event ->
                 if (!clickFocusable || event.type != KeyEventType.KeyDown) {

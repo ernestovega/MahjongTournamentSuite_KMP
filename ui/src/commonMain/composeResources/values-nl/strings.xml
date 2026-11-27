@@ -268,21 +268,11 @@
     <string name="spreadsheet_chooser_filter">CSV- en Excel-bestanden</string>
     <string name="spreadsheet_error_read">De app kon het bestand niet lezen. Kies een CSV- of Excel-bestand en probeer het opnieuw.</string>
     <string name="spreadsheet_error_save">De app kon het bestand niet opslaan. Probeer het opnieuw.</string>
-    <string name="consent_title">Anonieme analyse</string>
-    <string name="consent_intro">Deze app verzamelt anonieme gegevens over hoe hij wordt gebruikt en over fouten. Het team gebruikt de gegevens alleen om problemen te vinden en de app te verbeteren.</string>
-    <string name="consent_collects">De app legt de volgende gegevens vast:\n• De schermen, dialoogvensters en tabbladen die je opent, en hoe lang.\n• De acties die je gebruikt, zoals het opslaan van een tafel.\n• Fouten en crashes, met technische details zoals het soort fout.</string>
-    <string name="consent_not_collected">De app legt je naam, je e-mailadres, je EMA-nummer of tekst die je invoert niet vast. De gegevens identificeren jou niet.</string>
-    <string name="consent_required">Je kunt de app alleen gebruiken als je akkoord gaat. Als je niet akkoord gaat, kun je de app niet openen.</string>
-    <string name="consent_accept">Akkoord en doorgaan</string>
-    <string name="consent_decline">Weigeren</string>
-    <string name="consent_declined_note">Zonder de anonieme analyse kun je de app niet gebruiken. Je kunt de app sluiten, of akkoord gaan om door te gaan.</string>
-    <string name="consent_withdraw">Toestemming voor analyse intrekken</string>
     <string name="profile_delete_account">Mijn account verwijderen</string>
     <string name="profile_delete_account_title">Je account verwijderen?</string>
     <string name="profile_delete_account_message">Je account wordt definitief verwijderd: de aanmelding, het e-mailadres, de alias en de foto. Je EMA-speler en je toernooiresultaten blijven bestaan. Dit kan niet ongedaan worden gemaakt.</string>
     <string name="profile_delete_account_confirm">Verwijderen</string>
     <string name="privacy_policy">Privacybeleid</string>
-    <string name="consent_withdraw_info">De app stopt de analyse en vraagt het je opnieuw. Je kunt de app pas weer gebruiken als je akkoord gaat.</string>
     <string name="stat_best_hand_points">Meeste punten uit één hand</string>
     <string name="stat_average_hands_per_table">Gem. handen per tafel</string>
     <string name="app_switch_to_admin">Beheer-app</string>
@@ -791,4 +781,19 @@ De eerste die lukt, wint</string>
     <string name="update_available_later">Later</string>
     <!-- Sign-in of the web: the page of the apps -->
     <string name="sign_in_get_the_app">Download de app</string>
+    <string name="consent_title">Anonieme analyse</string>
+    <string name="consent_message">Mag de app anonieme gegevens over het gebruik en over fouten versturen? Ze helpen ons de app te verbeteren. Het is vrijwillig: als je weigert, werkt de app precies hetzelfde.</string>
+    <string name="consent_more_details">Meer details</string>
+    <string name="consent_why_title">Waarom</string>
+    <string name="consent_why">Om fouten te vinden en te zien welke delen van de app gebruikt worden, zodat we weten wat we moeten oplossen en verbeteren.</string>
+    <string name="consent_what_title">Wat</string>
+    <string name="consent_what">De schermen en acties die je gebruikt, en de fouten met technische details. Nooit je naam, je e-mailadres, je EMA-nummer of wat je typt.</string>
+    <string name="consent_where_title">Waarheen</string>
+    <string name="consent_where">Het gebruik gaat naar Google Analytics for Firebase, dat het 14 maanden bewaart. De fouten gaan naar ons eigen logboek op Firebase, in de EU, dat ze na 30 dagen verwijdert.</string>
+    <string name="consent_change_title">Later wijzigen</string>
+    <string name="consent_change">In je profiel, wanneer je wilt.</string>
+    <string name="consent_accept">Akkoord</string>
+    <string name="consent_decline">Weigeren</string>
+    <string name="profile_analytics">Anonieme analyse versturen</string>
+    <string name="profile_analytics_info">Anonieme gegevens over hoe je de app gebruikt en over de fouten, nooit je naam, je e-mailadres of je EMA-nummer. Zet het uit om het meteen te stoppen. De app werkt precies hetzelfde.</string>
 </resources>

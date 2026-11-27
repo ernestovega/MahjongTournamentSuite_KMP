@@ -124,7 +124,7 @@ type TournamentSpec = {
   replaces?: string;
   /**
    * The round that waits for the Play of the Timer. The seed moves the whole schedule so that this round starts at the
-   * time of the run, as the script prepareOngoingRound does: the rounds before it are over and it has no clock.
+   * time of the run (services/ongoingRound.ts): the rounds before it are over and it has no clock.
    */
   readyRound?: number;
   /**

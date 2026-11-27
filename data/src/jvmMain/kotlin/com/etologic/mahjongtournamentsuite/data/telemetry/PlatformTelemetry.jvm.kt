@@ -58,6 +58,8 @@ internal class DesktopTelemetry(
     private val properties = ConcurrentHashMap<String, String>()
     private val preferences = Preferences.userRoot().node(preferencesNode)
     private var consent = runCatching { preferences.getBoolean(CONSENT_KEY, false) }.getOrDefault(false)
+    // The answer of this run counts even when the preferences cannot be saved.
+    private var answered = runCatching { preferences.get(CONSENT_KEY, null) != null }.getOrDefault(false)
 
     init {
         properties[TelemetryProperty.PLATFORM] = "desktop"
@@ -69,8 +71,11 @@ internal class DesktopTelemetry(
 
     override fun hasConsent(): Boolean = consent
 
+    override fun hasAnswered(): Boolean = answered
+
     override fun setConsent(granted: Boolean) {
         consent = granted
+        answered = true
         runCatching { preferences.putBoolean(CONSENT_KEY, granted) }
     }
 
