@@ -256,6 +256,9 @@
     <string name="assign_all_before_id_cards">Wijs een EMA-speler toe aan elke plaats van het toernooi voordat je ID-kaarten maakt.</string>
     <string name="assign_all_before_id_list">Wijs een EMA-speler toe aan elke plaats van het toernooi voordat je de ID-lijst maakt.</string>
     <string name="assign_ema_player_to_player">EMA-SPELER TOEWIJZEN AAN SPELER %1$d</string>
+    <string name="filter_ema_photo">EMA-foto</string>
+    <string name="filter_own_photo">Eigen foto</string>
+    <string name="filter_with_photo">Met foto</string>
     <string name="photo">Foto</string>
     <string name="country_n">Land %1$s</string>
     <string name="no_matches">Geen resultaten</string>

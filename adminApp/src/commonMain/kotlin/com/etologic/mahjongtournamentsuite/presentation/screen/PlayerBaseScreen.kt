@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -130,6 +131,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.country
 import mahjongtournamentsuite.adminapp.generated.resources.country_players_count
 import mahjongtournamentsuite.adminapp.generated.resources.ema_number
 import mahjongtournamentsuite.adminapp.generated.resources.filter_by_code
+import mahjongtournamentsuite.adminapp.generated.resources.filter_with_photo
 import mahjongtournamentsuite.adminapp.generated.resources.first_name
 import mahjongtournamentsuite.adminapp.generated.resources.last_name
 import mahjongtournamentsuite.adminapp.generated.resources.name
@@ -216,6 +218,8 @@ fun PlayerBaseScreen(navController: NavHostController) {
     var newPlayerError by remember { mutableStateOf<UiText?>(null) }
     var searchQuery by remember { mutableStateOf("") }
     var selectedCountryCodes by remember { mutableStateOf<Set<String>>(emptySet()) }
+    // Only the players with a photo, so an admin reviews the photos quickly.
+    var withPhotoOnly by remember { mutableStateOf(false) }
     val searchFocusRequester = remember { FocusRequester() }
     val saveFocusRequester = remember { FocusRequester() }
     var loading by remember { mutableStateOf(true) }
@@ -243,7 +247,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                 )
             }
     }
-    val filteredPlayers = remember(players, searchQuery, selectedCountryCodes) {
+    val filteredPlayers = remember(players, searchQuery, selectedCountryCodes, withPhotoOnly) {
         val query = normalizeSearchText(searchQuery.trim())
         players.filter {
             val matchesSearch = query.isEmpty() ||
@@ -251,7 +255,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                 normalizeSearchText(it.displayName).contains(query)
             val matchesCountry = selectedCountryCodes.isEmpty() ||
                 it.country.trim().uppercase() in selectedCountryCodes
-            matchesSearch && matchesCountry
+            matchesSearch && matchesCountry && (!withPhotoOnly || !it.photoUrl.isNullOrBlank())
         }
     }
     // Only the players that the list shows count. A checked player that a filter hides stays out.
@@ -481,10 +485,11 @@ fun PlayerBaseScreen(navController: NavHostController) {
                 if (!fullyVisible) playersListState.animateScrollToItem(index)
                 scrollToEmaId = null
             }
-            // A search or a country filter hides the player: they are cleared, so the list shows it.
+            // A search, a country or the photo filter hides the player: they are cleared, so the list shows it.
             players.any { it.emaId == target } -> {
                 searchQuery = ""
                 selectedCountryCodes = emptySet()
+                withPhotoOnly = false
             }
         }
     }
@@ -784,12 +789,20 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                         },
                                         modifier = Modifier.fillMaxWidth().focusRequester(searchFocusRequester),
                                     )
-                                    if (existingPlayerCountryCodes.isNotEmpty()) {
+                                    if (players.isNotEmpty()) {
                                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                             FullBleedRow(
                                                 modifier = Modifier.fillMaxWidth(),
                                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                                             ) {
+                                                val photoCount = players.count { !it.photoUrl.isNullOrBlank() }
+                                                FilterPillButton(
+                                                    selected = withPhotoOnly,
+                                                    description = stringResource(Res.string.filter_with_photo),
+                                                    onClick = { withPhotoOnly = !withPhotoOnly },
+                                                ) {
+                                                    ButtonText(stringResource(Res.string.filter_with_photo) + " ($photoCount)")
+                                                }
                                                 existingPlayerCountryCodes.forEach { code ->
                                                     val countryName = countryNameOf(
                                                         code,
@@ -804,7 +817,9 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                                         countryName,
                                                     )
                                                     AppTooltipBox(pluralStringResource(Res.plurals.country_players_count, countryPlayerCount, countryName, countryPlayerCount)) {
-                                                        TextButton(
+                                                        FilterPillButton(
+                                                            selected = isSelected,
+                                                            description = filterDescription,
                                                             onClick = {
                                                                 selectedCountryCodes = if (isSelected) {
                                                                     selectedCountryCodes - code
@@ -812,30 +827,6 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                                                     selectedCountryCodes + code
                                                                 }
                                                             },
-                                                            buttonModifier = Modifier.semantics {
-                                                                contentDescription = filterDescription
-                                                            },
-                                                            shape = CircleShape,
-                                                            colors = if (isSelected) {
-                                                                ButtonDefaults.textButtonColors(
-                                                                    containerColor = MaterialTheme.colorScheme.primary,
-                                                                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                                                                )
-                                                            } else {
-                                                                ButtonDefaults.textButtonColors(
-                                                                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                                                    contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                                )
-                                                            },
-                                                            border = BorderStroke(
-                                                                width = if (isSelected) 2.dp else 1.dp,
-                                                                color = if (isSelected) {
-                                                                    MaterialTheme.colorScheme.primary
-                                                                } else {
-                                                                    MaterialTheme.colorScheme.outline
-                                                                },
-                                                            ),
-                                                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                                                         ) {
                                                             CountryFlag(code = code)
                                                             Spacer(Modifier.width(4.dp))
@@ -1217,3 +1208,35 @@ private fun validatePlayerPhoto(image: SelectedImage): UiText? = when {
 
 /** A player has the three-letter code of the EMA, or an empty code when they have no country (a guest). */
 private fun isValidPlayerCountry(code: String): Boolean = code.trim().let { it.isEmpty() || it.matches(Regex("^[A-Za-z]{3}$")) }
+
+/** A round filter button of the players list: filled with the primary colour while [selected]. */
+@Composable
+private fun FilterPillButton(
+    selected: Boolean,
+    description: String,
+    onClick: () -> Unit,
+    content: @Composable RowScope.() -> Unit,
+) {
+    TextButton(
+        onClick = onClick,
+        buttonModifier = Modifier.semantics { contentDescription = description },
+        shape = CircleShape,
+        colors = if (selected) {
+            ButtonDefaults.textButtonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            )
+        } else {
+            ButtonDefaults.textButtonColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        },
+        border = BorderStroke(
+            width = if (selected) 2.dp else 1.dp,
+            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+        ),
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+        content = content,
+    )
+}

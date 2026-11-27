@@ -256,6 +256,9 @@
     <string name="assign_all_before_id_cards">Назначьте игрока EMA на каждое место турнира перед созданием бейджей.</string>
     <string name="assign_all_before_id_list">Назначьте игрока EMA на каждое место турнира перед созданием списка ID.</string>
     <string name="assign_ema_player_to_player">НАЗНАЧИТЬ ИГРОКА EMA ИГРОКУ %1$d</string>
+    <string name="filter_ema_photo">Фото EMA</string>
+    <string name="filter_own_photo">Своё фото</string>
+    <string name="filter_with_photo">С фото</string>
     <string name="photo">Фото</string>
     <string name="country_n">Страна %1$s</string>
     <string name="no_matches">Совпадений нет</string>

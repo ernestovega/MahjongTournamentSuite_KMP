@@ -60,6 +60,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.country_n
 import mahjongtournamentsuite.adminapp.generated.resources.ema_id
 import mahjongtournamentsuite.adminapp.generated.resources.email
 import mahjongtournamentsuite.adminapp.generated.resources.email_hidden
+import mahjongtournamentsuite.adminapp.generated.resources.filter_ema_photo
+import mahjongtournamentsuite.adminapp.generated.resources.filter_own_photo
 import mahjongtournamentsuite.adminapp.generated.resources.photo
 import mahjongtournamentsuite.adminapp.generated.resources.photo_of
 import mahjongtournamentsuite.adminapp.generated.resources.role
@@ -216,6 +218,27 @@ internal fun UsersTable(
     }
 }
 
+/** The kinds of photo that the users list filters by. */
+internal enum class UserPhotoFilter {
+    /** The EMA player of the account has a photo. */
+    EMA,
+
+    /** The account has its own photo. */
+    OWN,
+}
+
+/**
+ * True when the account has one of the [filters] photos, or when there is no filter. [emaIdsWithPhoto] are the EMA
+ * numbers of the EMA players that have a photo.
+ */
+internal fun ManagedUser.matchesPhotoFilters(filters: Set<UserPhotoFilter>, emaIdsWithPhoto: Set<String>): Boolean =
+    filters.isEmpty() ||
+        (UserPhotoFilter.OWN in filters && hasOwnPhoto && !photoUrl.isNullOrBlank()) ||
+        (
+            UserPhotoFilter.EMA in filters &&
+                (emaId?.let { it in emaIdsWithPhoto } == true || (!hasOwnPhoto && !photoUrl.isNullOrBlank()))
+            )
+
 /** The order of the role filter buttons. */
 internal val RoleFilterOrder = listOf(GlobalUserRole.SUPER_ADMIN, GlobalUserRole.CLUB_ADMIN, GlobalUserRole.EDITOR, GlobalUserRole.PLAYER)
 
@@ -229,6 +252,8 @@ internal fun UserFilters(
     tournaments: List<Tournament>,
     selectedTournamentId: String?,
     onTournamentSelected: (String?) -> Unit,
+    selectedPhotoFilters: Set<UserPhotoFilter> = emptySet(),
+    onPhotoFilterToggle: (UserPhotoFilter) -> Unit = {},
 ) {
     // A phone puts the search and the tournament on two lines, so both fields have room.
     val compact = LocalCompactLayout.current
@@ -269,6 +294,23 @@ internal fun UserFilters(
                     selected = role in selectedRoles,
                     onClick = { onRoleToggle(role) },
                     label = { Text(role.label()) },
+                )
+            }
+            // The photo filters let an admin review quickly the photos that the list shows.
+            UserPhotoFilter.entries.forEach { filter ->
+                FilterChip(
+                    selected = filter in selectedPhotoFilters,
+                    onClick = { onPhotoFilterToggle(filter) },
+                    label = {
+                        Text(
+                            stringResource(
+                                when (filter) {
+                                    UserPhotoFilter.EMA -> Res.string.filter_ema_photo
+                                    UserPhotoFilter.OWN -> Res.string.filter_own_photo
+                                },
+                            ),
+                        )
+                    },
                 )
             }
         }

@@ -256,6 +256,9 @@
     <string name="assign_all_before_id_cards">Assign an EMA player to every tournament slot before creating ID cards.</string>
     <string name="assign_all_before_id_list">Assign an EMA player to every tournament slot before creating the ID list.</string>
     <string name="assign_ema_player_to_player">ASSIGN EMA PLAYER TO PLAYER %1$d</string>
+    <string name="filter_ema_photo">EMA photo</string>
+    <string name="filter_own_photo">Own photo</string>
+    <string name="filter_with_photo">With photo</string>
     <string name="photo">Photo</string>
     <string name="country_n">Country %1$s</string>
     <string name="no_matches">No matches</string>

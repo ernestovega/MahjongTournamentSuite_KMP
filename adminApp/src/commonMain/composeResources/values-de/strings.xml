@@ -256,6 +256,9 @@
     <string name="assign_all_before_id_cards">Ordne jedem Turnierplatz einen EMA-Spieler zu, bevor du Ausweise erstellst.</string>
     <string name="assign_all_before_id_list">Ordne jedem Turnierplatz einen EMA-Spieler zu, bevor du die ID-Liste erstellst.</string>
     <string name="assign_ema_player_to_player">EMA-SPIELER DEM SPIELER %1$d ZUORDNEN</string>
+    <string name="filter_ema_photo">EMA-Foto</string>
+    <string name="filter_own_photo">Eigenes Foto</string>
+    <string name="filter_with_photo">Mit Foto</string>
     <string name="photo">Foto</string>
     <string name="country_n">Land %1$s</string>
     <string name="no_matches">Keine Treffer</string>
