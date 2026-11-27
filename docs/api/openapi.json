@@ -2,7 +2,7 @@
  "openapi": "3.1.0",
  "info": {
   "title": "Mahjong Tournament Suite API",
-  "version": "1.0.101",
+  "version": "1.0.103",
   "description": "The API of the backend: one HTTP Cloud Function (`api`, Express, Node 22, europe-southwest1).\n\n- The apps never read or write Firestore directly (the rules deny everything): everything goes through here.\n- **Authentication:** header `Authorization: Bearer <Firebase ID token>`, from `POST /auth/signIn`.\n- **App Check:** the apps send `X-Firebase-AppCheck`. Today in *monitor* mode (it is only logged).\n- **Errors:** always `{ error, message, details }` (see the `Error` schema).\n- **Limits:** 600 writes/min per address, 120 per account; 600 reads/min per address on `/public`.\n\nDocumentation with diagrams: `docs/architecture/` in the repository.\n\nOn this page «Try it out» only works for GET: changes are made from the apps."
  },
  "servers": [
