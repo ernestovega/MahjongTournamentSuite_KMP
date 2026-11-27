@@ -21,7 +21,7 @@ together.
 ## Restore it
 
 The account exists in production since 2026-11-15 (created by hand). Run this when production is cleaned of test data
-before the launch, or after any reset that deletes it (`resetAccess` deletes every account but one admin).
+before the launch, or after anything deletes it.
 
 `firebase/functions`, with production credentials and the owner's OK (it writes to production):
 
