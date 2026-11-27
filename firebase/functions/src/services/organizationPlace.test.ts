@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { EMPTY_PLACE, parseOrganizationInput, parsePlace, readPlace } from "./organizationsService";
+import { EMPTY_PLACE, parseOrganizationInput, parsePlace, readOrganizerIds, readPlace } from "./organizationsService";
 
 const link = "https://maps.app.goo.gl/abc123";
 
@@ -52,4 +52,12 @@ test("the organization form carries the place", () => {
   assert.deepEqual(parseOrganizationInput(body).place, EMPTY_PLACE);
   assert.deepEqual(parseOrganizationInput({ ...body, place: { address: "Calle Mayor 1" } }).place, { ...EMPTY_PLACE, address: "Calle Mayor 1" });
   assert.throws(() => parseOrganizationInput({ ...body, place: { name: "Room" } }));
+});
+
+test("reads organizer ids without blanks or repeats, and refuses an organization without a type or a country", () => {
+  assert.deepEqual(readOrganizerIds([null, " org-a ", "org-a", "", 7]), ["org-a", "7"]);
+  assert.deepEqual(readOrganizerIds("org-a"), []);
+  assert.throws(() => parseOrganizationInput({ name: "Club", country: "ES" }), /type must be CLUB or FEDERATION/);
+  assert.throws(() => parseOrganizationInput({ name: "Club", type: "CLUB" }), /country must be the two-letter code/);
+  assert.equal(parseOrganizationInput({ name: "Club", type: "CLUB", country: "es" }).type, "CLUB");
 });

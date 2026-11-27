@@ -33,4 +33,13 @@ describe("EMA report of malformed documents", () => {
     await ref.collection("players").doc("4").set({ id: 4, assignedEmaId: "07710004" });
     await assert.rejects(generateEmaReport({ tournamentId, rows: [row(4, 1)] }), /Assigned EMA player does not exist/);
   });
+
+  it("reads a bare tournament and a player without names, and refuses the missing host", async () => {
+    const bare = db.doc(`tournaments/${tournamentId}-bare`);
+    await bare.set({ createdAt: null });
+    await bare.collection("players").doc("1").set({ id: 1, assignedEmaId: "07710005" });
+    await db.doc("emaPlayerRegistry/07710005").set({ country: "ES" });
+    // The names and the dates are read as empty text, and the missing host stops the report.
+    await assert.rejects(generateEmaReport({ tournamentId: `${tournamentId}-bare`, rows: [row(1, 1)] }), /Host country and host city are required/);
+  });
 });

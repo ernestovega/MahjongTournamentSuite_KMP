@@ -76,8 +76,8 @@ export function publicTournament(tournament: Tournament): Omit<Tournament, "crea
   return rest;
 }
 
-const readEmaParam = (value: unknown): string => {
-  const emaId = String(value ?? "").trim();
+const readEmaParam = (value: string): string => {
+  const emaId = value.trim();
   if (emaId === "" || emaId.length > 64) throw badRequest("Invalid EMA id");
   return emaId;
 };
@@ -129,7 +129,8 @@ export function publicRouter(): Router {
       next();
     }, next);
   });
-  const tournamentCache = (res: Response) => cacheFor(res, Number(res.locals.publicCacheSeconds ?? PUBLIC_CACHE_SECONDS.live));
+  // Every route that uses it has a tournament id, so the check above has set the cache time.
+  const tournamentCache = (res: Response) => cacheFor(res, Number(res.locals.publicCacheSeconds));
   // The hands: what polling reads during play. A completed tournament keeps its long cache.
   const hiddenFrom = (res: Response) => (res.locals.hiddenFromRound as number | null | undefined) ?? null;
   const handsCache = (res: Response) => cacheFor(
@@ -149,8 +150,8 @@ export function publicRouter(): Router {
   }));
 
   router.get("/tournaments/:tournamentId", handle(async (_req, res) => {
-    const tournament = await tournamentFromSnapshot(res.locals.tournamentSnapshot as FirebaseFirestore.DocumentSnapshot);
-    if (tournament == null) throw notFound("Tournament not found");
+    // The check of the tournament id answered 404 already for a tournament that does not exist.
+    const tournament = (await tournamentFromSnapshot(res.locals.tournamentSnapshot as FirebaseFirestore.DocumentSnapshot))!;
     tournamentCache(res);
     res.status(200).json(publicTournament(tournament));
   }));
@@ -311,11 +312,10 @@ export function meRouter(): Router {
     let slots: MyTournamentSlot[] = [];
     if (emaId !== "") {
       const snapshot = await db.collectionGroup("players").where("assignedEmaId", "==", emaId).get();
-      slots = snapshot.docs.flatMap((slot) => {
-        const tournamentId = slot.ref.parent.parent?.id;
-        if (tournamentId == null) return [];
-        return [{ tournamentId, playerId: Number(slot.get("id") ?? slot.id), teamId: Number(slot.get("team") ?? 0) }];
-      });
+      // A slot of the collection group "players" always lives under a tournament.
+      slots = snapshot.docs.map((slot) => ({
+        tournamentId: slot.ref.parent.parent!.id, playerId: Number(slot.get("id") ?? slot.id), teamId: Number(slot.get("team") ?? 0),
+      }));
     }
     // The tournaments before their draw where the person is registered, so the player app marks them too.
     const registrations = await registrationsOfEma(emaId);

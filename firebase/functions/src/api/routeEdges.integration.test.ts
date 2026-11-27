@@ -157,4 +157,15 @@ describe("route edges", () => {
     if (change.status >= 500 || change.status === 200) wrong.push(`player-count: ${change.status} ${JSON.stringify(change.body)}`);
     assert.deepEqual(wrong, []);
   });
+
+  it("tells a player its slots that miss their id or team fields", async () => {
+    const player = await createAccount({ role: "PLAYER", playerOf: [tournamentId] });
+    const emaId = String((await db.doc(`users/${player.uid}`).get()).get("emaId"));
+    const other = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
+    await db.doc(`tournaments/${other}/players/9`).set({ assignedEmaId: emaId });
+    const response = await server.request("GET", "/me", { token: player.token });
+    assert.equal(response.status, 200);
+    const tournaments = (response.body as { tournaments: Array<{ tournamentId: string; playerId: number; teamId: number }> }).tournaments;
+    assert.deepEqual(tournaments.find((slot) => slot.tournamentId === other), { tournamentId: other, playerId: 9, teamId: 0 });
+  });
 });
