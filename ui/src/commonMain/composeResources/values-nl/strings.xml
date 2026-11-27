@@ -45,8 +45,8 @@
     <string name="profile_public_photo">Mijn foto openbaar tonen</string>
     <string name="profile_public_photo_info">Je foto is openbaar te zien in ranglijsten, statistieken en inschrijvingslijsten.\n\nZonder eigen foto wordt die van je EMA-speler gebruikt.\nZonder beide wordt geen foto getoond.\n\nZet dit uit om helemaal geen foto te tonen, niet die van jou en niet die van de EMA.</string>
     <string name="photo_public_notice_title">Je foto wordt openbaar</string>
-    <string name="photo_public_notice_text">Je foto wordt openbaar: iedereen kan hem zien in ranglijsten, statistieken en inschrijvingslijsten van de toernooien.</string>
-    <string name="photo_public_notice_hide">Je kunt hem altijd verbergen met "Mijn foto openbaar tonen" in je profiel.</string>
+    <string name="photo_public_notice_text">Je foto is te zien in ranglijsten, statistieken en inschrijvingslijsten.</string>
+    <string name="photo_public_notice_hide">Heb je geen eigen foto, dan wordt die van je EMA-speler gebruikt (als die er een heeft).\n\nIn je profiel kun je kiezen er geen te tonen.</string>
     <string name="photo_public_notice_accept">Accepteren</string>
     <string name="photo_error_type">Kies een JPEG-, PNG-, WebP- of GIF-afbeelding.</string>
     <string name="photo_error_size">Kies een foto van maximaal 5 MB.</string>

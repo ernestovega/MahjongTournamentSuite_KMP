@@ -46,8 +46,8 @@
     <string name="profile_public_photo">Mostrar mi foto en público</string>
     <string name="profile_public_photo_info">Tu foto se ve en público en rankings, estadísticas y listas de inscritos.\n\nSi no tienes foto propia, se usa la de tu jugador EMA.\nSi no hay ninguna, no se muestra foto.\n\nDesactívalo para no mostrar ninguna foto, ni la tuya ni la de la EMA.</string>
     <string name="photo_public_notice_title">Tu foto será pública</string>
-    <string name="photo_public_notice_text">Tu foto será pública: cualquiera podrá verla en los rankings, las estadísticas y las listas de inscritos de los torneos.</string>
-    <string name="photo_public_notice_hide">Puedes ocultarla cuando quieras con "Mostrar mi foto en público" en tu perfil.</string>
+    <string name="photo_public_notice_text">Tu foto se verá en los rankings, estadísticas y listas de inscritos.</string>
+    <string name="photo_public_notice_hide">Si no tienes foto propia, se usa la de tu jugador EMA (si tiene).\n\nPuedes elegir no mostrar ninguna en tu perfil.</string>
     <string name="photo_public_notice_accept">Aceptar</string>
     <string name="photo_error_type">Elige una imagen JPEG, PNG, WebP o GIF.</string>
     <string name="photo_error_size">Elige una foto de 5 MB o menos.</string>

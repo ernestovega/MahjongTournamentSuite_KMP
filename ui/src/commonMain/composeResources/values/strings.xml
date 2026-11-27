@@ -46,8 +46,8 @@
     <string name="profile_public_photo">Show my photo publicly</string>
     <string name="profile_public_photo_info">Your photo shows publicly in rankings, statistics and registration lists.\n\nWithout your own photo, the one of your EMA player is used.\nWithout either, no photo is shown.\n\nTurn this off to show no photo at all, neither yours nor the EMA one.</string>
     <string name="photo_public_notice_title">Your photo will be public</string>
-    <string name="photo_public_notice_text">Your photo will be public: everyone can see it in rankings, statistics and registration lists of the tournaments.</string>
-    <string name="photo_public_notice_hide">You can hide it at any time with "Show my photo publicly" in your profile.</string>
+    <string name="photo_public_notice_text">Your photo will show in rankings, statistics and registration lists.</string>
+    <string name="photo_public_notice_hide">If you have no photo of your own, the one of your EMA player is used (if it has one).\n\nYou can choose to show none in your profile.</string>
     <string name="photo_public_notice_accept">Accept</string>
     <string name="photo_error_type">Choose a JPEG, PNG, WebP, or GIF image.</string>
     <string name="photo_error_size">Choose a photo that is 5 MB or smaller.</string>
