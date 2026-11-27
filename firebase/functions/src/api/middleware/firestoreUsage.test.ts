@@ -94,4 +94,23 @@ describe("Firestore usage", () => {
       server.close();
     }
   });
+
+  it("counts what it can of answers without results and of classes that miss methods", async () => {
+    class BareDocument {}
+    class BareFirestore {}
+    class BareQuery { async _get() { return undefined; } }
+    class BareAggregate { async _get() { return { result: {} }; } }
+    class BareTransaction {}
+    class BareBatch { async _commit() { return []; } }
+    installFirestoreUsageCounters({
+      Firestore: BareFirestore, Query: BareQuery, AggregateQuery: BareAggregate, Transaction: BareTransaction,
+      WriteBatch: BareBatch, DocumentReference: BareDocument,
+    });
+    const { usage } = await withUsage(async () => {
+      await new BareQuery()._get();
+      await new BareAggregate()._get();
+      await new BareBatch()._commit();
+    });
+    assert.deepEqual(usage, { reads: 2, writes: 0, deletes: 0 });
+  });
 });
