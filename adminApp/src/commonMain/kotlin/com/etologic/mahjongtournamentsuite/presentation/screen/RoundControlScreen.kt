@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -97,6 +98,14 @@ import mahjongtournamentsuite.adminapp.generated.resources.round_control_clock
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_clock_help
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_closed
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_completed_notice
+import mahjongtournamentsuite.adminapp.generated.resources.results_hidden_notice
+import mahjongtournamentsuite.adminapp.generated.resources.results_revealed_notice
+import mahjongtournamentsuite.adminapp.generated.resources.hide_results_again_confirm_message
+import mahjongtournamentsuite.adminapp.generated.resources.hide_results_again_confirm_title
+import mahjongtournamentsuite.adminapp.generated.resources.hide_results_again
+import mahjongtournamentsuite.adminapp.generated.resources.reveal_results_confirm_message
+import mahjongtournamentsuite.adminapp.generated.resources.reveal_results_confirm_title
+import mahjongtournamentsuite.adminapp.generated.resources.reveal_results
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_badge
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_notice
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_finished_review
@@ -162,12 +171,14 @@ fun RoundControlScreen(
     onBack: () -> Unit,
 ) {
     val repository = koinInject<TournamentRepository>()
+    val tournaments = koinInject<TournamentsPresenter>()
     val telemetry = LocalTelemetry.current
     val controller = remember(tournamentId) { RoundTimerController(repository, tournamentId, initialRound, telemetry = telemetry) }
     RoundControlContent(
         controller = controller,
         loadTables = { mode -> repository.listTournamentTables(tournamentId, null, mode) },
         loadRoundHands = { roundId -> repository.getRoundTablesWithHands(tournamentId, roundId, RefreshMode.FORCE) },
+        setResultsRevealed = { revealed -> tournaments.setResultsRevealed(tournamentId, revealed) },
         onBack = onBack,
     )
 }
@@ -178,7 +189,7 @@ private const val ROUND_CONTROL_POLL_MS = 5_000L
 /** From this width the clock and the rules of the players sit side by side. */
 private val TWO_COLUMNS_MIN_WIDTH = 760.dp
 
-private enum class RoundControlPrompt { SetTime, StartedAgo, ConfirmStop }
+private enum class RoundControlPrompt { SetTime, StartedAgo, ConfirmStop, ConfirmReveal, ConfirmHideAgain }
 
 @Composable
 internal fun RoundControlContent(
@@ -188,6 +199,8 @@ internal fun RoundControlContent(
     /** The tables of a round with their hands: the review of the open tables counts the hands entered. */
     loadRoundHands: suspend (roundId: Int) -> AppResult<List<Pair<TableState, List<TableHand>>>>,
     onBack: () -> Unit,
+    /** The prize giving: reveals the hidden results, or hides them again. */
+    setResultsRevealed: suspend (revealed: Boolean) -> AppResult<Unit> = { AppResult.Success(Unit) },
     deviceNowMs: () -> Long = { Clock.System.now().toEpochMilliseconds() },
 ) {
     val scope = rememberCoroutineScope()
@@ -233,6 +246,17 @@ internal fun RoundControlContent(
             busy = false
             if (result is AppResult.Failure) error = result.error
             if (change.reopenTables.isNotEmpty() || change.completeTables.isNotEmpty()) tablesRevision += 1
+        }
+    }
+
+    fun reveal(revealed: Boolean) {
+        if (busy) return
+        busy = true
+        scope.launch {
+            val result = setResultsRevealed(revealed)
+            controller.refresh()
+            busy = false
+            if (result is AppResult.Failure) error = result.error
         }
     }
 
@@ -311,6 +335,28 @@ internal fun RoundControlContent(
             },
             onDismiss = { prompt = null },
         )
+        RoundControlPrompt.ConfirmReveal -> ConfirmDialog(
+            name = "RoundControlConfirmReveal",
+            title = stringResource(Res.string.reveal_results_confirm_title),
+            message = stringResource(Res.string.reveal_results_confirm_message),
+            confirm = stringResource(Res.string.reveal_results),
+            onConfirm = {
+                prompt = null
+                reveal(true)
+            },
+            onDismiss = { prompt = null },
+        )
+        RoundControlPrompt.ConfirmHideAgain -> ConfirmDialog(
+            name = "RoundControlConfirmHideAgain",
+            title = stringResource(Res.string.hide_results_again_confirm_title),
+            message = stringResource(Res.string.hide_results_again_confirm_message),
+            confirm = stringResource(Res.string.hide_results_again),
+            onConfirm = {
+                prompt = null
+                reveal(false)
+            },
+            onDismiss = { prompt = null },
+        )
         null -> Unit
     }
     // Once every table is closed, the review has nothing left to show.
@@ -363,6 +409,18 @@ internal fun RoundControlContent(
                             openTables = finishedOpenTables,
                             enabled = !busy,
                             onReview = { reviewing = true },
+                        )
+                    }
+                }
+                // The prize giving: about the whole tournament too.
+                state.tournament?.hideResultsFromRound?.let { fromRound ->
+                    Box(Modifier.padding(start = side, end = side, top = MtsTheme.spacing.md)) {
+                        HiddenResultsNotice(
+                            fromRound = fromRound,
+                            revealed = state.tournament?.resultsRevealed == true,
+                            enabled = !busy,
+                            onReveal = { prompt = RoundControlPrompt.ConfirmReveal },
+                            onHideAgain = { prompt = RoundControlPrompt.ConfirmHideAgain },
                         )
                     }
                 }
@@ -820,6 +878,41 @@ private fun FinishedRoundsNotice(openTables: List<TableKey>, enabled: Boolean, o
             )
             FocusedButton(enabled = enabled, onClick = onReview) {
                 ButtonText(stringResource(Res.string.round_control_finished_review))
+            }
+        }
+    }
+}
+
+/**
+ * The results that the public cannot see from [fromRound] on, with the button of the prize giving. After the reveal it
+ * offers to hide them again, for a reveal by mistake.
+ */
+@Composable
+private fun HiddenResultsNotice(fromRound: Int, revealed: Boolean, enabled: Boolean, onReveal: () -> Unit, onHideAgain: () -> Unit) {
+    Surface(
+        color = MaterialTheme.colorScheme.secondaryContainer,
+        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+        shape = MaterialTheme.shapes.medium,
+        modifier = Modifier.fillMaxWidth().testTag("hidden_results_notice"),
+    ) {
+        Row(
+            Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(
+                if (revealed) {
+                    stringResource(Res.string.results_revealed_notice)
+                } else {
+                    stringResource(Res.string.results_hidden_notice, fromRound)
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f),
+            )
+            if (revealed) {
+                FocusedButton(enabled = enabled, onClick = onHideAgain) { ButtonText(stringResource(Res.string.hide_results_again)) }
+            } else {
+                FocusedButton(enabled = enabled, onClick = onReveal) { ButtonText(stringResource(Res.string.reveal_results)) }
             }
         }
     }

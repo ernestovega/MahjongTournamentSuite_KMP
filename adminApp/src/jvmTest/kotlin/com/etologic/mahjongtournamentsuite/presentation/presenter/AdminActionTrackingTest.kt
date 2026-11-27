@@ -138,6 +138,7 @@ class AdminActionTrackingTest {
 
     private val cases = listOf(
         Case(TelemetryAction.TOURNAMENT_RENAMED) { it.tournamentsPresenter.renameTournament("t1", "New name") },
+        Case(TelemetryAction.RESULTS_VISIBILITY_CHANGED) { it.tournamentsPresenter.setResultsRevealed("t1", revealed = true) },
         Case(TelemetryAction.TOURNAMENT_SETTINGS_UPDATED) {
             it.tournamentsPresenter.updateTournamentSettings(
                 tournamentId = "t1",

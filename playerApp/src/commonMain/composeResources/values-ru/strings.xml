@@ -357,4 +357,9 @@
     <string name="apps_notice_later">Позже их можно найти в меню «Ещё», в пункте «Скачать приложение».</string>
     <string name="apps_notice_close">Закрыть</string>
     <string name="apps_notice_never">Больше не показывать</string>
+    <string name="ranking_hidden_title">Рейтинг скрыт до награждения</string>
+    <string name="ranking_hidden_message">Организаторы держат результаты в секрете и откроют их на награждении.</string>
+    <string name="ranking_frozen_notice">Рейтинг заморожен после раунда %1$d. Итоги объявят на награждении.</string>
+    <string name="table_results_hidden_title">Результаты скрыты до награждения</string>
+    <string name="table_results_hidden_message">Только игроки этого стола видят его раздачи, пока организаторы не откроют результаты.</string>
 </resources>

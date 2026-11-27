@@ -1242,6 +1242,21 @@ Change les places dans Inscriptions.</string>
         <item quantity="one">%1$d pays</item>
         <item quantity="other">%1$d pays</item>
     </plurals>
+    <string name="hide_results">Masquer les résultats jusqu'à la remise des prix</string>
+    <string name="hide_results_description">À partir du tour choisi, les joueurs et le public voient les tables sans résultats, et le classement reste celui d'avant ce tour. Chaque joueur voit toujours sa propre table. Les administrateurs voient tout.
+Les résultats se révèlent à la remise des prix depuis le Contrôle du tour.</string>
+    <string name="hide_results_from_round">Masquer à partir du tour</string>
+    <string name="results_hidden_notice">Les joueurs et le public ne voient pas les résultats à partir du tour %1$d. Seuls les administrateurs les voient.</string>
+    <string name="results_revealed_notice">Les résultats sont révélés : tout le monde voit le classement.</string>
+    <string name="reveal_results">Révéler les résultats</string>
+    <string name="reveal_results_confirm_title">Révéler les résultats ?</string>
+    <string name="reveal_results_confirm_message">Les joueurs et le public verront le classement final et tous les résultats en moins d'une minute.</string>
+    <string name="hide_results_again">Masquer à nouveau</string>
+    <string name="hide_results_again_confirm_title">Masquer à nouveau les résultats ?</string>
+    <string name="hide_results_again_confirm_message">En cas de révélation par erreur. Ceux qui ont déjà vu le classement le connaissent.</string>
+    <string name="ranking_hidden_from_public_title">Les résultats sont masqués au public</string>
+    <string name="ranking_hidden_from_public_message">Si cet écran est dans la salle, tout le monde verra le classement. Révélez les résultats depuis le Contrôle du tour à la remise des prix.</string>
+    <string name="show_ranking_here_anyway">Afficher ici quand même</string>
     <string name="projection_logo_show_while_running">Afficher en cours</string>
     <string name="score_sheets_title">Feuilles de score</string>
     <string name="score_sheets_info">Feuilles à imprimer en A4 et à remplir aux tables. Elles sont toujours en anglais.</string>

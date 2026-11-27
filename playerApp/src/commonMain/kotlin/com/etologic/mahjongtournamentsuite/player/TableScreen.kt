@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.HorizontalRule
 import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -103,6 +104,8 @@ import mahjongtournamentsuite.playerapp.generated.resources.round_will_start_at
 import mahjongtournamentsuite.playerapp.generated.resources.round_will_start_on_at
 import mahjongtournamentsuite.playerapp.generated.resources.stat_hands
 import mahjongtournamentsuite.playerapp.generated.resources.stats_round_table
+import mahjongtournamentsuite.playerapp.generated.resources.table_results_hidden_message
+import mahjongtournamentsuite.playerapp.generated.resources.table_results_hidden_title
 import mahjongtournamentsuite.playerapp.generated.resources.table_details
 import mahjongtournamentsuite.playerapp.generated.resources.table_hand_progress
 import mahjongtournamentsuite.playerapp.generated.resources.table_sign_in_to_enter_hands
@@ -171,6 +174,11 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
             ) {
                 MessageDialog(message)
                 if (view == null || table == null) return@ScreenColumn
+                // The tournament hides the results of this round until the prize giving. The players of the table see theirs.
+                if (table.table.resultsHidden) {
+                    EmptyState(Icons.Default.VisibilityOff, stringResource(Res.string.table_results_hidden_title), stringResource(Res.string.table_results_hidden_message))
+                    return@ScreenColumn
+                }
                 val complete = view.isFinished(table, now)
                 val handNumber = minOf(table.doneHands + 1, 16)
                 // A hand that arrives, a correction or a deletion is said by the screen reader, also without animations.

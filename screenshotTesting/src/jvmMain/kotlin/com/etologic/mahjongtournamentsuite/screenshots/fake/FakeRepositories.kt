@@ -114,6 +114,7 @@ open class ScreenshotTournamentRepository(
         timeZone: String?,
         isPublic: Boolean?,
         showTableDiffs: Boolean?,
+        hideResultsFromRound: Int?,
     ): AppResult<Tournament> = noWrite()
 
     override suspend fun generateTournamentIdCards(tournamentId: String, sheet: IdCardSheetLayout?): AppResult<ByteArray> = noWrite()
