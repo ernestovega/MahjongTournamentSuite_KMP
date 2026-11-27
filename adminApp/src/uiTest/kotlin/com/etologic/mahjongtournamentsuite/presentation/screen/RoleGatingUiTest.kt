@@ -270,7 +270,8 @@ class RoleGatingUiTest {
 
         awaitText("10002")
         onNodeWithContentDescription("10002", substring = true).performClick()
-        onNodeWithContentDescription("10003", substring = true).performClick()
+        // The small test window may show the third row only after a scroll.
+        onNodeWithContentDescription("10003", substring = true).performScrollTo().performClick()
         onNodeWithText("Delete players (2)").performClick()
         awaitText("Delete the EMA players?")
         // The warning names the player with data and its tournaments: it is deactivated, not deleted.
