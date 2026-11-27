@@ -376,20 +376,13 @@ async function listTournamentAssignmentsByUid(
   });
   const tournamentRefs = [...new Map(memberships.map(({ tournamentRef }) => [tournamentRef.id, tournamentRef])).values()];
   const tournaments = tournamentRefs.length === 0 ? [] : await db.getAll(...tournamentRefs, { fieldMask: ["name", "organizerIds"] });
-  const namesById = new Map(
-    tournaments.filter((tournament) => tournament.exists).map((tournament) => [tournament.id, String(tournament.get("name") ?? "")]),
-  );
-  const organizersById = new Map(
-    tournaments.filter((tournament) => tournament.exists)
-      .map((tournament) => [tournament.id, readOrganizerIds(tournament.get("organizerIds"))]),
-  );
+  const assignmentsById = new Map(tournaments.filter((tournament) => tournament.exists).map((tournament): [string, TournamentAssignment] => [
+    tournament.id,
+    { tournamentId: tournament.id, tournamentName: String(tournament.get("name") ?? ""), organizerIds: readOrganizerIds(tournament.get("organizerIds")) },
+  ]));
   memberships.forEach(({ uid, tournamentRef }) => {
-    if (!namesById.has(tournamentRef.id)) return;
-    const assignment: TournamentAssignment = {
-      tournamentId: tournamentRef.id,
-      tournamentName: namesById.get(tournamentRef.id) ?? "",
-      organizerIds: organizersById.get(tournamentRef.id) ?? [],
-    };
+    const assignment = assignmentsById.get(tournamentRef.id);
+    if (assignment == null) return;
     result.set(uid, [...(result.get(uid) ?? []), assignment]);
   });
   result.forEach((assignments) => assignments.sort(
