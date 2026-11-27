@@ -70,7 +70,7 @@ fun ScoreSheetsDialog(tournament: Tournament, onDismiss: () -> Unit) {
     )
 }
 
-private suspend fun exportScoreSheets(
+internal suspend fun exportScoreSheets(
     presenter: PlayersPresenter,
     tournament: Tournament,
     perTable: Boolean,
