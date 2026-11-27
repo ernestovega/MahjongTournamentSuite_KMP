@@ -229,11 +229,11 @@ private fun Tournament.tournamentYear(): Int? = eventStartDate?.take(4)?.toIntOr
 @Composable
 private fun TournamentSummary(tournament: Tournament, standing: Standing?) {
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
-    FlowRow(
+    // The dates alone and centered on the first line, and the place, Points and Score on the next one (Ernesto, 2026-11-27).
+    Column(
         Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg, Alignment.CenterHorizontally),
+        horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
-        itemVerticalAlignment = Alignment.CenterVertically,
     ) {
         formatLocalizedDateRange(tournament.eventStartDate, tournament.eventEndDate)?.let { dates ->
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
@@ -242,24 +242,31 @@ private fun TournamentSummary(tournament: Tournament, standing: Standing?) {
             }
         }
         standing?.let { place ->
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
-                Icon(
-                    Icons.Default.Leaderboard,
-                    contentDescription = stringResource(Res.string.stat_rank),
-                    Modifier.size(18.dp),
-                    tint = MtsTheme.colors.position(place.rank, muted),
-                )
-                Text(
-                    buildAnnotatedString {
-                        withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)) { append(place.rank.toString()) }
-                        append(" " + stringResource(Res.string.rank_of, place.of))
-                    },
-                    style = MaterialTheme.typography.bodyMedium.inTextFont(),
-                    color = muted,
-                )
+            FlowRow(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg, Alignment.CenterHorizontally),
+                verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
+                itemVerticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
+                    Icon(
+                        Icons.Default.Leaderboard,
+                        contentDescription = stringResource(Res.string.stat_rank),
+                        Modifier.size(18.dp),
+                        tint = MtsTheme.colors.position(place.rank, muted),
+                    )
+                    Text(
+                        buildAnnotatedString {
+                            withStyle(SpanStyle(fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)) { append(place.rank.toString()) }
+                            append(" " + stringResource(Res.string.rank_of, place.of))
+                        },
+                        style = MaterialTheme.typography.bodyMedium.inTextFont(),
+                        color = muted,
+                    )
+                }
+                SummaryValue(stringResource(Res.string.column_points), formatPoints(place.points))
+                SummaryValue(stringResource(Res.string.column_score), place.score.toString())
             }
-            SummaryValue(stringResource(Res.string.column_points), formatPoints(place.points))
-            SummaryValue(stringResource(Res.string.column_score), place.score.toString())
         }
     }
 }

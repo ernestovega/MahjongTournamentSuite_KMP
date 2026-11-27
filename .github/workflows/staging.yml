@@ -243,7 +243,7 @@ jobs:
     name: Seed the production tournaments
     if: (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main') && inputs.action == 'tournaments'
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 60
     permissions:
       contents: read
       id-token: write
@@ -283,7 +283,8 @@ jobs:
           NUMBER="$(gcloud projects describe "$STAGING" --format='value(projectNumber)')"
           export EMA_FIREBASE_SERVICE_ACCOUNT="$NUMBER-compute@developer.gserviceaccount.com"
           npm run seed:tournaments -- --target=staging --set=production --apply
-          npm run backfill:statistics:apply
+          # Only the tournaments of the seed: all of staging (game days included) takes longer than the job.
+          npm run backfill:statistics:apply -- --only=madrid-open-2026,toledo-mcr-challenge-2026,alcala-team-cup-2026,barcelona-mahjong-open-2027,madrid-spring-open-2027,uppsala-mcr-open-2026
 
   # The staging Android app (build type `staging`), as a downloadable APK, on every push to develop and by hand. It may
   # run on any branch: it touches no project.
