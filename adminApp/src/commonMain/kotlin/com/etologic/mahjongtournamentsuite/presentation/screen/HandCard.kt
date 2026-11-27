@@ -46,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHandStatOptions
@@ -392,7 +393,7 @@ private fun ColumnScope.HandEditor(
         DebouncedTextButton(onClick = { penaltyRowToFocus = hand.addPenaltyRow() }, enabled = rowEnabled) {
             Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.add_penalty_to_hand, number), modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(4.dp))
-            Text(stringResource(Res.string.penalty))
+            ButtonText(stringResource(Res.string.penalty))
         }
         Spacer(Modifier.weight(1f))
         KeyboardAwareOutlinedTextField(
