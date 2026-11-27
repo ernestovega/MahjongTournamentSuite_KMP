@@ -178,8 +178,6 @@ internal fun HandToggleControl(
     }
 }
 
-internal fun SeatTextValues?.orZero(): SeatTextValues = this ?: SeatTextValues.ZERO
-
 /**
  * A player menu in a table cell. When the menu is closed, the arrow keys move the focus to the next cell.
  * The Enter key and the space key open the menu.
