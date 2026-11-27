@@ -178,6 +178,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.time.Clock
 import kotlin.time.Instant
+import com.etologic.mahjongtournamentsuite.presentation.components.FilterGroup as TitledFilterGroup
 
 private val WhenColumnWidth = 150.dp
 
@@ -532,8 +533,7 @@ private fun ActivityFiltersBar(
 /** A titled line of filter chips. The chips share the width of the line. */
 @Composable
 private fun FilterGroup(title: String, modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    TitledFilterGroup(title, modifier) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             content()
         }
