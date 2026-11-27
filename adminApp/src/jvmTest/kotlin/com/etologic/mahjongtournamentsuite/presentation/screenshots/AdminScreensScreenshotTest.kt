@@ -127,6 +127,16 @@ class AdminScreensScreenshotTest {
         RoundControlScreen(ONGOING, initialRound = 3, onBack = { nav.popBackStack() })
     }
 
+    /** The results are hidden from round 3 until the prize giving: the notice with REVEAL above the rounds. */
+    @Test
+    fun roundControlHiddenResults() = adminScreenshots(
+        "round-control-hidden-results",
+        modules = { adminModules(tournaments = HiddenResultsTournamentRepository()) },
+        ready = { waitForText("2:00:00") },
+    ) { nav ->
+        RoundControlScreen(ONGOING, initialRound = 3, onBack = { nav.popBackStack() })
+    }
+
     /** Round 2 is over (round 3 is in play) but two of its tables stayed open: badge on its chip and the close button. */
     @Test
     fun roundControlOpenTables() = adminScreenshots("round-control-open-tables", ready = { waitForText("2:00:00") }) {
@@ -402,6 +412,11 @@ private class BrandedTournamentRepository(
     override suspend fun getRoundClocks(tournamentId: String): AppResult<RoundClocks> =
         if (runningClock) RunningClockTournamentRepository().getRoundClocks(tournamentId) else super.getRoundClocks(tournamentId)
 }
+
+/** [ONGOING] hides its results from round 3 until the prize giving, not revealed yet. */
+private class HiddenResultsTournamentRepository : ScreenshotTournamentRepository(
+    ScreenshotData.tournaments.map { if (it.id == ONGOING) it.copy(hideResultsFromRound = 3, resultsHiddenFromRound = 3) else it },
+)
 
 /** A club logo on disk, so the screenshot needs no network. */
 private val fakeClubLogo: String = checkNotNull(BrandedTournamentRepository::class.java.getResource("/fake-club-logo.png")).toString()

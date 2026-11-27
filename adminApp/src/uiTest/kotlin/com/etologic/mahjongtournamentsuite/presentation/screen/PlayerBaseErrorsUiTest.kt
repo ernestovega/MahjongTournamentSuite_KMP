@@ -268,6 +268,27 @@ class PlayerBaseErrorsUiTest {
         assertEquals(emptyList(), registry.calls)
     }
 
+    @Test
+    fun theWithPhotoFilterCountsAndShowsOnlyThePlayersWithAPhoto() = runComposeUiTest {
+        val curie = Player(emaId = "00020001", firstName = "Marie", lastName = "Curie", country = "FRA", photoUrl = "https://photos.test/curie.png")
+        val blank = babbage.copy(photoUrl = " ")
+        show(FailingRegistry(listOf(ada, blank, curie)))
+        awaitText("10001")
+        awaitText("20001")
+
+        // Only Curie has a photo: a blank address is no photo.
+        onAllNodes(hasText("With photo (1)") and hasClickAction()).onFirst().press()
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("10001", substring = true).fetchSemanticsNodes().isEmpty() }
+        awaitText("20001")
+        assertEquals(0, onAllNodesWithText("10002", substring = true).fetchSemanticsNodes().size)
+
+        // A second press shows every player again.
+        onAllNodes(hasText("With photo (1)") and hasClickAction()).onFirst().press()
+        onAllNodes(hasScrollToIndexAction()).onFirst().performScrollToIndex(0)
+        awaitText("10001")
+        awaitText("10002")
+    }
+
     private fun ComposeUiTest.onNodeWithTextClick(text: String) {
         onAllNodes(hasText(text) and hasClickAction()).onFirst().press()
         waitForIdle()
