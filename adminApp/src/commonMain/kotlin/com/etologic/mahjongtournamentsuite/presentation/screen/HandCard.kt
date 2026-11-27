@@ -52,6 +52,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedText
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHandStatOptions
 import com.etologic.mahjongtournamentsuite.presentation.components.SelfDrawIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.focusRing
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import mahjongtournamentsuite.adminapp.generated.resources.Res
@@ -133,8 +134,8 @@ internal fun HandCard(
             .clip(shape)
             .border(if (expanded && !rowLocked) 1.5.dp else 1.dp, borderColor, shape)
             .background(background)
-            .padding(horizontal = if (wide) 4.dp else 10.dp, vertical = 6.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
+            .padding(horizontal = if (wide) MtsTheme.spacing.xs else MtsTheme.spacing.sm, vertical = MtsTheme.spacing.sm),
+        verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             val toggle = Modifier.clickable(
@@ -210,7 +211,7 @@ private fun HandSummary(hand: HandDraftState, seatPlayerIds: List<String>, seatN
     val score = hand.handScore.trim()
     val penalties = hand.penaltyRows.count { row -> (0..3).any { row.value(it).isNotBlank() } }
     val isEmpty = hand.isBlank
-    Row(modifier.heightIn(min = 32.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+    Row(modifier.heightIn(min = 32.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
         when {
             isEmpty -> Text("-", style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
             winner.isEmpty() -> Text(
@@ -320,7 +321,7 @@ private fun ColumnScope.HandEditor(
                 seat = seat,
                 label = seatNames[seat],
                 selected = id.isNotEmpty() && winner == id,
-                accent = WinnerGreen,
+                accent = MtsTheme.colors.gain,
                 enabled = rowEnabled && id.isNotEmpty(),
                 tag = "hand-$number-winner-$id",
                 onClick = {
@@ -409,19 +410,19 @@ private fun ColumnScope.HandEditor(
         Row(sidePadding, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(48.dp)) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 FieldLabel(stringResource(Res.string.winner))
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
                     // An empty slot under Self-draw keeps each seat over the same seat of the loser.
                     Spacer(Modifier.weight(1f))
                     winnerButtons()
                 }
                 FieldLabel(stringResource(Res.string.loser))
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), content = loserButtons)
+                Row(horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm), content = loserButtons)
             }
             Row(verticalAlignment = Alignment.CenterVertically, content = scoreAndChicken)
         }
     } else {
         FieldLabel(stringResource(Res.string.winner))
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), content = winnerButtons)
+        Row(horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm), content = winnerButtons)
         FieldLabel(stringResource(Res.string.loser))
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp), content = loserButtons)
     }
@@ -529,7 +530,7 @@ private fun PenaltyEditorRow(
                 modifier = Modifier.weight(HandSummaryWeight),
             )
             Spacer(Modifier.width(SigmaColumnWidth))
-            (0..3).forEach { seat -> field(seat, Modifier.weight(1f).padding(horizontal = 10.dp)) }
+            (0..3).forEach { seat -> field(seat, Modifier.weight(1f).padding(horizontal = MtsTheme.spacing.sm)) }
             Spacer(Modifier.width(HandDoneWidth))
             Row(Modifier.width(HandArrowWidth), horizontalArrangement = Arrangement.Center) { remove() }
         } else {
@@ -555,8 +556,6 @@ private fun PenaltyEditorRow(
 private fun FieldLabel(text: String) {
     Text(text = text, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
-
-private val WinnerGreen = Color(0xFF22A45D)
 
 /**
  * A button for one seat, with its wind and the name of the player, or for a self-draw when [seat] is null.
@@ -587,7 +586,7 @@ private fun SeatButton(
             .border(if (selected) 2.dp else 1.dp, if (selected) accent else colors.outlineVariant.copy(alpha = alpha), shape)
             .onFocusChanged { focused = it.isFocused }
             .clickable(enabled = enabled, role = Role.RadioButton, onClick = onClick)
-            .padding(vertical = 6.dp, horizontal = 2.dp),
+            .padding(vertical = MtsTheme.spacing.sm, horizontal = MtsTheme.spacing.xxs),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {

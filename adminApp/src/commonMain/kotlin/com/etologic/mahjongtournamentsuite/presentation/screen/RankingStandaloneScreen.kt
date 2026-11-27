@@ -312,7 +312,7 @@ private fun RankingStandaloneContent(
                                 size = if (compact) COMPACT_LOGO_SIZE else LOGO_SIZE,
                                 modifier = Modifier
                                     .align(Alignment.TopStart)
-                                    .padding(start = if (compact) 8.dp else 24.dp, top = if (compact) 20.dp else 40.dp),
+                                    .padding(start = if (compact) 8.dp else 24.dp, top = if (compact) MtsTheme.spacing.xl else 40.dp),
                             )
                         }
                     }
