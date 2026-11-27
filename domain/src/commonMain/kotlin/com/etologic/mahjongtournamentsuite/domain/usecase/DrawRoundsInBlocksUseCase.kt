@@ -125,7 +125,7 @@ class DrawRoundsInBlocksUseCase(
             }
             rounds = pattern.filterIndexed { index, _ -> index != teamsRound }.shuffled(random)
         }
-        if (rounds.size < roundIds.size) return null
+        // A block never has more rounds than the pattern: [RepeatFreeRounds.sure] is all the pattern for its sizes.
         return rounds.zip(roundIds).flatMap { (tables, roundId) ->
             tables.shuffled(random).mapIndexed { tableIndex, seats ->
                 TournamentTable(

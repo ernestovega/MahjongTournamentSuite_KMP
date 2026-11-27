@@ -55,6 +55,10 @@ class DrawScheduleLimitsTest {
         assertNull(found.onSlots(slots(*teams).map { it.copy(id = 3) }, isTeams = true), "a repeated number")
         assertNull(found.onSlots(slots(1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4), isTeams = true), "a team without 4 slots")
         assertNull(found.onSlots(slots(*IntArray(16) { it / 8 + 1 }), isTeams = true), "another number of teams")
+        val firstTeam = found.players.first().team
+        val moving = found.players.first { it.team != firstTeam }.id
+        val unevenDraw = found.copy(players = found.players.map { if (it.id == moving) it.copy(team = firstTeam) else it })
+        assertNull(unevenDraw.onSlots(slots(*teams), isTeams = true), "a draw whose own teams are not of 4")
 
         val moved = assertNotNull(found.onSlots(slots(*teams).map { it.copy(id = it.id * 10, team = it.team + 4) }, isTeams = true))
         assertEquals((1..16).map { it * 10 }.toSet(), moved.tables.flatMap { it.playerIds }.toSet())
