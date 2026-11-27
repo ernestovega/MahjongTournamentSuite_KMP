@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -228,7 +228,6 @@ private fun HandSummary(hand: HandDraftState, seatPlayerIds: List<String>, seatN
                     modifier = Modifier.weight(1f, fill = false),
                 )
                 if (loser.isEmpty()) {
-                    SelfDrawIcon(16.dp, tint = LocalContentColor.current)
                     Text(stringResource(Res.string.hand_self_draw), style = MaterialTheme.typography.bodyMedium, maxLines = 1)
                 }
                 if (score.isNotEmpty()) Text("· $score", style = MaterialTheme.typography.bodyMedium, maxLines = 1)
@@ -584,7 +583,7 @@ private fun SeatButton(
     ) {
         val tint = colors.onSurface.copy(alpha = alpha)
         if (seat == null) {
-            SelfDrawIcon(18.dp, tint = tint)
+            SelfDrawIcon(18.dp, Modifier.alpha(alpha))
         } else {
             Image(
                 painter = painterResource(SeatWindIcons[seat]),
