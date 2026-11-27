@@ -15,11 +15,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -33,20 +33,11 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
-import androidx.compose.ui.layout.IntrinsicMeasurable
-import androidx.compose.ui.layout.IntrinsicMeasureScope
-import androidx.compose.ui.layout.Measurable
-import androidx.compose.ui.layout.MeasureResult
-import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.node.DrawModifierNode
-import androidx.compose.ui.node.LayoutModifierNode
 import androidx.compose.ui.node.ModifierNodeElement
 import androidx.compose.ui.node.invalidateDraw
 import androidx.compose.ui.platform.InspectorInfo
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.constrainHeight
-import androidx.compose.ui.unit.constrainWidth
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -66,9 +57,8 @@ val MtsFadingEdgeLength: Dp = 16.dp
  * The shadow shows also when the edge falls between two items, so a list cut in a gap still looks like a list.
  * It grows with the first pixels of the scroll, so it does not jump in.
  *
- * With [MtsScrollbar.Outside] (the default), the list is [MtsScrollbarThickness] narrower (or lower, for a horizontal list) and the scrollbar
- * takes that strip, on the end (or at the bottom), from the first time there is content to scroll to. The thumb can be dragged,
- * and a tap in the strip jumps there.
+ * The scrollbar goes on the end edge (or at the bottom, for a horizontal list), over the content. The thumb can be dragged,
+ * and a tap in its strip jumps there.
  *
  * Without [fadingEdges] it draws only the scrollbar: for a screen whose padding is outside its scroll, with a second
  * [scrollIndicators] without scrollbar inside the padding, so the shadows fall where the content is cut.
@@ -208,7 +198,6 @@ private fun Modifier.scrollIndicators(
         Modifier
     }
     return this
-        .then(if (shownScrollbar == MtsScrollbar.Margin) MarginBleedElement(handle, orientation) else Modifier)
         .then(drag)
         .then(ScrollIndicatorsElement(handle, orientation, shownScrollbar, colors))
 }
@@ -218,7 +207,7 @@ enum class MtsScrollbar {
     /** No scrollbar, only the shadows: lists that have their own, and short strips like chips. */
     None,
 
-    /** In its own strip beside the list (or under it), outside the content. */
+    /** Shown like [Overlay]: it had its own strip beside the list, but the scrollbar shows only while scrolling now. */
     Outside,
 
     /**
@@ -227,11 +216,7 @@ enum class MtsScrollbar {
      */
     Overlay,
 
-    /**
-     * Like [Outside], but its strip goes past the end of the list (or under it), into the margin of the container, so
-     * the list keeps the same width as the content above it and both sides look the same. The container must keep a
-     * margin of at least [MtsScrollbarThickness] after the list and must not clip it: a single list on a whole screen.
-     */
+    /** Shown like [Overlay]: its strip went into the margin after the list, but the scrollbar shows only while scrolling now. */
     Margin,
 }
 
@@ -462,61 +447,8 @@ internal class LazyGridIndicator(override val state: LazyGridState) : LazyIndica
 internal class ScrollIndicatorHandle(val indicator: ScrollIndicator) {
     var dragging by mutableStateOf(false)
 
-    /** Whether the strip of an outside scrollbar is in the layout. It comes once and stays (see the measure of the node). */
-    var gutterShown = false
-
     /** How visible the scrollbar is, from 0 to 1. Null for a list without scrollbar. */
     var thumbAlpha: Animatable<Float, *>? = null
-}
-
-/**
- * For [MtsScrollbar.Margin]: the list and its scrollbar strip measure [MtsScrollbarThickness] wider than the place
- * they get, so the strip falls in the margin after it. The gesture of the strip is inside this, so it takes presses there.
- */
-private class MarginBleedElement(
-    val handle: ScrollIndicatorHandle,
-    val orientation: Orientation,
-) : ModifierNodeElement<MarginBleedNode>() {
-    override fun create() = MarginBleedNode(handle, orientation)
-
-    override fun update(node: MarginBleedNode) {
-        node.handle = handle
-        node.orientation = orientation
-    }
-
-    override fun InspectorInfo.inspectableProperties() {
-        name = "scrollbarMargin"
-    }
-
-    override fun equals(other: Any?) = other is MarginBleedElement && other.handle === handle && other.orientation == orientation
-
-    override fun hashCode() = handle.hashCode() * 31 + orientation.hashCode()
-}
-
-private class MarginBleedNode(
-    var handle: ScrollIndicatorHandle,
-    var orientation: Orientation,
-) : Modifier.Node(),
-    LayoutModifierNode {
-    override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
-        if (!handle.gutterShown && handle.indicator.canScroll) handle.gutterShown = true
-        val bleed = if (handle.gutterShown) MtsScrollbarThickness.roundToPx() else 0
-        val vertical = orientation == Orientation.Vertical
-        if (bleed == 0 || (vertical && !constraints.hasBoundedWidth) || (!vertical && !constraints.hasBoundedHeight)) {
-            val placeable = measurable.measure(constraints)
-            return layout(placeable.width, placeable.height) { placeable.place(0, 0) }
-        }
-        val wider = if (vertical) {
-            constraints.copy(minWidth = constraints.minWidth + bleed, maxWidth = constraints.maxWidth + bleed)
-        } else {
-            constraints.copy(minHeight = constraints.minHeight + bleed, maxHeight = constraints.maxHeight + bleed)
-        }
-        val placeable = measurable.measure(wider)
-        val width = if (vertical) constraints.constrainWidth(placeable.width - bleed) else constraints.constrainWidth(placeable.width)
-        val height = if (vertical) constraints.constrainHeight(placeable.height) else constraints.constrainHeight(placeable.height - bleed)
-        // Placed at the start: the part past the end is the strip, in the margin.
-        return layout(width, height) { placeable.place(0, 0) }
-    }
 }
 
 private class ScrollIndicatorsElement(
@@ -556,68 +488,19 @@ private class ScrollIndicatorsNode(
     var scrollbar: MtsScrollbar,
     var colors: ScrollIndicatorColors,
 ) : Modifier.Node(),
-    LayoutModifierNode,
     DrawModifierNode {
 
     private val vertical get() = orientation == Orientation.Vertical
 
-    private val usesGutter get() = scrollbar == MtsScrollbar.Outside || scrollbar == MtsScrollbar.Margin
-
-    private var gutterShown
-        get() = handle.gutterShown
-        set(value) {
-            handle.gutterShown = value
-        }
-
-    override fun MeasureScope.measure(measurable: Measurable, constraints: Constraints): MeasureResult {
-        // The strip comes the first time the content can scroll, so a list that fits keeps its whole width. The state is
-        // read here, so the layout comes again when it changes. Once there, the strip stays: content that gets shorter
-        // when it is narrower (tiles that scale with the width) would otherwise fit without it, scroll with it, and the
-        // layout would go back and forth forever.
-        if (usesGutter && !gutterShown && handle.indicator.canScroll) gutterShown = true
-        val gutter = if (usesGutter && gutterShown) MtsScrollbarThickness.roundToPx() else 0
-        if (gutter == 0) {
-            val placeable = measurable.measure(constraints)
-            return layout(placeable.width, placeable.height) { placeable.place(0, 0) }
-        }
-        val inner = if (vertical) {
-            constraints.copy(
-                minWidth = (constraints.minWidth - gutter).coerceAtLeast(0),
-                maxWidth = if (constraints.hasBoundedWidth) (constraints.maxWidth - gutter).coerceAtLeast(0) else Constraints.Infinity,
-            )
-        } else {
-            constraints.copy(
-                minHeight = (constraints.minHeight - gutter).coerceAtLeast(0),
-                maxHeight = if (constraints.hasBoundedHeight) (constraints.maxHeight - gutter).coerceAtLeast(0) else Constraints.Infinity,
-            )
-        }
-        val placeable = measurable.measure(inner)
-        val width = if (vertical) constraints.constrainWidth(placeable.width + gutter) else constraints.constrainWidth(placeable.width)
-        val height = if (vertical) constraints.constrainHeight(placeable.height) else constraints.constrainHeight(placeable.height + gutter)
-        return layout(width, height) { placeable.place(0, 0) }
-    }
-
-    private fun IntrinsicMeasureScope.gutter() = if (usesGutter && gutterShown) MtsScrollbarThickness.roundToPx() else 0
-
-    override fun IntrinsicMeasureScope.minIntrinsicWidth(measurable: IntrinsicMeasurable, height: Int) = measurable.minIntrinsicWidth(height) + if (vertical) gutter() else 0
-
-    override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurable: IntrinsicMeasurable, height: Int) = measurable.maxIntrinsicWidth(height) + if (vertical) gutter() else 0
-
-    override fun IntrinsicMeasureScope.minIntrinsicHeight(measurable: IntrinsicMeasurable, width: Int) = measurable.minIntrinsicHeight(width) + if (vertical) 0 else gutter()
-
-    override fun IntrinsicMeasureScope.maxIntrinsicHeight(measurable: IntrinsicMeasurable, width: Int) = measurable.maxIntrinsicHeight(width) + if (vertical) 0 else gutter()
-
     override fun ContentDrawScope.draw() {
         drawContent()
         val indicator = handle.indicator
-        val gutter = if (usesGutter && gutterShown) MtsScrollbarThickness.toPx() else 0f
-        val contentSize = if (vertical) Size(size.width - gutter, size.height) else Size(size.width, size.height - gutter)
         val edge = MtsFadingEdgeLength.toPx()
         val before = indicator.hiddenBefore(edge) / edge
         val after = indicator.hiddenAfter(edge) / edge
         val shadow = colors.shadow
         if (shadow.alpha > 0f) {
-            drawShadows(contentSize, edge, before, after, shadow, if (vertical) indicator.pinnedStart() else 0f)
+            drawShadows(size, edge, before, after, shadow, if (vertical) indicator.pinnedStart() else 0f)
         }
         if (scrollbar == MtsScrollbar.None) return
         val strip = MtsScrollbarThickness.toPx()
