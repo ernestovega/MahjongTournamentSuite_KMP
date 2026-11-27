@@ -107,6 +107,10 @@ Ernesto's rule of 2026-11-19 (it replaces the scrollbars that showed only while 
   green in the player app and purple in the admin app (`adminHeader`, the purple of the expert level: #8E5CD9 light,
   #6538AD dark). Every `MtsTheme` of the admin app passes `adminApp = true`. The button of the player app that opens
   the admin app is filled with `adminHeader` (`AppTopBarButton(containerColor = ...)`).
+- **Projected screens wear the organizer** (Ernesto, 2026-11-27): the Timer, the standalone ranking and the table QR
+  are not purple. The Timer and the ranking wrap their content in `MtsBrandTheme(organizationColor(tournament.primaryColor))`,
+  which swaps the green of the suite for the color of the main organizer and keeps the contrast: white or ink text on
+  the fill, and the brand as text darkened or lightened to 4.5:1 (`MtsBrandThemeTest`).
 - **No gap under the top bar** (Ernesto, 2026-11-26): a list or a scrolling screen starts right under the top bar.
   Its top margin goes inside the scroll (`contentPadding` of a lazy list, the top padding of a scrollable
   `ScreenColumn`), so the content goes out of sight right at the bar and the top shadow starts there. The same at the
