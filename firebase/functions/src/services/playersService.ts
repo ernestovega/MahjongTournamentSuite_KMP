@@ -42,6 +42,48 @@ export function toPlayer(emaId: string, data: FirebaseFirestore.DocumentData): P
   };
 }
 
+/** What an account adds to the photo of its EMA player: its own photo, and whether the person shows a photo publicly. */
+export type AccountPhoto = { photoUrl: string | null; publicPhoto: boolean };
+
+/** A player of the registry with the photo that everyone sees of the person. */
+export type PlayerWithPublicPhoto = Player & {
+  /**
+   * The photo of the person in rankings, statistics and registrations: the own photo of its account, or else the photo
+   * of the EMA player. Null when there is neither, or when the person chose not to show a photo publicly.
+   */
+  publicPhotoUrl: string | null;
+};
+
+/** Reads what the account of a person says about its photo. Without the field, the person shows its photo. */
+export function readAccountPhoto(data: FirebaseFirestore.DocumentData | undefined): AccountPhoto {
+  const url = data?.photoUrl;
+  return { photoUrl: typeof url === "string" && url.length > 0 ? url : null, publicPhoto: data?.publicPhoto !== false };
+}
+
+/** The photo that everyone sees of a person: the own one first, then the one of the EMA player, none when hidden. */
+export function publicPhotoOf(emaPhoto: string | null, account: AccountPhoto | undefined): string | null {
+  if (account?.publicPhoto === false) return null;
+  return account?.photoUrl ?? emaPhoto ?? null;
+}
+
+/** The photo settings of every account that has an EMA number, by EMA number. */
+export async function accountPhotosByEmaId(): Promise<Map<string, AccountPhoto>> {
+  const users = await db.collection("users").select("emaId", "photoUrl", "publicPhoto").get();
+  const result = new Map<string, AccountPhoto>();
+  users.docs.forEach((doc) => {
+    const emaId = doc.get("emaId");
+    if (typeof emaId === "string" && emaId.length > 0) result.set(emaId, readAccountPhoto(doc.data()));
+  });
+  return result;
+}
+
+/** Adds to each player the photo that everyone sees of it. */
+export async function withPublicPhotos(players: Player[]): Promise<PlayerWithPublicPhoto[]> {
+  if (players.length === 0) return [];
+  const accounts = await accountPhotosByEmaId();
+  return players.map((player) => ({ ...player, publicPhotoUrl: publicPhotoOf(player.photoUrl, accounts.get(player.emaId)) }));
+}
+
 export function validateEmaId(value: unknown): string {
   const emaId = String(value ?? "").trim();
   if (!/^\d+$/.test(emaId)) {

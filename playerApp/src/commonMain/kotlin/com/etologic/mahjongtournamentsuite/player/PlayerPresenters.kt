@@ -76,6 +76,9 @@ class PlayerSessionPresenter(
 
     suspend fun removePhoto(): AppResult<UserProfile> = authRepository.removePhoto().profileUpdated(TelemetryProfileAction.PHOTO_REMOVED)
 
+    suspend fun setPublicPhoto(visible: Boolean): AppResult<UserProfile> = authRepository.setPublicPhoto(visible)
+        .profileUpdated(if (visible) TelemetryProfileAction.PHOTO_SHOWN else TelemetryProfileAction.PHOTO_HIDDEN)
+
     private fun <T> AppResult<T>.profileUpdated(action: String) = track(telemetry, TelemetryEvent.PROFILE_UPDATED, mapOf(TelemetryParam.ACTION to action))
 
     /** Deletes the own account. On success the player is signed out. */

@@ -7,6 +7,7 @@ import { sendPasswordResetEmail } from "./firebaseAuthRest";
 import { sendEmail } from "./mailService";
 import { buildRegistrationEmail, DEFAULT_LANGUAGE, type Language } from "./i18n";
 import { assertEmailAvailable, createUserProfile, grantPlayerCapability, revokePlayerCapability } from "./usersService";
+import { readAccountPhoto } from "./playersService";
 
 /** Where a player opens the tournament after the reminder. Set PLAYER_APP_URL to the player web site. */
 function playerAppUrl(): string {
@@ -169,6 +170,9 @@ export async function setAccountEmaId(params: { uid: string; emaId: string | nul
   if (current === params.emaId) return;
   if (params.emaId != null) await assertEmaIdAvailable(params.emaId, params.uid);
   if (current != null) await releaseEmaId(params.uid);
+  // The own photo of the account, or its choice to show none, is the public photo of its EMA player.
+  const photo = readAccountPhoto(profile.data());
+  if (photo.photoUrl != null || !photo.publicPhoto) await bumpGlobalDataVersion("emaPlayers");
   // The player capability exists only with an EMA id.
   if (params.emaId == null) {
     await revokePlayerCapability(params.uid);

@@ -2,7 +2,7 @@
  "openapi": "3.1.0",
  "info": {
   "title": "Mahjong Tournament Suite API",
-  "version": "1.0.62",
+  "version": "1.0.90",
   "description": "The API of the backend: one HTTP Cloud Function (`api`, Express, Node 22, europe-southwest1).\n\n- The apps never read or write Firestore directly (the rules deny everything): everything goes through here.\n- **Authentication:** header `Authorization: Bearer <Firebase ID token>`, from `POST /auth/signIn`.\n- **App Check:** the apps send `X-Firebase-AppCheck`. Today in *monitor* mode (it is only logged).\n- **Errors:** always `{ error, message, details }` (see the `Error` schema).\n- **Limits:** 600 writes/min per address, 120 per account; 600 reads/min per address on `/public`.\n\nDocumentation with diagrams: `docs/architecture/` in the repository.\n\nOn this page «Try it out» only works for GET: changes are made from the apps."
  },
  "servers": [
@@ -646,6 +646,60 @@
      },
      "429": {
       "$ref": "#/components/responses/E429"
+     }
+    }
+   }
+  },
+  "/auth/me/photo-visibility": {
+   "put": {
+    "tags": [
+     "Session"
+    ],
+    "summary": "Show or hide my photo publicly",
+    "description": "🔑 Any signed-in account (Firebase token).\n\nWith `publicPhoto` false, rankings, statistics and registrations show no photo of the person: neither the own one nor the one of the EMA player.",
+    "security": [
+     {
+      "bearer": []
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "OK",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/UserProfile"
+        }
+       }
+      }
+     },
+     "400": {
+      "$ref": "#/components/responses/E400"
+     },
+     "401": {
+      "$ref": "#/components/responses/E401"
+     },
+     "403": {
+      "$ref": "#/components/responses/E403"
+     },
+     "404": {
+      "$ref": "#/components/responses/E404"
+     },
+     "409": {
+      "$ref": "#/components/responses/E409"
+     },
+     "429": {
+      "$ref": "#/components/responses/E429"
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/UpdatePhotoVisibilityRequest"
+       }
+      }
      }
     }
    }
@@ -1344,7 +1398,7 @@
      "Public"
     ],
     "summary": "Public EMA registry",
-    "description": "🌐 Public: no account.\n\nNumber, name, country and photo. Cache 1 h.",
+    "description": "🌐 Public: no account.\n\nNumber, name, country and the photo that everyone sees: the own photo of the account first, then the EMA one, none when the person hides it. Cache 1 h.",
     "security": [],
     "responses": {
      "200": {
@@ -10293,6 +10347,23 @@
      "expectedVersion"
     ]
    },
+   "PenaltiesResponse": {
+    "type": "object",
+    "properties": {
+     "handId": {
+      "type": "integer",
+      "format": "int32"
+     },
+     "tableVersion": {
+      "type": "integer",
+      "format": "int64"
+     }
+    },
+    "required": [
+     "handId",
+     "tableVersion"
+    ]
+   },
    "PermissionChange": {
     "type": "object",
     "properties": {
@@ -10371,6 +10442,12 @@
       "type": "string"
      },
      "photoUrl": {
+      "type": [
+       "string",
+       "null"
+      ]
+     },
+     "publicPhotoUrl": {
       "type": [
        "string",
        "null"
@@ -11278,6 +11355,12 @@
        "boolean",
        "null"
       ]
+     },
+     "closePrevious": {
+      "type": [
+       "boolean",
+       "null"
+      ]
      }
     },
     "required": [
@@ -11841,6 +11924,50 @@
      "appVersion",
      "platform"
     ]
+   },
+   "TableConflictDetails": {
+    "type": "object",
+    "properties": {
+     "expectedVersion": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int64"
+     },
+     "currentVersion": {
+      "type": [
+       "integer",
+       "null"
+      ],
+      "format": "int64"
+     },
+     "current": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/TableWithHandsResponse"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    }
+   },
+   "TableConflictResponse": {
+    "type": "object",
+    "properties": {
+     "details": {
+      "anyOf": [
+       {
+        "$ref": "#/components/schemas/TableConflictDetails"
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    }
    },
    "TableControl": {
     "type": "object",
@@ -12700,6 +12827,17 @@
      "consent"
     ]
    },
+   "UpdatePhotoVisibilityRequest": {
+    "type": "object",
+    "properties": {
+     "publicPhoto": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "publicPhoto"
+    ]
+   },
    "UpdatePlayerPhotoRequest": {
     "type": "object",
     "properties": {
@@ -12967,6 +13105,9 @@
       ]
      },
      "hasOwnPhoto": {
+      "type": "boolean"
+     },
+     "publicPhoto": {
       "type": "boolean"
      },
      "roles": {

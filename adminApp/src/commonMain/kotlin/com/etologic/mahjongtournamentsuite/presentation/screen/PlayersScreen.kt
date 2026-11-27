@@ -784,7 +784,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     if (compact) {
                                         // A phone shows the player in one cell: photo, name, then the other columns as small text.
                                         TournamentPlayerPhoto(
-                                            photoUrl = assigned?.photoUrl,
+                                            photoUrl = assigned?.publicPhotoUrl,
                                             playerName = playerName.orEmpty(),
                                             columnWidth = TournamentPlayerCompactLeadingWidth,
                                         )
@@ -839,7 +839,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                             contentAlignment = Alignment.Center,
                                         ) {
                                             TournamentPlayerPhoto(
-                                                photoUrl = assigned?.photoUrl,
+                                                photoUrl = assigned?.publicPhotoUrl,
                                                 playerName = playerName.orEmpty(),
                                                 columnWidth = TournamentPlayerPhotoColumnWidth,
                                             )

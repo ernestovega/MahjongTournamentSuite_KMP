@@ -90,6 +90,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTablesResp
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTeamsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateOwnAliasRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePhotoVisibilityRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateOwnRegistrationRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerRequestDto
@@ -171,6 +172,9 @@ class FunctionsBackendApi(
     suspend fun updateOwnPhoto(idToken: String, request: UpdatePlayerPhotoRequestDto): UserProfileDto = put(path = "/auth/me/photo", requestBody = request, idToken = idToken)
 
     suspend fun removeOwnPhoto(idToken: String): UserProfileDto = delete(path = "/auth/me/photo", idToken = idToken)
+
+    suspend fun updateOwnPhotoVisibility(idToken: String, request: UpdatePhotoVisibilityRequestDto): UserProfileDto =
+        put(path = "/auth/me/photo-visibility", requestBody = request, idToken = idToken)
 
     suspend fun deleteOwnAccount(idToken: String): OkResponseDto = delete(path = "/auth/me", idToken = idToken)
 

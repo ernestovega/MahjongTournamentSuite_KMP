@@ -4,7 +4,7 @@ import { auth, db, storage } from "../firebase";
 import { badRequest, conflict, forbidden, notFound } from "../api/httpError";
 import { bumpGlobalDataVersion, tournamentVersionUpdate } from "./dataVersionsService";
 import { sendPasswordResetEmail } from "./firebaseAuthRest";
-import { EMA_PLAYER_REGISTRY_COLLECTION, storePhotoFile, toPlayer } from "./playersService";
+import { EMA_PLAYER_REGISTRY_COLLECTION, readAccountPhoto, storePhotoFile, toPlayer } from "./playersService";
 import { getGlobalUserRole, getGlobalUserRoles, type GlobalUserRole } from "../models/globalRole";
 import { forgetAccess, readOrganizationList } from "./accessService";
 import { readOrganizerIds } from "./organizationsService";
@@ -34,6 +34,11 @@ export type UserProfile = {
 export type OwnProfile = UserProfile & {
   photoUrl: string | null;
   hasOwnPhoto: boolean;
+  /**
+   * False when the person chose not to show a photo publicly: rankings, statistics and registrations then show no photo,
+   * neither the own one nor the one of the EMA player. The person still sees its photo in its profile.
+   */
+  publicPhoto: boolean;
 };
 
 export const MAX_ALIAS_LENGTH = 60;
@@ -73,7 +78,11 @@ export async function getUserProfile(uid: string): Promise<UserProfile> {
 
 export async function getOwnProfile(uid: string): Promise<OwnProfile> {
   const [profile, userSnap] = await Promise.all([getUserProfile(uid), db.doc(`users/${uid}`).get()]);
-  return { ...profile, ...(await resolvePhoto(userSnap.get("photoUrl"), profile.emaId)) };
+  return {
+    ...profile,
+    ...(await resolvePhoto(userSnap.get("photoUrl"), profile.emaId)),
+    publicPhoto: readAccountPhoto(userSnap.data()).publicPhoto,
+  };
 }
 
 /** The own photo of the user wins. The photo of the EMA player is the fallback. */
@@ -89,7 +98,27 @@ export async function setUserPhoto(uid: string, contentType: string, dataBase64:
   await getUserProfile(uid);
   const photoUrl = await storePhotoFile({ folder: "userPhotos", id: uid, contentType, dataBase64 });
   await db.doc(`users/${uid}`).set({ photoUrl, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+  await photoChanged();
+}
+
+/** The own photo is also the public photo of the person, so the apps read the registry again. */
+async function photoChanged(): Promise<void> {
   await bumpGlobalDataVersion("users");
+  await bumpGlobalDataVersion("emaPlayers");
+}
+
+/**
+ * Whether the person shows a photo publicly: the own photo, or else the one of the EMA player. With false, rankings,
+ * statistics and registrations show no photo of the person.
+ */
+export async function setOwnPublicPhoto(uid: string, rawVisible: unknown): Promise<void> {
+  if (typeof rawVisible !== "boolean") throw badRequest("publicPhoto must be true or false");
+  await getUserProfile(uid);
+  await db.doc(`users/${uid}`).set(
+    { publicPhoto: rawVisible ? FieldValue.delete() : false, updatedAt: FieldValue.serverTimestamp() },
+    { merge: true },
+  );
+  await photoChanged();
 }
 
 /** Removes the own photo of a user. The photo of the EMA player is the photo of the user again. */
@@ -97,10 +126,13 @@ export async function clearUserPhoto(uid: string): Promise<void> {
   await getUserProfile(uid);
   await storage.deleteFiles({ prefix: `userPhotos/${uid}.` });
   await db.doc(`users/${uid}`).set({ photoUrl: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
-  await bumpGlobalDataVersion("users");
+  await photoChanged();
 }
 
-/** Sets the alias that the user chose. The alias is the name that the apps show for the account. */
+/**
+ * Sets the alias that the user chose. The alias is private: only the person and the organizers see it, to tell apart
+ * people with the same name. The public routes never show it.
+ */
 export async function updateOwnAlias(uid: string, rawAlias: unknown): Promise<void> {
   const alias = typeof rawAlias === "string" ? rawAlias.trim().replace(/\s+/g, " ") : "";
   if (alias.length === 0 || alias.length > MAX_ALIAS_LENGTH) {
@@ -460,10 +492,12 @@ export async function deleteManagedUser(uid: string): Promise<void> {
   await auth.getUser(uid);
   await syncUserTournamentAssignments(uid, []);
   const profile = await db.doc(`users/${uid}`).get();
+  const photo = readAccountPhoto(profile.data());
   if (typeof profile.get("photoUrl") === "string") await storage.deleteFiles({ prefix: `userPhotos/${uid}.` });
   await db.doc(`users/${uid}`).delete();
   await auth.deleteUser(uid);
-  await bumpGlobalDataVersion("users");
+  if (photo.photoUrl != null || !photo.publicPhoto) await photoChanged();
+  else await bumpGlobalDataVersion("users");
 }
 
 export async function countEnabledSuperAdmins(): Promise<number> {

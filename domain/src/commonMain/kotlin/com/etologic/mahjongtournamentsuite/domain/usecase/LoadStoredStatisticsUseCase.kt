@@ -121,7 +121,7 @@ class LoadStoredStatisticsUseCase(
     }
 }
 
-private fun Player.toProfile() = PlayerProfile(displayName, emaId, country, photoUrl)
+private fun Player.toProfile() = PlayerProfile(displayName, emaId, country, publicPhotoUrl)
 
 /** Builds the all-tournaments view from the sums of the server. */
 internal fun overviewFrom(overview: StatisticsOverview, registry: List<Player>): OverviewStatisticsData {

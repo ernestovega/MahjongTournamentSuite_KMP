@@ -130,6 +130,7 @@ class AccountActions(
                 onSaveAlias = session::updateAlias,
                 onSavePhoto = session::updatePhoto,
                 onRemovePhoto = session::removePhoto,
+                onSetPublicPhoto = session::setPublicPhoto,
                 onSaved = {
                     profile = it
                     me = it

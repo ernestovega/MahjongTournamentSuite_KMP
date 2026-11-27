@@ -41,6 +41,9 @@ internal class FakeAuthRepository : AuthRepository {
     override suspend fun removePhoto(): AppResult<UserProfile> =
         error("Not used in this test")
 
+    override suspend fun setPublicPhoto(visible: Boolean): AppResult<UserProfile> =
+        error("Not used in this test")
+
     override suspend fun deleteAccount(): AppResult<Unit> =
         error("Not used in this test")
 }

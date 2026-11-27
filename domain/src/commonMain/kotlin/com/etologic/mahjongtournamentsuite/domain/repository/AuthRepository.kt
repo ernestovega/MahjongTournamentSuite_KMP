@@ -34,6 +34,9 @@ interface AuthRepository {
     /** Removes the own photo. The photo of the EMA player of the account is the photo again. */
     suspend fun removePhoto(): AppResult<UserProfile>
 
+    /** Shows or hides the photo of the signed-in person in rankings, statistics and registrations. */
+    suspend fun setPublicPhoto(visible: Boolean): AppResult<UserProfile>
+
     /**
      * Deletes the signed-in account for good: the sign-in, the email, the alias and the own photo. The EMA player and
      * the results stay. On success the session ends on this device.

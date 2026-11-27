@@ -3,7 +3,7 @@ import { NextFunction, Request, Response, Router } from "express";
 import { db } from "../../firebase";
 import { listCountries } from "../../services/countriesService";
 import { getGlobalDataVersions, getTournamentManifest } from "../../services/dataVersionsService";
-import { listHiddenEmaIds, listPlayers } from "../../services/playersService";
+import { listHiddenEmaIds, listPlayers, withPublicPhotos } from "../../services/playersService";
 import { readGroupFilter } from "../groupFilter";
 import { groupTournament, loadGroupStatistics } from "../../services/statisticsGroups";
 import { loadOverview, loadPersonStatistics, loadStandings, MAX_STANDINGS_PER_REQUEST, publicTournamentIds } from "../../services/statisticsStore";
@@ -256,9 +256,12 @@ export function publicRouter(): Router {
     res.status(200).json({ standings: await loadStandings(emaId, ids.filter((id) => allowed.has(id))) });
   }));
 
-  // The EMA registry: name, country, number and photo (the photos come from the public EMA website).
+  // The EMA registry: name, country, number and photo. The photo is the own photo of the account of the person, or else
+  // the one of the EMA website, and none when the person chose not to show a photo. The EMA photo of a person who chose
+  // that never leaves the server.
   router.get("/players", handle(async (_req, res) => {
-    const players = (await listPlayers()).filter((player) => !player.hiddenFromPublic);
+    const players = (await withPublicPhotos((await listPlayers()).filter((player) => !player.hiddenFromPublic)))
+      .map((player) => ({ ...player, photoUrl: player.publicPhotoUrl }));
     cacheFor(res, PUBLIC_CACHE_SECONDS.registry);
     res.status(200).json({ players });
   }));

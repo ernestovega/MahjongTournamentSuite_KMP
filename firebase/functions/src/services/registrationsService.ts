@@ -7,7 +7,7 @@ import { bumpGlobalDataVersion } from "./dataVersionsService";
 import type { Language } from "./i18n";
 import { LANGUAGES } from "./i18n";
 import { sendEmail } from "./mailService";
-import { EMA_PLAYER_REGISTRY_COLLECTION, toPlayer, validateEmaId } from "./playersService";
+import { EMA_PLAYER_REGISTRY_COLLECTION, publicPhotoOf, readAccountPhoto, toPlayer, validateEmaId, type AccountPhoto } from "./playersService";
 import { readSpreadsheetRecords } from "./playerImport";
 import {
   isValidEmail,
@@ -263,7 +263,8 @@ const photoCache = new Map<string, { at: number; url: string | null }>();
 
 /**
  * The photo of each person, by EMA number: the photo of its account when it has one, or else the photo of its EMA
- * player (the same order as the profile of an account). A person without either has no entry.
+ * player (the same order as the profile of an account). A person without either, or who chose not to show a photo
+ * publicly, has no entry.
  */
 export async function photosOf(emaIds: string[]): Promise<Map<string, string>> {
   const now = Date.now();
@@ -276,17 +277,20 @@ export async function photosOf(emaIds: string[]): Promise<Map<string, string>> {
   });
   if (missing.length === 0) return result;
   const accounts = await accountsOf(missing);
-  const accountPhotos = new Map<string, string>();
+  const accountPhotos = new Map<string, AccountPhoto>();
   const emaPhotos = new Map<string, string>();
   const uids = [...accounts.entries()].filter(([, uid]) => uid !== "");
   for (let start = 0; start < uids.length; start += 300) {
     const chunk = uids.slice(start, start + 300);
     (await db.getAll(...chunk.map(([, uid]) => db.doc(`users/${uid}`)))).forEach((snapshot, index) => {
-      const url = snapshot.get("photoUrl");
-      if (typeof url === "string" && url.length > 0) accountPhotos.set(chunk[index][0], url);
+      if (snapshot.exists) accountPhotos.set(chunk[index][0], readAccountPhoto(snapshot.data()));
     });
   }
-  const withoutAccountPhoto = missing.filter((emaId) => !accountPhotos.has(emaId));
+  // The EMA photo is read only for the people whose account gives no photo and does not hide it.
+  const withoutAccountPhoto = missing.filter((emaId) => {
+    const account = accountPhotos.get(emaId);
+    return account == null || (account.publicPhoto && account.photoUrl == null);
+  });
   for (let start = 0; start < withoutAccountPhoto.length; start += 300) {
     const chunk = withoutAccountPhoto.slice(start, start + 300);
     (await db.getAll(...chunk.map((emaId) => db.doc(`${EMA_PLAYER_REGISTRY_COLLECTION}/${emaId}`)))).forEach((snapshot, index) => {
@@ -295,7 +299,7 @@ export async function photosOf(emaIds: string[]): Promise<Map<string, string>> {
     });
   }
   missing.forEach((emaId) => {
-    const url = accountPhotos.get(emaId) ?? emaPhotos.get(emaId) ?? null;
+    const url = publicPhotoOf(emaPhotos.get(emaId) ?? null, accountPhotos.get(emaId));
     photoCache.set(emaId, { at: now, url });
     if (url != null) result.set(emaId, url);
   });

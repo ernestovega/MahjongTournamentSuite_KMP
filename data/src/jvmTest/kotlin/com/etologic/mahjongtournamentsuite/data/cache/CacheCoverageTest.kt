@@ -50,6 +50,7 @@ class CacheCoverageTest {
         "updateOwnAlias" to Write(),
         "updateOwnPhoto" to Write(via = "profilePhotoRequest"),
         "removeOwnPhoto" to Write(via = "profilePhotoRequest"),
+        "updateOwnPhotoVisibility" to Write(via = "profilePhotoRequest"),
         "deleteOwnAccount" to Write(via = "signOut"),
 
         // --- Accounts, roles and organizations (admin) ---

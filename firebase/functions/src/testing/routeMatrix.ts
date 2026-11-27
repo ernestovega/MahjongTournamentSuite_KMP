@@ -53,6 +53,7 @@ export const MATRIX: Array<[string, string, Access]> = [
   ["PUT", "/auth/me", "SIGNED_IN"],
   ["PUT", "/auth/me/photo", "SIGNED_IN"],
   ["DELETE", "/auth/me/photo", "SIGNED_IN"],
+  ["PUT", "/auth/me/photo-visibility", "SIGNED_IN"],
   ["DELETE", "/auth/me", "SIGNED_IN"],
   ["GET", "/admin/whoami", "SIGNED_IN"],
   ["GET", "/countries/", "SIGNED_IN"],

@@ -45,6 +45,8 @@ private class SessionAuthRepository(
     override suspend fun updateAlias(alias: String): AppResult<UserProfile> = AppResult.Failure(AppError.Network)
     override suspend fun updatePhoto(contentType: String, bytes: ByteArray): AppResult<UserProfile> = AppResult.Failure(AppError.Network)
     override suspend fun removePhoto(): AppResult<UserProfile> = AppResult.Failure(AppError.Network)
+
+    override suspend fun setPublicPhoto(visible: Boolean): AppResult<UserProfile> = AppResult.Failure(AppError.Network)
     override suspend fun deleteAccount(): AppResult<Unit> = AppResult.Failure(AppError.Network)
 }
 

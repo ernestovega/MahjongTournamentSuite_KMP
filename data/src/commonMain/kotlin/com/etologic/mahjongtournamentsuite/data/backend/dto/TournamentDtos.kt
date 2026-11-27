@@ -291,6 +291,11 @@ data class PlayerDto(
     val lastName: String,
     val country: String = "",
     val photoUrl: String? = null,
+    /**
+     * The photo that everyone sees: the own photo of the account first, none when the person hides it. The lists of the
+     * registry have it; the answer of a create or an update does not, and the list is read again after it.
+     */
+    val publicPhotoUrl: String? = null,
     val hiddenFromPublic: Boolean = false,
     val disabled: Boolean = false,
     val createdAt: String? = null,

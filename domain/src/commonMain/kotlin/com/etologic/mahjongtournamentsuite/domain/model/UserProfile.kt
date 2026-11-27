@@ -10,6 +10,11 @@ data class UserProfile(
     val photoUrl: String? = null,
     /** True when [photoUrl] is the own photo of the account and not the photo of the EMA player. */
     val hasOwnPhoto: Boolean = false,
+    /**
+     * False when the person chose not to show a photo publicly: rankings, statistics and registrations show no photo of
+     * it, neither the own one nor the one of the EMA player. [photoUrl] stays, so the profile still shows it.
+     */
+    val publicPhoto: Boolean = true,
     val roles: Set<GlobalUserRole> = emptySet(),
 )
 

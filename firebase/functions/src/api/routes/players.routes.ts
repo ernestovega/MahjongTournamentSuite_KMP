@@ -8,7 +8,7 @@ import { requirePermission } from "../middleware/requirePermission";
 import { isStaff, loadAccess } from "../../services/accessService";
 import { requireAuth } from "../middleware/requireAuth";
 import { listPlayerTournamentIds } from "../../services/playerAccountsService";
-import { createPlayer, listPlayers, listPlayersOfTournaments, updatePlayer, updatePlayerPhoto, validateEmaId } from "../../services/playersService";
+import { createPlayer, listPlayers, listPlayersOfTournaments, updatePlayer, updatePlayerPhoto, validateEmaId, withPublicPhotos } from "../../services/playersService";
 
 export function playersRouter(): Router {
   const router = Router();
@@ -17,12 +17,15 @@ export function playersRouter(): Router {
     try {
       const decoded = res.locals.auth as { uid: string; player?: boolean };
       if (isStaff(await loadAccess(decoded.uid))) {
-        res.status(200).json({ players: await listPlayers() });
+        res.status(200).json({ players: await withPublicPhotos(await listPlayers()) });
         return;
       }
       if (decoded.player !== true) throw forbidden("Editor or player required");
       const tournamentIds = await listPlayerTournamentIds(decoded.uid);
-      res.status(200).json({ players: await listPlayersOfTournaments(tournamentIds) });
+      // A player sees the others as the public sees them.
+      const players = (await withPublicPhotos(await listPlayersOfTournaments(tournamentIds)))
+        .map((player) => ({ ...player, photoUrl: player.publicPhotoUrl }));
+      res.status(200).json({ players });
     } catch (error) {
       next(error);
     }

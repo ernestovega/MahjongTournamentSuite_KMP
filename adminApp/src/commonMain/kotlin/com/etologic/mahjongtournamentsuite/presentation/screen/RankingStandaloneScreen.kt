@@ -999,7 +999,7 @@ private fun displayName(playerId: Int, slots: Map<Int, TournamentPlayer>, player
 
 private fun displayCountry(playerId: Int, slots: Map<Int, TournamentPlayer>, players: Map<String, Player>): String = slots[playerId]?.assignedEmaId?.let(players::get)?.country.orEmpty()
 
-private fun displayPhoto(playerId: Int, slots: Map<Int, TournamentPlayer>, players: Map<String, Player>): String? = slots[playerId]?.assignedEmaId?.let(players::get)?.photoUrl?.takeIf { it.isNotBlank() }
+private fun displayPhoto(playerId: Int, slots: Map<Int, TournamentPlayer>, players: Map<String, Player>): String? = slots[playerId]?.assignedEmaId?.let(players::get)?.publicPhotoUrl?.takeIf { it.isNotBlank() }
 
 private fun formatPoints(value: Double): String = if (value % 1.0 == 0.0) value.toInt().toString() else value.toString().trimEnd('0').trimEnd('.')
 

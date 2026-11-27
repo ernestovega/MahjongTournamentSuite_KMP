@@ -82,7 +82,13 @@ data class Player(
     val firstName: String,
     val lastName: String,
     val country: String = "",
+    /** The photo of the EMA player: the one of the EMA website, or the one an admin uploaded. */
     val photoUrl: String? = null,
+    /**
+     * The photo that everyone sees of the person in rankings, statistics and registrations: the own photo of its
+     * account, or else [photoUrl]. Null when there is neither, or when the person chose not to show a photo publicly.
+     */
+    val publicPhotoUrl: String? = photoUrl,
     /** The person asked not to be shown publicly: everyone without an account sees "#<slot>" and no profile. */
     val hiddenFromPublic: Boolean = false,
     /** An admin deleted the player, but it has data in tournaments, so it stays deactivated. */

@@ -646,6 +646,7 @@ fun ProfileInfo(
                 onSaveAlias = presenter::updateAlias,
                 onSavePhoto = presenter::updatePhoto,
                 onRemovePhoto = presenter::removePhoto,
+                onSetPublicPhoto = presenter::setPublicPhoto,
                 onSaved = { store.profile.value = it },
                 onDismiss = { showProfile = false },
                 onSignOut = {
