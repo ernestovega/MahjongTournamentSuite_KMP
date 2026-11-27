@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { before, describe, it, mock } from "node:test";
 
+import { FieldValue } from "firebase-admin/firestore";
+
 import { db } from "../firebase";
 import { HttpError } from "../api/httpError";
 import { newTournamentId, requireEmulator } from "../testing/firestoreFixtures";
@@ -238,6 +240,30 @@ describe("change of the number of players with teams", () => {
     assert.equal(slots.get(5)?.team, 2);
     assert.ok([...slots.values()].every((slot) => slot.assignedEmaId !== `3${tag}6`));
     assert.equal((await ref.collection("emaPlayerAssignments").doc(`3${tag}6`).get()).exists, false);
+  });
+
+  it("reads slots, teams and tables that miss their fields", async () => {
+    const tag = String(Date.now()).slice(-6);
+    const { id, ref } = await create(20, { isTeams: true });
+    await assign(ref, 9, `4${tag}9`);
+    const strip = async (collection: string, fields: string[]) => {
+      const docs = await ref.collection(collection).get();
+      await Promise.all(docs.docs.map((doc) => doc.ref.update(Object.fromEntries(fields.map((field) => [field, FieldValue.delete()])))));
+    };
+    await strip("players", ["id", "name"]);
+    await strip("teams", ["id", "name"]);
+    await strip("tables", ["version"]);
+    await ref.update({ tablesWithProgress: FieldValue.delete(), hostCountry: FieldValue.delete(), contactEmail: FieldValue.delete() });
+
+    const result = await run(id, 16, { isTeams: true, removed: [5, 6, 7, 8] });
+
+    assert.equal(result.tournament.numPlayers, 16);
+    const slots = await slotsOf(ref);
+    assert.equal(slots.size, 16);
+    assert.equal(slots.get(5)?.assignedEmaId, `4${tag}9`);
+    assert.equal((await ref.collection("teams").get()).size, 4);
+    // A table without a version counts as version 0, so the table that keeps its key goes to 1.
+    assert.equal((await ref.collection("tables").doc("1_1").get()).get("version"), 1);
   });
 
   it("refuses part of a team and adds a new empty team", async () => {

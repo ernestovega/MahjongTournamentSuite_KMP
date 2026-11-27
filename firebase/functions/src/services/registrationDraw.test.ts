@@ -31,6 +31,17 @@ describe("draw of a tournament with registrations", () => {
     assert.equal("code" in twice && twice.code, "BAD_ASSIGNMENTS");
     const unknown = drawAssignmentProblem({ ...base, assignments: [...four.slice(0, 3), "99999999"].map((emaId, index) => ({ playerId: index + 1, emaId })) });
     assert.equal("code" in unknown && unknown.code, "BAD_ASSIGNMENTS");
+    const sameSlot = drawAssignmentProblem({ ...base, assignments: four.map((emaId) => ({ playerId: 1, emaId })) });
+    assert.equal("problem" in sameSlot && sameSlot.problem, "Slot 1 is unknown or twice");
+  });
+
+  it("names a team of the draw after its number when its registration team has no name", () => {
+    const result = drawAssignmentProblem({
+      confirmed: four.map((emaId) => person(emaId, "nameless")), teamNames: new Map(), isTeams: true,
+      players: [1, 2, 3, 4].map((id) => ({ id, team: 1 })),
+      assignments: four.map((emaId, index) => ({ playerId: index + 1, emaId })),
+    });
+    assert.deepEqual(result, { teamNames: [{ teamId: 1, name: "Team 1" }] });
   });
 
   it("needs full teams and keeps each registration team in one team of the draw", () => {

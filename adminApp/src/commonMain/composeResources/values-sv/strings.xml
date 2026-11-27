@@ -1242,6 +1242,7 @@ Antalet spelare kan bara ändras före den första given.</string>
         <item quantity="one">%1$d land</item>
         <item quantity="other">%1$d länder</item>
     </plurals>
+    <string name="projection_logo_show_while_running">Visa under körning</string>
     <string name="score_sheets_title">Poängblad</string>
     <string name="score_sheets_info">Blad att skriva ut på A4 och fylla i vid borden. De är alltid på engelska.</string>
     <string name="score_sheets_blank">Tomt</string>

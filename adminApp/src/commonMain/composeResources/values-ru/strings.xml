@@ -1296,6 +1296,7 @@
         <item quantity="many">%1$d стран</item>
         <item quantity="other">%1$d страны</item>
     </plurals>
+    <string name="projection_logo_show_while_running">Показывать во время показа</string>
     <string name="score_sheets_title">Листы записи</string>
     <string name="score_sheets_info">Листы для печати на A4 и заполнения за столами. Всегда на английском.</string>
     <string name="score_sheets_blank">Пустой</string>

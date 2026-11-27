@@ -1242,6 +1242,7 @@ Change les places dans Inscriptions.</string>
         <item quantity="one">%1$d pays</item>
         <item quantity="other">%1$d pays</item>
     </plurals>
+    <string name="projection_logo_show_while_running">Afficher en cours</string>
     <string name="score_sheets_title">Feuilles de score</string>
     <string name="score_sheets_info">Feuilles à imprimer en A4 et à remplir aux tables. Elles sont toujours en anglais.</string>
     <string name="score_sheets_blank">Vierge</string>

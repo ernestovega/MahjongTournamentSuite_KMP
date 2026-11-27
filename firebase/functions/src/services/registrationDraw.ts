@@ -50,7 +50,7 @@ export function drawAssignmentProblem(params: {
     members.set(registration.teamId, [...(members.get(registration.teamId) ?? []), registration.emaId]);
   });
   const incomplete = params.confirmed
-    .filter((registration) => registration.teamId == null || (members.get(registration.teamId)?.length ?? 0) !== TEAM_SIZE)
+    .filter((registration) => registration.teamId == null || members.get(registration.teamId)!.length !== TEAM_SIZE)
     .map((registration) => registration.emaId);
   if (incomplete.length > 0) {
     return { problem: `Every person needs a team of ${TEAM_SIZE}`, code: "INCOMPLETE_TEAMS", details: { emaIds: incomplete } };
@@ -58,8 +58,9 @@ export function drawAssignmentProblem(params: {
   const teamOfSlot = new Map(params.players.map((player) => [player.id, player.team]));
   const drawTeamToRegistrationTeam = new Map<number, string>();
   for (const assignment of params.assignments) {
-    const drawTeam = teamOfSlot.get(assignment.playerId) ?? 0;
-    const registrationTeam = byEma.get(assignment.emaId)?.teamId ?? "";
+    // Every slot and every person was checked above, and every person has a team.
+    const drawTeam = teamOfSlot.get(assignment.playerId)!;
+    const registrationTeam = byEma.get(assignment.emaId)!.teamId!;
     const known = drawTeamToRegistrationTeam.get(drawTeam);
     if (known != null && known !== registrationTeam) {
       return { problem: `Draw team ${drawTeam} mixes registration teams`, code: "BAD_ASSIGNMENTS" };
@@ -140,9 +141,10 @@ export async function makeDrawFromRegistrations(params: {
   const emaOfSlot = new Map(params.assignments.map((assignment) => [assignment.playerId, assignment.emaId]));
   const byEma = new Map(confirmed.map((registration) => [registration.emaId, registration]));
   const writes = tournamentContentWrites(tournament.ref, {
+    // drawAssignmentProblem checked that every slot holds one confirmed person.
     players: players.map((player) => {
-      const registration = byEma.get(emaOfSlot.get(player.id) ?? "");
-      return { id: player.id, team: player.team, name: registration?.name, country: registration?.country };
+      const registration = byEma.get(emaOfSlot.get(player.id)!)!;
+      return { id: player.id, team: player.team, name: registration.name, country: registration.country };
     }),
     tables: params.tables,
     numRounds,
@@ -168,7 +170,8 @@ export async function makeDrawFromRegistrations(params: {
       slots: params.assignments.map((assignment) => ({
         slotId: assignment.playerId,
         emaId: assignment.emaId,
-        email: emails.get(assignment.emaId) ?? null,
+        // slotEmails has an entry, an email or null, for every confirmed person.
+        email: emails.get(assignment.emaId)!,
       })),
       teamNames: checked.teamNames,
       uid: params.uid,

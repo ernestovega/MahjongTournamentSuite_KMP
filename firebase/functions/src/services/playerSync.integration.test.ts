@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { after, before, describe, it } from "node:test";
+import { after, before, describe, it, mock } from "node:test";
 
 import { db } from "../firebase";
 import { requireEmulator } from "../testing/firestoreFixtures";
@@ -92,5 +92,45 @@ describe("EMA player registry sync", () => {
 
     assert.deepEqual(report.additions, []);
     assert.deepEqual(report.updates, []);
+  });
+
+  it("stores the photo of a new player, and keeps it while the photo file stays the same", async () => {
+    await page("Tournament/Tournaments_2025.html", `<a href="TR_9902.html">y</a> <a href="TR_9903.html">z</a> <a href="TR_9904.html">w</a>`);
+    await page("Tournament/TR_9904.html", row("99000004", "PHOTO", "PIA", "ESP"));
+    await page("Players/99000004.html", `<html><img src="photo/99000004.jpg"/></html>`);
+    await page("Players/photo/99000004.jpg", "jpeg bytes");
+
+    await runEmaPlayerRegistrySync("incremental");
+    const stored = await registry("99000004");
+    assert.match(String(stored.get("photoUrl")), /playerPhotos%2F99000004\.jpg/);
+    assert.match(String(stored.get("photoSourceEtag")), /^"[0-9a-f]{64}"$/);
+
+    await runEmaPlayerRegistrySync("seed");
+    assert.equal((await registry("99000004")).get("photoUrl"), stored.get("photoUrl"));
+  });
+
+  it("reads the EMA site over the network, and keeps a photo that has not changed there", async () => {
+    const local = source;
+    delete process.env.EMA_LOCAL_SOURCE_DIR;
+    const asked: Array<{ url: string; etag: string | null }> = [];
+    const fetching = mock.method(globalThis, "fetch", async (url: string, init?: RequestInit) => {
+      const etag = (init?.headers as Record<string, string> | undefined)?.["If-None-Match"] ?? null;
+      asked.push({ url, etag });
+      if (url.includes("/Players/photo/")) return new Response(null, { status: 304 });
+      try {
+        return new Response(await readFile(join(local, new URL(url).pathname), "utf8"), { status: 200 });
+      } catch {
+        return new Response("missing", { status: 404 });
+      }
+    });
+    try {
+      await runEmaPlayerRegistrySync("seed");
+    } finally {
+      fetching.mock.restore();
+      process.env.EMA_LOCAL_SOURCE_DIR = local;
+    }
+    const photo = asked.find((call) => call.url.endsWith("/Players/photo/99000004.jpg"));
+    assert.match(String(photo?.etag), /^"[0-9a-f]{64}"$/);
+    assert.match(String((await registry("99000004")).get("photoUrl")), /playerPhotos%2F99000004\.jpg/);
   });
 });
