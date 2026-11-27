@@ -1,13 +1,15 @@
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
 
+import { FieldValue } from "firebase-admin/firestore";
+
 import { db } from "../firebase";
 import { HttpError } from "../api/httpError";
 import { giveEmaIdToAccount, seatEmaId } from "../testing/authFixtures";
 import { requireEmulator, seedTournament } from "../testing/firestoreFixtures";
 import { startedClock } from "../testing/schedule";
 import { setRoundCloseEnqueuer } from "./matchTimeTaskService";
-import { addPenalties, parsePenaltyInput, previewHand, recordHand } from "./playerHandService";
+import { addPenalties, assignSeats, parseHandInput, parsePenaltyInput, parseSeatsInput, previewHand, recordHand } from "./playerHandService";
 
 /** A table in play whose seats 1..4 sit from east to north, and the account of slot 1. */
 async function seedTable(): Promise<{ tournamentId: string; uid: string }> {
@@ -76,4 +78,34 @@ describe("hand entry refusals", () => {
       "TABLE_CHANGED_TOTALS",
     );
   });
+
+  it("reads a request that is not an object as empty", () => {
+    assert.throws(() => parseHandInput(null), /A winner is required/);
+    assert.equal(parseHandInput({ playerWinnerId: "1", playerLooserId: "-", handScore: "8" }).playerLooserId, "");
+    assert.throws(() => parsePenaltyInput(null), /A penalty is required/);
+    assert.throws(() => parseSeatsInput(null), /four seats need a player/);
+  });
+
+  it("refuses a loser who does not play at the table", async () => {
+    const table = await seedTable();
+    await rejects(previewHand({ tournamentId: table.tournamentId, roundId: 1, tableId: 1, uid: table.uid, input: { ...hand, playerLooserId: "9" } }), 400);
+  });
+
+  it("takes a table without its version and totals switch as version 0 with hands", async () => {
+    const table = await seedTable();
+    await db.doc(`tournaments/${table.tournamentId}/tables/1_1`).update({ version: FieldValue.delete(), useTotalsOnly: FieldValue.delete() });
+    const at = { tournamentId: table.tournamentId, roundId: 1, tableId: 1, uid: table.uid };
+    assert.equal((await previewHand({ ...at, input: hand })).tableVersion, 0);
+    assert.equal((await recordHand({ ...at, input: hand, expectedVersion: 0 })).tableVersion, 1);
+  });
+
+  it("refuses the seats of a table without its drawn players", async () => {
+    const table = await seedTable();
+    await db.doc(`tournaments/${table.tournamentId}/tables/1_1`).update({ playerIds: FieldValue.delete() });
+    await rejects(
+      assignSeats({ tournamentId: table.tournamentId, roundId: 1, tableId: 1, uid: table.uid, seats: ["1", "2", "3", "4"], expectedVersion: 0 }),
+      403,
+    );
+  });
 });
+
