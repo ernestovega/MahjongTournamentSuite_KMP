@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { after, before, describe, it } from "node:test";
+import { after, before, describe, it, mock } from "node:test";
 
 import { Timestamp } from "firebase-admin/firestore";
 
@@ -288,5 +288,25 @@ describe("registrations of an import with missing fields", () => {
   it("skips people of a player count change who have no registration", async () => {
     await applyPlayerCountToRegistrations({ tournamentId, removedEmaIds: ["07670098"], promotedEmaIds: ["07670099"], numPlayers: 8 });
     assert.equal((await registrations.doc("07670099").get()).exists, false);
+  });
+
+  it("adds a person whose account has no email, after another one of the same moment with a lower EMA number", async () => {
+    const tieId = `${tournamentId}-tie`;
+    const tieRef = db.doc(`tournaments/${tieId}`);
+    await tieRef.set({ isTeams: false, drawPending: true, registration: { status: "OPEN" } });
+    const moment = Date.UTC(2030, 0, 1);
+    await tieRef.collection("registrations").doc("07660080").set({ status: "CONFIRMED", order: moment });
+    const user = await auth.createUser({});
+    await db.doc("emaPlayerRegistry/07660081").set({ firstName: "Tie", lastName: "Break", country: "ES" });
+    await db.doc(`users/${user.uid}`).set({ emaId: "07660081" });
+    await db.doc("emaIdIndex/07660081").set({ uid: user.uid });
+    mock.timers.enable({ apis: ["Date"], now: moment });
+    try {
+      const added = await adminAddRegistration({ tournamentId: tieId, emaId: "07660081", email: "", language: "en" });
+      assert.equal(added.email, "");
+    } finally {
+      mock.timers.reset();
+    }
+    assert.equal((await tieRef.collection("registrations").doc("07660081").get()).get("order"), moment);
   });
 });
