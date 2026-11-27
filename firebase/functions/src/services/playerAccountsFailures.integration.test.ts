@@ -1,0 +1,75 @@
+import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
+import { before, describe, it, mock } from "node:test";
+
+import { auth, db, storage } from "../firebase";
+import { createAccount, requireAuthEmulator } from "../testing/authFixtures";
+import { deleteEmaPlayers } from "./emaPlayerDeletes";
+import * as playerAccountsService from "./playerAccountsService";
+import * as usersService from "./usersService";
+
+const randomEmaId = () => String(10_000_000 + Math.floor(Math.random() * 89_000_000));
+
+async function registryPlayer(emaId: string, data: Record<string, unknown> = {}): Promise<void> {
+  await db.doc(`emaPlayerRegistry/${emaId}`).set({ emaId, firstName: "ANA", lastName: "RUIZ", country: "ESP", ...data });
+}
+
+/** Player accounts and EMA players when two changes meet or a store fails in the middle. */
+describe("player accounts and EMA players that fail", () => {
+  before(requireAuthEmulator);
+
+  it("gives an account only one of two EMA ids set at the same time", async () => {
+    const account = await createAccount({ role: "PLAYER" });
+    const [first, second] = [randomEmaId(), randomEmaId()];
+    await registryPlayer(first);
+    await registryPlayer(second);
+    const outcomes = await Promise.allSettled([
+      playerAccountsService.setAccountEmaId({ uid: account.uid, emaId: first }),
+      playerAccountsService.setAccountEmaId({ uid: account.uid, emaId: second }),
+    ]);
+    const refused = outcomes.filter((outcome) => outcome.status === "rejected") as PromiseRejectedResult[];
+    assert.equal(refused.length, 1, JSON.stringify(outcomes));
+    assert.equal((refused[0].reason as { details?: { code?: string } }).details?.code, "ACCOUNT_HAS_OTHER_EMA");
+    const kept = (await db.doc(`users/${account.uid}`).get()).get("emaId");
+    assert.ok(kept === first || kept === second);
+  });
+
+  it("removes the new account again when its profile cannot be written", async () => {
+    const emaId = randomEmaId();
+    await registryPlayer(emaId);
+    const email = `${randomUUID()}@example.test`;
+    const failing = mock.method(usersService, "createUserProfile", async () => {
+      throw new Error("store unavailable");
+    });
+    try {
+      await assert.rejects(playerAccountsService.createPlayerAccount({ email, emaId }), /store unavailable/);
+    } finally {
+      failing.mock.restore();
+    }
+    await assert.rejects(auth.getUserByEmail(email), (error: { code?: string }) => error.code === "auth/user-not-found");
+    assert.equal((await db.doc(`emaIdIndex/${emaId}`).get()).exists, false);
+  });
+
+  it("deletes the photo of a deleted EMA player, and reports a player whose delete fails", async () => {
+    const [withPhoto, broken] = [randomEmaId(), randomEmaId()];
+    await registryPlayer(withPhoto, { photoUrl: "https://example.test/photo.jpg" });
+    await registryPlayer(broken);
+    await storage.file(`playerPhotos/${withPhoto}.jpg`).save(Buffer.from("jpeg"), { contentType: "image/jpeg" });
+    const quiet = mock.method(console, "error", () => {});
+    const real = playerAccountsService.tournamentIdsOfEmaId;
+    const lookup = mock.method(playerAccountsService, "tournamentIdsOfEmaId", async (emaId: string) => {
+      if (emaId === broken) throw new Error("store unavailable");
+      return real(emaId);
+    });
+    try {
+      assert.deepEqual(await deleteEmaPlayers([withPhoto, broken]), [
+        { emaId: withPhoto, outcome: "DELETED" },
+        { emaId: broken, outcome: "FAILED", reason: "UNKNOWN" },
+      ]);
+    } finally {
+      lookup.mock.restore();
+      quiet.mock.restore();
+    }
+    assert.equal((await storage.file(`playerPhotos/${withPhoto}.jpg`).exists())[0], false);
+  });
+});

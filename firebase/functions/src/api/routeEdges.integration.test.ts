@@ -126,4 +126,14 @@ describe("route edges", () => {
       count.mock.restore();
     }
   });
+
+  it("lists a registration that does not fit among the problems of a new tournament", async () => {
+    const response = await server.request("POST", "/tournaments", {
+      token: admin.token,
+      body: { name: "Open", shortName: "OPEN", numRounds: 3, registration: { maxPlayers: 2, slug: "" } },
+    });
+    assert.equal(response.status, 400);
+    const issues = (response.body as { details?: { issues?: Array<{ field: string }> } }).details?.issues ?? [];
+    assert.ok(issues.some((issue) => issue.field === "registration"), JSON.stringify(response.body));
+  });
 });
