@@ -2,18 +2,25 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.navigation.compose.rememberNavController
 import co.touchlab.kermit.Logger
@@ -158,5 +165,41 @@ class TeamsScreenEditUiTest {
         waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Network request failed.").fetchSemanticsNodes().isNotEmpty() }
         onAllNodesWithText("OK").onFirst().performClick()
         waitForIdle()
+    }
+
+    @Test
+    fun aRefusedSaveShowsTheErrorAndCancelClosesTheEditor() = runComposeUiTest {
+        val server = world(started = false)
+        server.writesSucceed = false
+        show(server)
+
+        openEdit()
+        save(server)
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("OK").fetchSemanticsNodes().isNotEmpty() }
+        onAllNodes(hasClickAction() and hasText("OK")).onLast().performClick()
+        waitForIdle()
+        onAllNodes(hasClickAction() and hasText("Cancel")).onLast().performClick()
+        waitForIdle()
+        assertEquals(0, onAllNodesWithText("Save team").fetchSemanticsNodes().size)
+    }
+
+    @Test
+    fun theArrowsMoveBetweenTheEditButtonsOfTheTeams() = runComposeUiTest {
+        val server = world(started = false).apply {
+            players = (1..8).map { TournamentPlayer(id = it, name = "P$it", team = (it + 3) / 4, assignedEmaId = "1$it") }
+            teams = listOf(TournamentTeam(id = 1, name = "Aces", playerIds = listOf(1, 2, 3, 4)), TournamentTeam(id = 2, name = "Bees", playerIds = listOf(5, 6, 7, 8)))
+        }
+        show(server)
+        val edit = onAllNodes(hasClickAction() and hasText("Edit"))
+        edit[0].requestFocus()
+        edit[0].performKeyInput { pressKey(Key.DirectionDown) }
+        waitForIdle()
+        edit[1].assertIsFocused()
+        edit[1].performKeyInput {
+            pressKey(Key.DirectionUp)
+            pressKey(Key.A)
+        }
+        waitForIdle()
+        edit[0].assertIsFocused()
     }
 }
