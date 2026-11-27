@@ -69,6 +69,14 @@ describe("tournament and organization refusals", () => {
     { what: "a logo over 2 MB", method: "POST", path: "/admin/organizations", body: { ...organization, name: "Logo big", logoContentType: "image/png", logoDataBase64: Buffer.alloc(2 * 1024 * 1024 + 1).toString("base64") }, status: 400, message: /2 MB/ },
     { what: "a PNG logo that is not a PNG", method: "POST", path: "/admin/organizations", body: { ...organization, name: "Logo fake", logoContentType: "image/png", logoDataBase64: Buffer.from("not a png at all").toString("base64") }, status: 400, message: /does not match/ },
     { what: "a JPEG logo that is not a JPEG", method: "POST", path: "/admin/organizations", body: { ...organization, name: "Logo fake jpeg", logoContentType: "image/jpeg", logoDataBase64: Buffer.from("nope").toString("base64") }, status: 400, message: /does not match/ },
+    { what: "a new tournament that is not an object", method: "POST", path: "/tournaments", body: undefined, status: 400, message: /Missing or invalid/ },
+    { what: "a new tournament that ends before it starts", method: "POST", path: "/tournaments", body: { ...newTournament, eventEndDate: "2027-02-05" }, status: 400, message: /./ },
+    { what: "a player that is not an object", method: "POST", path: "/tournaments", body: withPlayer(null), status: 400, message: /player id/ },
+    { what: "a table that is not an object", method: "POST", path: "/tournaments", body: withTable(null), status: 400, message: /roundId/ },
+    { what: "a seat that is empty", method: "POST", path: "/tournaments", body: withTable({ ...goodTable, playerIds: [1, 2, 3, null] }), status: 400, message: /playerIds entry/ },
+    { what: "a venue link that is not a link", method: "POST", path: "/tournaments", body: { ...newTournament, venueMapUrl: "javascript:alert(1)" }, status: 400, message: /./ },
+    { what: "settings that are not an object", method: "PUT", path: `/tournaments/${tournamentId}/settings`, body: undefined, status: 400, message: /name is required/ },
+    { what: "a rename that is not an object", method: "PUT", path: `/tournaments/${tournamentId}`, body: undefined, status: 400, message: /name is required/ },
   ];
 
   it("answers each bad request with its status and a message", async () => {
@@ -79,6 +87,16 @@ describe("tournament and organization refusals", () => {
       if (status !== item.status || !item.message.test(message)) wrong.push(`${item.what}: HTTP ${status} ${message}`);
     }
     assert.deepEqual(wrong, []);
+  });
+
+  it("saves the switches of the settings", async () => {
+    const response = await server.request("PUT", `/tournaments/${tournamentId}/settings`, {
+      token: admin.token,
+      body: { ...settings, countBestHands: false, countChickenHands: false, isPublic: false, showTableDiffs: false },
+    });
+    assert.equal(response.status, 200, JSON.stringify(response.body));
+    const saved = response.body as Body;
+    assert.deepEqual([saved.countBestHands, saved.countChickenHands, saved.isPublic, saved.showTableDiffs], [false, false, false, false]);
   });
 
   it("creates the tournament once the players and the tables are valid", async () => {

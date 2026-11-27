@@ -50,6 +50,8 @@ No container is pale green (Ernesto, 27-nov-2026, for contrast). The light `seco
 `tertiaryContainer` and `surfaceVariant` (selected chips, notices, placeholders, tracks, stat tiles) are the grey
 #D5D9DE (`AppLightGrayContainer`), a little darker than the page so they still show on it; the tooltips of the dark
 theme (`inverseSurface`) are the page grey #E9EBEE. The brand green stays for fills, borders and text.
+A selected chip or segmented button (`MtsFilterChip`, `MtsInputChip`, `MtsSegmentedButton`) is filled with the
+green of a button (`primary`, white text), so the choice stands out.
 
 A screen whose content is a single list (Players, Teams, Tournaments, Users, Organizations, App errors) does not
 wrap it in a big card: it uses `SectionCard(container = false)`, which keeps the title, subtitle and actions but

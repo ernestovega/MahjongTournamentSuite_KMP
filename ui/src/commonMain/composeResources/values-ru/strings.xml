@@ -45,9 +45,9 @@
     <string name="profile_public_photo">Показывать моё фото публично</string>
     <string name="profile_public_photo_info">Ваше фото видно всем в рейтингах, статистике и списках участников.\n\nЕсли своего фото нет, используется фото вашего игрока EMA.\nЕсли нет ни одного, фото не показывается.\n\nВыключите, чтобы не показывать никакого фото: ни вашего, ни фото EMA.</string>
     <string name="photo_public_notice_title">Ваше фото будет публичным</string>
-    <string name="photo_public_notice_text">Ваше фото будет публичным: его увидят все в рейтингах, статистике и списках участников турниров.</string>
-    <string name="photo_public_notice_hide">Вы можете скрыть его в любой момент переключателем "Показывать моё фото публично" в профиле.</string>
-    <string name="photo_public_notice_accept">Принять и выбрать</string>
+    <string name="photo_public_notice_text">Ваше фото будет видно в рейтингах, статистике и списках участников.</string>
+    <string name="photo_public_notice_hide">Если у вас нет своего фото, используется фото вашего игрока EMA (если оно есть).\n\nВ профиле можно выбрать не показывать никакое.</string>
+    <string name="photo_public_notice_accept">Принять</string>
     <string name="photo_error_type">Выберите изображение JPEG, PNG, WebP или GIF.</string>
     <string name="photo_error_size">Выберите фото размером не более 5 МБ.</string>
     <string name="photo_edit">Изменить фото</string>
@@ -800,6 +800,4 @@
     <string name="consent_change">В вашем профиле, в любое время.</string>
     <string name="consent_accept">Принять</string>
     <string name="consent_decline">Отклонить</string>
-    <string name="profile_analytics">Отправлять анонимную аналитику</string>
-    <string name="profile_analytics_info">Анонимные данные о том, как вы пользуетесь приложением, и о его ошибках, никогда ваше имя, почта или номер EMA. Выключите, чтобы сразу всё остановить. Приложение работает так же.</string>
 </resources>

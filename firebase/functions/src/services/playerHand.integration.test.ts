@@ -230,8 +230,8 @@ describe("hand entry by a player", () => {
     assert.deepEqual(parsePenaltyInput(base), ["5", "-15", "5", "5"]);
     // A second penalty in the same request.
     assert.deepEqual(
-      parsePenaltyInput({ playerSouthPenalty: "-15;5", playerEastPenalty: "+5;-6", playerWestPenalty: "5;2" }),
-      ["5;-6", "-15;5", "5;2", ""],
+      parsePenaltyInput({ playerSouthPenalty: "-15;5", playerEastPenalty: "+5;-15", playerWestPenalty: "5;5", playerNorthPenalty: "5;5" }),
+      ["5;-15", "-15;5", "5;5", "5;5"],
     );
   });
 

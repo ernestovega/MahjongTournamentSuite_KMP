@@ -34,16 +34,26 @@ class TableEditingTest : AdminE2eTest() {
     /** The node with this tag, inside the card of a hand. The tags are "hand-<number>-<field>". */
     private fun tagged(tag: String) = c.onNode(hasTestTag(tag), useUnmergedTree = true)
 
+    /** Opens the card of a hand when it is folded: only the open hand shows its fields. */
+    private fun openHand(hand: Int) {
+        if (c.onAllNodes(hasTestTag("hand-$hand-score"), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()) return
+        tagged("hand-$hand-toggle").performScrollTo().performClick()
+        c.waitUntil(5_000) { c.onAllNodes(hasTestTag("hand-$hand-score"), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty() }
+    }
+
     /** The seat buttons of the open hand carry the id of their player. A second tap on a chosen one clears it. */
     private fun chooseWinner(id: String, hand: Int = LAST_HAND) {
+        openHand(hand)
         tagged("hand-$hand-winner-$id").performScrollTo().performClick()
     }
 
     private fun chooseLoser(id: String, hand: Int = LAST_HAND) {
+        openHand(hand)
         tagged("hand-$hand-loser-$id").performScrollTo().performClick()
     }
 
     private fun typeScore(score: String, hand: Int = LAST_HAND) {
+        openHand(hand)
         c.onNode(hasSetTextAction() and hasAnyAncestor(hasTestTag("hand-$hand-score")), useUnmergedTree = true)
             .performScrollTo().performTextInput(score)
     }

@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -228,7 +228,6 @@ private fun HandSummary(hand: HandDraftState, seatPlayerIds: List<String>, seatN
                     modifier = Modifier.weight(1f, fill = false),
                 )
                 if (loser.isEmpty()) {
-                    SelfDrawIcon(16.dp, tint = LocalContentColor.current)
                     Text(stringResource(Res.string.hand_self_draw), style = MaterialTheme.typography.bodyMedium, maxLines = 1)
                 }
                 if (score.isNotEmpty()) Text("· $score", style = MaterialTheme.typography.bodyMedium, maxLines = 1)
@@ -359,43 +358,7 @@ private fun ColumnScope.HandEditor(
         }
     }
 
-    if (wide) {
-        Row(sidePadding, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            Column(Modifier.weight(4f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                FieldLabel(stringResource(Res.string.winner))
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), content = winnerButtons)
-            }
-            Column(Modifier.weight(5f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                FieldLabel(stringResource(Res.string.loser))
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), content = loserButtons)
-            }
-        }
-    } else {
-        FieldLabel(stringResource(Res.string.winner))
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), content = winnerButtons)
-        FieldLabel(stringResource(Res.string.loser))
-        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), content = loserButtons)
-    }
-
-    val penaltyFocus = remember(hand.penaltyRows.size) { List(hand.penaltyRows.size) { FocusRequester() } }
-    // The new penalty has no focus target until the next composition.
-    var penaltyRowToFocus by remember { mutableStateOf<Int?>(null) }
-    LaunchedEffect(penaltyRowToFocus, penaltyFocus) {
-        val row = penaltyRowToFocus ?: return@LaunchedEffect
-        val target = penaltyFocus.getOrNull(row) ?: return@LaunchedEffect
-        withFrameNanos { }
-        runCatching { target.requestFocus() }
-        penaltyRowToFocus = null
-    }
-
-    // Add a penalty on the left; the score and the chicken hand on the right.
-    Row(sidePadding.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        DebouncedTextButton(onClick = { penaltyRowToFocus = hand.addPenaltyRow() }, enabled = rowEnabled) {
-            Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.add_penalty_to_hand, number), modifier = Modifier.size(18.dp))
-            Spacer(Modifier.width(4.dp))
-            ButtonText(stringResource(Res.string.penalty))
-        }
-        Spacer(Modifier.weight(1f))
+    val scoreAndChicken: @Composable RowScope.() -> Unit = {
         KeyboardAwareOutlinedTextField(
             value = hand.handScore,
             onValueChange = { hand.updateHandScore(it) },
@@ -438,6 +401,52 @@ private fun ColumnScope.HandEditor(
                     focusRequester = navigation.chicken,
                 )
             }
+        }
+    }
+
+    if (wide) {
+        // Winner over loser on the left; the score and the chicken hand on their right.
+        Row(sidePadding, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(48.dp)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                FieldLabel(stringResource(Res.string.winner))
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    // An empty slot under Self-draw keeps each seat over the same seat of the loser.
+                    Spacer(Modifier.weight(1f))
+                    winnerButtons()
+                }
+                FieldLabel(stringResource(Res.string.loser))
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), content = loserButtons)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, content = scoreAndChicken)
+        }
+    } else {
+        FieldLabel(stringResource(Res.string.winner))
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), content = winnerButtons)
+        FieldLabel(stringResource(Res.string.loser))
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), content = loserButtons)
+    }
+
+    val penaltyFocus = remember(hand.penaltyRows.size) { List(hand.penaltyRows.size) { FocusRequester() } }
+    // The new penalty has no focus target until the next composition.
+    var penaltyRowToFocus by remember { mutableStateOf<Int?>(null) }
+    LaunchedEffect(penaltyRowToFocus, penaltyFocus) {
+        val row = penaltyRowToFocus ?: return@LaunchedEffect
+        val target = penaltyFocus.getOrNull(row) ?: return@LaunchedEffect
+        withFrameNanos { }
+        runCatching { target.requestFocus() }
+        penaltyRowToFocus = null
+    }
+
+    // Add a penalty on the left; on a phone the score and the chicken hand go on its right.
+    Row(sidePadding.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        DebouncedTextButton(onClick = { penaltyRowToFocus = hand.addPenaltyRow() }, enabled = rowEnabled) {
+            Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.add_penalty_to_hand, number), modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(4.dp))
+            ButtonText(stringResource(Res.string.penalty))
+        }
+        if (!wide) {
+            Spacer(Modifier.weight(1f))
+            scoreAndChicken()
         }
     }
 
@@ -584,7 +593,7 @@ private fun SeatButton(
     ) {
         val tint = colors.onSurface.copy(alpha = alpha)
         if (seat == null) {
-            SelfDrawIcon(18.dp, tint = tint)
+            SelfDrawIcon(18.dp, Modifier.alpha(alpha))
         } else {
             Image(
                 painter = painterResource(SeatWindIcons[seat]),

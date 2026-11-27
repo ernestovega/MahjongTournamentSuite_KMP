@@ -33,7 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.HintTooltip
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
@@ -98,21 +98,32 @@ internal fun TableResultsCard(
         title = stringResource(Res.string.players_results),
         titleStyle = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
         subtitle = if (!editor.hasCompleteSeatPositions) stringResource(Res.string.seat_positions_first) else null,
-        verticalSpacing = 20.dp,
+        verticalSpacing = MtsTheme.spacing.md,
         centerTitle = true,
         titleActionAtStart = true,
-        // Without the summary and the Edit seats button, the switch is alone and goes to the centre on a phone.
+        // Without the summary there is no title action. On a phone the switch row still fills the width.
         titleAction = if (editor.hasCompleteSeatPositions || hasHandSummary(editor, otherTablesBestHandScores)) {
             { HandSummaryTitleAction(editor, otherTablesBestHandScores) }
         } else {
             null
         },
         actions = {
-            Row(horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg), verticalAlignment = Alignment.CenterVertically) {
+            // On a phone the row has the full width: Edit seats on the left and the switch on the right.
+            val compactActions = LocalCompactLayout.current
+            Row(
+                modifier = if (compactActions) Modifier.fillMaxWidth() else Modifier,
+                horizontalArrangement = if (compactActions) {
+                    Arrangement.spacedBy(MtsTheme.spacing.lg, Alignment.End)
+                } else {
+                    Arrangement.spacedBy(MtsTheme.spacing.lg)
+                },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 if (editor.hasCompleteSeatPositions) {
-                    FocusedTextButton(onClick = { editingSeats = !editingSeats }, enabled = enabled) {
+                    FocusedOutlinedButton(onClick = { editingSeats = !editingSeats }, enabled = enabled) {
                         ButtonText(stringResource(if (editingSeats) Res.string.table_done else Res.string.edit_seats))
                     }
+                    if (compactActions) Spacer(Modifier.weight(1f))
                 }
                 LabeledSwitch(
                     label = stringResource(Res.string.manual_scores),

@@ -24,6 +24,8 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
@@ -59,7 +61,8 @@ import mahjongtournamentsuite.ui.generated.resources.consent_why_title
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * The answer of the user to the anonymous analytics, and how to change it. The profile shows it as a switch.
+ * The answer of the user to the anonymous analytics, and how to change it. The profile has a button that shows the
+ * consent screen again ([ConsentDialog]).
  * It is null when this app does not ask for consent.
  */
 class AnalyticsConsent(val enabled: Boolean, val onChange: (Boolean) -> Unit)
@@ -147,6 +150,21 @@ internal fun ConsentScreen(onAnswer: (Boolean) -> Unit, initiallyShowDetails: Bo
     }
 }
 
+/**
+ * The consent screen of the first start, over the whole window, opened again from the profile. [onAnswer] gets the
+ * new answer. Back or Escape closes it and changes nothing.
+ */
+@Composable
+fun ConsentDialog(onAnswer: (Boolean) -> Unit, onDismiss: () -> Unit) {
+    TrackedDialog("Consent") {
+        Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+            Box(Modifier.fillMaxSize().testTag(CONSENT_DIALOG_TAG)) {
+                ConsentScreen(onAnswer = onAnswer)
+            }
+        }
+    }
+}
+
 @Composable
 private fun ConsentDetail(title: StringResource, text: StringResource) {
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -154,6 +172,9 @@ private fun ConsentDetail(title: StringResource, text: StringResource) {
         Text(stringResource(text), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
+
+/** The consent screen opened again from the profile. */
+const val CONSENT_DIALOG_TAG = "consent-dialog"
 
 /** The "More details" button of the consent screen. */
 const val CONSENT_DETAILS_TAG = "consent-details"

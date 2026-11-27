@@ -24,8 +24,9 @@ A platform without Analytics settings also sends no error log and shows no conse
   even loaded. The app does not ask again (`Telemetry.hasAnswered`).
 - The answer is saved on the device. Android: `SharedPreferences` file `mts_telemetry`. iOS: `NSUserDefaults` key
   `mts.telemetry.consent`. Web: `localStorage` key `mtsAnalyticsConsent` (`"1"` or `"0"`). Desktop: Java preferences.
-- The profile dialog has the switch "Send anonymous analytics". It turns the data on or off at once, and the app stays
-  open. On the web, turning it off also removes the `_ga` cookies of Google Analytics.
+- The profile dialog has the red text button "Anonymous analytics" among the account actions under the line (not a
+  switch, Ernesto 2026-11-27). It opens the same screen again; "Decline" stops the data at once and "Accept" turns it
+  back on. The app stays open. On the web, declining also removes the `_ga` cookies of Google Analytics.
 - On Android, `firebase_analytics_collection_enabled` is `false` in the manifest. Collection starts only after the user accepts.
 - The Android app has no advertising ID: the manifest removes the `AD_ID` permission that Firebase Analytics adds and sets
   `google_analytics_adid_collection_enabled` to `false`. Analytics count users by the app instance id. In Play Console the
