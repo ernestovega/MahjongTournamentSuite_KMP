@@ -172,7 +172,8 @@ export function localTime(instant: Date, timeZone: string | null): LocalTime {
   } catch {
     return localTime(instant, "Europe/Madrid");
   }
-  const part = (type: string) => parts.find((item) => item.type === type)?.value ?? "";
+  // The format above always gives each of these parts.
+  const part = (type: string) => parts.find((item) => item.type === type)!.value;
   const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   return {
     date: `${part("year")}-${part("month")}-${part("day")}`,

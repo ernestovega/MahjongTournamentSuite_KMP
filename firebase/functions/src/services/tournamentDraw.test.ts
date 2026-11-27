@@ -104,3 +104,12 @@ test("a table number beyond the tables of a round is refused", () => {
   tables[0].tableId = 5;
   assert.match(drawProblem(players, tables, 2, 4) ?? "", /The table of round 1 table 5 is out of range/);
 });
+
+test("refuses repeated player ids, reads unknown team players as no team, and counts nothing for odd sizes", () => {
+  const four = [1, 2, 3, 4].map((id) => ({ id, team: id }));
+  assert.equal(drawProblem([...four, { id: 1, team: 9 }], [], 1, 1), "Two players have the same id.");
+  assert.match(String(drawProblem(four, [{ roundId: 1, tableId: 1, playerIds: [1, 2, 3, 9] }], 1, 1, true)), /unknown player 9/);
+  assert.equal(repeatFreeCeiling(6, false), 0);
+  assert.equal(repeatFreeMax(2, true), 0);
+  assert.equal(repeatFreeSure(10, false), 0);
+});

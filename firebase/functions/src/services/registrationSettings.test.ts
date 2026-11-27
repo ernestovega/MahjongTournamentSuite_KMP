@@ -112,4 +112,11 @@ describe("hourly decision", () => {
     assert.equal(hourlyDecision({ ...base, status: "CLOSED", now: { date: "2027-02-07", hour: 21, weekday: 0 } }).weeklyReport, true);
     assert.equal(hourlyDecision({ ...base, hasContact: false, now: { date: "2027-01-17", hour: 21, weekday: 0 } }).weeklyReport, false);
   });
+
+  it("reads missing values as empty text", () => {
+    assert.throws(() => parseSlug(undefined), /The link name needs 3 to 40/);
+    assert.throws(() => parseTeamName(null), /A team name needs 1 to/);
+    assert.equal(normalizeFoodRestrictions(undefined), "");
+    assert.equal(teamFromForm(undefined), null);
+  });
 });
