@@ -417,7 +417,7 @@ export async function assignTournamentPlayer(params: {
       if (mappedPlayerId != null && mappedPlayerId !== params.playerId) {
         throw conflict("EMA player is already assigned in this tournament", { code: "EMA_ALREADY_IN_TOURNAMENT" });
       }
-      const assignedElsewhere = existingAssignments?.docs.some((document) => document.id !== playerRef.id) ?? false;
+      const assignedElsewhere = existingAssignments!.docs.some((document) => document.id !== playerRef.id);
       if (assignedElsewhere) {
         throw conflict("EMA player is already assigned in this tournament", { code: "EMA_ALREADY_IN_TOURNAMENT" });
       }
@@ -529,7 +529,7 @@ export async function overwriteTournamentPlayers(params: {
     writes.push((batch) => {
       batch.update(slot.ref, {
         assignedEmaId: next.emaId,
-        assignedCountry: next.emaId == null ? "" : countries.get(next.emaId) ?? "",
+        assignedCountry: next.emaId == null ? "" : countries.get(next.emaId)!,
         email: next.email ?? FieldValue.delete(),
         updatedAt: FieldValue.serverTimestamp(),
         ...(personChanged ? { substitution: FieldValue.delete() } : {}),
