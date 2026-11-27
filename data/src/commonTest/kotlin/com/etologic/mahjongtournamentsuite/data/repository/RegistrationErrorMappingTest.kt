@@ -35,5 +35,15 @@ class RegistrationErrorMappingTest {
         assertNull(refused("""{"details":{}}"""))
         assertNull(refused("""{"error":"no details"}"""))
         assertNull(refused("not json"))
+        // A code that is not a text is no code, and does not break the error.
+        assertNull(refused("""{"details":{"code":{}}}"""))
+    }
+
+    @Test
+    fun argumentsOfTheWrongShapeOrMissingAreLeftOut() {
+        assertEquals(AppError.Registration(RegistrationErrorCode.INCOMPLETE_TEAMS, emptyList()), refused("""{"details":{"code":"INCOMPLETE_TEAMS"}}"""))
+        assertEquals(AppError.Registration(RegistrationErrorCode.INCOMPLETE_TEAMS, emptyList()), refused("""{"details":{"code":"INCOMPLETE_TEAMS","emaIds":"1"}}"""))
+        assertEquals(AppError.Registration(RegistrationErrorCode.BAD_PLAYER_COUNT, listOf("30")), refused("""{"details":{"code":"BAD_PLAYER_COUNT","confirmed":30}}"""))
+        assertEquals(AppError.Registration(RegistrationErrorCode.BAD_PLAYER_COUNT, emptyList()), refused("""{"details":{"code":"BAD_PLAYER_COUNT"}}"""))
     }
 }
