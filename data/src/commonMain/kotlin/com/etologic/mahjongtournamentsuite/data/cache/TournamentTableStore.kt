@@ -142,6 +142,6 @@ class TournamentTableStore {
     }
 
     private suspend fun completeVersions(tournamentId: String): Map<TableKey, Long>? = mutex.withLock {
-        entries[tournamentId]?.takeIf { it.isComplete }?.tables?.mapValues { it.value.first.version }
+        entries[tournamentId]?.takeIf { it.isComplete }?.let { entry -> entry.tables.mapValues { it.value.first.version } }
     }
 }
