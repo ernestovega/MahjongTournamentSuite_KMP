@@ -50,11 +50,22 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawOutline
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.isSpecified
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
 private val FocusHaloPadding = 3.dp
+
+/** The circle that an icon button draws inside its 48 dp touch area. */
+private val IconButtonVisibleSize = 40.dp
 private val ButtonPressThreshold = 500.milliseconds
 
 /** Controls buttons in the current app screen. The back button is outside this scope. */
@@ -203,6 +214,7 @@ fun FocusedButton(
         modifier = modifier,
         interactionSource = resolvedInteractionSource,
         shape = shape,
+        visibleHeight = ButtonDefaults.MinHeight,
     ) {
         Button(
             onClick = thresholdOnClick,
@@ -244,6 +256,7 @@ fun FocusedOutlinedButton(
         modifier = modifier,
         interactionSource = resolvedInteractionSource,
         shape = shape,
+        visibleHeight = ButtonDefaults.MinHeight,
     ) {
         OutlinedButton(
             onClick = thresholdOnClick,
@@ -285,6 +298,7 @@ fun FocusedTextButton(
         modifier = modifier,
         interactionSource = resolvedInteractionSource,
         shape = shape,
+        visibleHeight = ButtonDefaults.MinHeight,
     ) {
         TextButton(
             onClick = thresholdOnClick,
@@ -319,6 +333,7 @@ fun FocusedAssistChip(
         modifier = modifier,
         interactionSource = interactionSource,
         shape = AssistChipDefaults.shape,
+        visibleHeight = AssistChipDefaults.Height,
     ) {
         AssistChip(
             onClick = thresholdOnClick,
@@ -351,6 +366,7 @@ fun FocusedIconButton(
         interactionSource = interactionSource,
         showFocusHighlight = showFocusHighlight,
         shape = CircleShape,
+        visibleHeight = IconButtonVisibleSize,
     ) {
         IconButton(
             onClick = thresholdOnClick,
@@ -370,22 +386,27 @@ private val emptyFunction: () -> Unit = {}
 private val FocusRingWidth = 2.dp
 
 /**
- * Draws a keyboard focus ring in [shape] around the control, in the space of the halo padding. It is a line, not a
- * fill, so the control still lights up in one place only: its own hover and focus layer.
+ * Draws a keyboard focus ring in [shape] around the control. It is a line in the accent color (pink), not a fill, so
+ * the control still lights up in one place only (its own hover and focus layer) and the ring does not mix with the
+ * green of the buttons.
  */
 @Composable
 fun Modifier.focusRing(focused: Boolean, shape: Shape): Modifier =
-    if (focused) border(FocusRingWidth, MaterialTheme.colorScheme.primary, shape) else this
+    if (focused) border(FocusRingWidth, MaterialTheme.colorScheme.tertiary, shape) else this
 
 /**
  * The room around a control for its keyboard focus. A control lights up in one place only:
  *
  * - With [lightsUpContent] false (the default) the control inside draws its own hover and focus layer, as every
- *   Material button, chip, card or ripple does. The container then draws nothing on hover, and a thin ring in the
- *   [shape] of the control on keyboard focus. Before, it also filled a rounded square behind the control, so a round
- *   icon button showed a circle inside a square.
+ *   Material button, chip, card or ripple does. The container then draws nothing on hover, and on keyboard focus a
+ *   pink ring right on the edge of the control, in its [shape]. Before, it also filled a rounded square behind the
+ *   control, so a round icon button showed a circle inside a square.
  * - With [lightsUpContent] true the control inside has no indication of its own (`indication = null`). The container
  *   fills its area in [shape] on hover and on focus, and that fill is the only one.
+ *
+ * [visibleHeight] is the height of what the control draws when that is less than its touch area (a Material button is
+ * 40 dp high inside a 48 dp touch area). The ring then sits on the drawn edge, not around the touch area. A control as
+ * narrow as the touch area (an icon button) is as wide as it is high.
  */
 @Composable
 fun FocusHighlightContainer(
@@ -394,6 +415,7 @@ fun FocusHighlightContainer(
     showFocusHighlight: Boolean = true,
     shape: Shape = MaterialTheme.shapes.small,
     lightsUpContent: Boolean = false,
+    visibleHeight: Dp? = null,
     content: @Composable () -> Unit,
 ) {
     val focused by interactionSource.collectIsFocusedAsState()
@@ -410,9 +432,25 @@ fun FocusHighlightContainer(
                 },
             )
     } else {
+        val ringColor = MaterialTheme.colorScheme.tertiary
+        val touchSize = LocalMinimumInteractiveComponentSize.current
+        val showRing = showFocusHighlight && focused
         modifier
-            .focusRing(showFocusHighlight && focused, shape)
             .padding(FocusHaloPadding)
+            .drawWithContent {
+                drawContent()
+                if (!showRing) return@drawWithContent
+                val stroke = FocusRingWidth.toPx()
+                val drawnHeight = visibleHeight?.toPx()?.coerceAtMost(size.height) ?: size.height
+                val narrow = touchSize.isSpecified && size.width <= touchSize.toPx() + 0.5f
+                val drawnWidth = if (visibleHeight != null && narrow) minOf(size.width, drawnHeight) else size.width
+                // The line goes just outside the drawn edge, touching it.
+                val ringSize = Size(drawnWidth + stroke, drawnHeight + stroke)
+                val outline = shape.createOutline(ringSize, layoutDirection, this)
+                translate((size.width - ringSize.width) / 2f, (size.height - ringSize.height) / 2f) {
+                    drawOutline(outline, ringColor, style = Stroke(stroke))
+                }
+            }
     }
     Box(modifier = boxModifier, propagateMinConstraints = true) {
         content()

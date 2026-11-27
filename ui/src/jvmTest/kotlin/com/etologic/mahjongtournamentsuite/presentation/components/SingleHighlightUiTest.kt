@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toAwtImage
 import androidx.compose.ui.graphics.toPixelMap
@@ -30,6 +31,7 @@ import javax.imageio.ImageIO
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
 
 /**
  * A control lights up in one place only. Material buttons draw their own hover and focus layer in their own shape (a
@@ -41,6 +43,10 @@ import kotlin.test.assertNotEquals
  */
 @OptIn(ExperimentalTestApi::class)
 class SingleHighlightUiTest {
+    private companion object {
+        const val MIN_HOVER_CHANGE = 40
+    }
+
     private val tag = "control"
 
     private fun save(image: ImageBitmap, name: String) {
@@ -84,9 +90,19 @@ class SingleHighlightUiTest {
                 assertEquals(idlePixels[x, y], pixels[x, y], "$name ($theme): the corner ($x, $y) lights up on $label, so two areas light up.")
             }
         }
+        // The hover shows clearly on the control itself, also on a filled green button (Ernesto, 27-nov). The point is
+        // inside the shape of every control, left of its text or icon.
+        val probeX = 14
+        val probeY = idle.height / 2
+        val change = colorDistance(idlePixels[probeX, probeY], hovered.toPixelMap()[probeX, probeY])
+        assertTrue(change >= MIN_HOVER_CHANGE, "$name ($theme): the hover changes the control by $change only, too little to see.")
         // Something does show the focus: the control does not look the same as at rest.
         assertNotEquals(idlePixels.buffer.toList(), focused.toPixelMap().buffer.toList(), "$name ($theme): the keyboard focus does not show.")
     }
+
+    /** The sum of the RGB differences, from 0 to 765. */
+    private fun colorDistance(a: Color, b: Color): Int =
+        ((kotlin.math.abs(a.red - b.red) + kotlin.math.abs(a.green - b.green) + kotlin.math.abs(a.blue - b.blue)) * 255).toInt()
 
     private val controls: List<Pair<String, @Composable (Modifier, FocusRequester) -> Unit>> = listOf(
         "icon-button" to { m, f -> FocusedIconButton({}, m, focusRequester = f) { Icon(Icons.Default.Edit, contentDescription = "Edit") } },

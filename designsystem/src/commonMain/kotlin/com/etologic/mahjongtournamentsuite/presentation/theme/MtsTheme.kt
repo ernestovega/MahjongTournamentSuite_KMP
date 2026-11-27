@@ -1,7 +1,10 @@
 package com.etologic.mahjongtournamentsuite.presentation.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RippleConfiguration
+import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -40,10 +43,21 @@ fun MtsTheme(
             LocalMtsColors provides if (useDarkTheme) DarkMtsColors else LightMtsColors,
             LocalMtsTypography provides mtsTypography,
             LocalMtsWindowWidth provides windowWidth,
+            LocalRippleConfiguration provides MtsRippleConfiguration,
             content = content,
         )
     }
 }
+
+/**
+ * The hover and focus layer of every control is stronger than the Material default (8 % and 10 %). That layer is the
+ * only thing that lights up (see AGENTS.md, One Lit Area Per Control), and at 8 % a hovered green button looked the
+ * same as at rest.
+ */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+val MtsRippleConfiguration = RippleConfiguration(
+    rippleAlpha = RippleAlpha(draggedAlpha = 0.24f, focusedAlpha = 0.20f, hoveredAlpha = 0.16f, pressedAlpha = 0.20f),
+)
 
 internal val MahjongGreen = Color(0xFF00B16A)
 internal val MahjongGreenLight = Color(0xFF3DE6A3)

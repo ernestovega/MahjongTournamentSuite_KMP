@@ -231,12 +231,14 @@ Apply these rules to every new or changed dialog:
 
 - A control lights up in one place only, in its own shape. Material buttons, chips, cards and ripples already draw
   their hover and focus layer; never add a fill behind them.
-- `FocusHighlightContainer` draws only a focus ring in the `shape` of the control by default. Pass
+- `FocusHighlightContainer` draws only a pink (tertiary) focus ring right on the drawn edge of the control, in its `shape`, by default. Pass
   `lightsUpContent = true` only when the control inside has `indication = null`; the container then fills its area.
 - For a custom focus mark use `Modifier.focusRing`, not a `background` that follows `collectIsHoveredAsState` or
   `collectIsFocusedAsState`.
 - A clickable card or surface uses `Card(onClick = ...)` / `Surface(onClick = ...)`, so the ripple follows its round
   corners. A folding card header is clickable edge to edge, with its margins inside the click area.
+- The hover and focus layers are stronger than the Material default (`MtsRippleConfiguration` in `MtsTheme`), so a
+  hovered filled button shows the change.
 - `SingleHighlightUiTest` and `SingleHighlightConventionTest` (ui jvmTest) guard these rules.
 
 ## Checkboxes, Switches And Radio Buttons
