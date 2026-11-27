@@ -7,6 +7,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithText
@@ -35,6 +36,8 @@ import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
+import com.etologic.mahjongtournamentsuite.presentation.platform.LocalPickedImageForTests
+import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.presenter.UsersPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
@@ -44,6 +47,9 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
 import org.koin.compose.KoinContext
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
+import java.awt.image.BufferedImage
+import java.io.ByteArrayOutputStream
+import javax.imageio.ImageIO
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -102,6 +108,16 @@ class GlobalUsersScreenFlowsUiTest {
 
     private fun world(vararg users: ManagedUser, role: GlobalUserRole = GlobalUserRole.SUPER_ADMIN) = World(role, users.toList())
 
+    /** A small green PNG, what the photo picker of the account dialog returns. */
+    private val pickedPhoto: SelectedImage = run {
+        val image = BufferedImage(40, 40, BufferedImage.TYPE_INT_RGB)
+        val bytes = ByteArrayOutputStream().use {
+            ImageIO.write(image, "png", it)
+            it.toByteArray()
+        }
+        SelectedImage("ann.png", "image/png", bytes)
+    }
+
     private fun ComposeUiTest.show(world: World, waitFor: String? = "me@example.test") {
         setContent {
             val themeController = ThemeController(ThemePreference.Light, false, {})
@@ -140,7 +156,11 @@ class GlobalUsersScreenFlowsUiTest {
                 }.koin
             }
             KoinContext(koin) {
-                CompositionLocalProvider(LocalThemeController provides themeController, LocalPressTimeSource provides pressClock) {
+                CompositionLocalProvider(
+                    LocalThemeController provides themeController,
+                    LocalPressTimeSource provides pressClock,
+                    LocalPickedImageForTests provides { pickedPhoto },
+                ) {
                     MtsTheme(useDarkTheme = false) { GlobalUsersScreen(rememberNavController()) }
                 }
             }
@@ -413,5 +433,20 @@ class GlobalUsersScreenFlowsUiTest {
         onNodeWithText("Disable account?").assertExists()
         click("Disable")
         awaitText("Network request failed.")
+    }
+
+    @Test
+    fun aSuperAdminRemovesAndUploadsThePhotoOfAnAccount() = runComposeUiTest {
+        val world = world(me, ann.copy(photoUrl = "https://example.test/ann.png", hasOwnPhoto = true))
+        show(world)
+        open("ann@example.test")
+
+        click("Remove photo")
+        waitUntil(timeoutMillis = 5_000) { "remove photo p1" in world.admin.calls }
+        pressClock += 1.seconds
+        click("Edit photo")
+        waitUntil(timeoutMillis = 10_000) { onAllNodes(hasText("Use crop") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+        click("Use crop")
+        waitUntil(timeoutMillis = 10_000) { "photo p1" in world.admin.calls }
     }
 }
