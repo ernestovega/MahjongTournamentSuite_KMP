@@ -29,7 +29,7 @@ export const GOOGLE_PLAY_TESTER: StoreTester = {
  */
 export const GOOGLE_PLAY_DISPOSABLE_TESTER: StoreTester = {
   email: "mtsgoogleplaydisposable@mahjongmadrid.com",
-  alias: "PLAY STORE REVIEWER DISPOSABLE ACCOUNT",
+  alias: "PLAY STORE REVIEWER NON-ADMIN DISPOSABLE ACCOUNT",
   role: "PLAYER",
   photoPath: resolve(__dirname, "../../assets/google-play-tester.png"),
 };
@@ -53,7 +53,7 @@ export const APP_STORE_TESTER: StoreTester = {
  */
 export const APP_STORE_DISPOSABLE_TESTER: StoreTester = {
   email: "mtsappstoredisposable@mahjongmadrid.com",
-  alias: "APP STORE REVIEWER DISPOSABLE ACCOUNT",
+  alias: "APP STORE REVIEWER NON-ADMIN DISPOSABLE ACCOUNT",
   role: "PLAYER",
   photoPath: resolve(__dirname, "../../assets/app-store-tester.png"),
 };

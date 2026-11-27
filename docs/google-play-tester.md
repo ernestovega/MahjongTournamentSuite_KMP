@@ -49,7 +49,7 @@ needs to know it; to see it, open App Store Connect.
 
 App Review checks the account deletion (Guideline 5.1.1(v)). Deleting the demo account would leave the next review
 without one, so the review notes (`docs/app-store/review-notes.txt`) ask Apple not to delete it and offer a second
-account instead: `APP_STORE_DISPOSABLE_TESTER` (`mtsappstoredisposable@mahjongmadrid.com`, alias APP STORE REVIEWER DISPOSABLE ACCOUNT,
+account instead: `APP_STORE_DISPOSABLE_TESTER` (`mtsappstoredisposable@mahjongmadrid.com`, alias APP STORE REVIEWER NON-ADMIN DISPOSABLE ACCOUNT,
 player, no EMA number). The same workflow creates it again on each run when a review deleted it, with a password that
 also comes from the API key, and writes its email and password into the review notes, never into the repository.
 The notes also explain how the reviewer can create an own account from ADMIN > Users and delete it.
