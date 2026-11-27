@@ -30,6 +30,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.RoundControlChange
 import com.etologic.mahjongtournamentsuite.domain.model.TableKey
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import kotlinx.coroutines.CompletableDeferred
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
@@ -39,6 +40,8 @@ import kotlin.time.TestTimeSource
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TestTimeSource
 
 /**
  * Round control, the plan B of the Timer: an admin runs the clock of a round without the Timer and decides by hand
@@ -48,6 +51,9 @@ import kotlin.test.assertTrue
 class RoundControlScreenUiTest {
     private val now = 1_000_000_000L
     private val min = 60_000L
+
+    // The buttons ignore a second press within 500 ms of real time: the tests move this clock before a press.
+    private val pressClock = TestTimeSource()
 
     private fun server(vararg clocks: RoundClock, numRounds: Int = 3) = FakeTournamentRepository().apply {
         tournaments = listOf(Tournament(id = "t1", name = "Open", isTeams = false, numPlayers = 8, numRounds = numRounds, matchDurationMinutes = 120))
@@ -528,22 +534,29 @@ class RoundControlScreenUiTest {
         }
 
         onNodeWithText("Players and the public do not see the results from round 3 on. Only admins see them.").assertExists()
+        pressClock += 1.seconds
         onNodeWithText("Reveal results").performClick()
         settle()
         onNodeWithText("Reveal the results?").assertExists()
+        pressClock += 1.seconds
         onAllNodesWithText("Reveal results").onLast().performClick()
         settle()
         assertEquals(listOf(true), reveals)
         onNodeWithText("The results are revealed: everyone sees the ranking.").assertExists()
 
+        pressClock += 1.seconds
+
         onNodeWithText("Hide again").performClick()
         settle()
         onNodeWithText("Hide the results again?").assertExists()
+        pressClock += 1.seconds
         onNodeWithText("Cancel").performClick()
         settle()
         onNodeWithText("Hide the results again?").assertDoesNotExist()
+        pressClock += 1.seconds
         onNodeWithText("Hide again").performClick()
         settle()
+        pressClock += 1.seconds
         onAllNodesWithText("Hide again").onLast().performClick()
         settle()
         assertEquals(listOf(true, false), reveals)
@@ -556,8 +569,11 @@ class RoundControlScreenUiTest {
         server.tournaments = server.tournaments.map { it.copy(hideResultsFromRound = 2) }
         show(server) { AppResult.Failure(AppError.Network) }
 
+        pressClock += 1.seconds
+
         onNodeWithText("Reveal results").performClick()
         settle()
+        pressClock += 1.seconds
         onAllNodesWithText("Reveal results").onLast().performClick()
         settle()
         onNodeWithText("Players and the public do not see the results from round 2 on. Only admins see them.").assertExists()

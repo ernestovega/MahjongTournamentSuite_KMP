@@ -213,6 +213,10 @@ class DefaultPlayerImportRepositoryTest {
         assertEquals(AppError.ImportFile(ImportFileErrorCode.EMPTY, emptyList()), errorOf("""{"details":{"code":"EMPTY"}}""", HttpStatusCode.Conflict))
         assertIs<AppError.Unexpected>(errorOf("""{"details":{}}"""))
         assertIs<AppError.Unexpected>(errorOf("""{"details":"x"}"""))
+        // Values of the wrong shape do not break the error: a code that is not a text is no code, a bad limit is left empty.
+        assertIs<AppError.Unexpected>(errorOf("""{"details":{"code":{}}}"""))
+        assertEquals(AppError.ImportFile(ImportFileErrorCode.TOO_MANY_ROWS, listOf("")), errorOf("""{"details":{"code":"TOO_MANY_ROWS","max":{}}}"""))
+        assertEquals(AppError.ImportFile(ImportFileErrorCode.MISSING_COLUMNS, listOf("")), errorOf("""{"details":{"code":"MISSING_COLUMNS","missing":"id"}}"""))
         assertIs<AppError.Unexpected>(errorOf("""{"details":{"code":"EMPTY"}}""", HttpStatusCode.Forbidden), "only a refused file has a file error")
         assertIs<AppError.Unexpected>(errorOf("""{"details":{"code":null}}"""))
     }

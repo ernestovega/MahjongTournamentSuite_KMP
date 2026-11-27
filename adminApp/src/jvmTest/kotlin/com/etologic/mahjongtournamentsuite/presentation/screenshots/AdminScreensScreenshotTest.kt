@@ -352,7 +352,7 @@ class AdminScreensScreenshotTest {
         },
     ) { RankingStandaloneScreen(ONGOING, clock = FixedClock) }
 
-    /** The projected ranking, playing, after the switch of the EMA logo was turned off: only the organizer's logo stays. */
+    /** The projected ranking, playing: both logos stay, their switches hide. */
     @Test
     fun rankingStandaloneBranded() = adminScreenshots(
         "ranking-standalone-branded",
@@ -360,8 +360,6 @@ class AdminScreensScreenshotTest {
         variants = brandedVariants,
         ready = {
             waitForText("LUCÍA MARTÍN", substring = true)
-            // The second switch is the one under the EMA logo, at the right.
-            onAllNodesWithText(adminText("projection_logo_show_while_running"))[1].performClick()
             onNodeWithContentDescription(adminText("paging_start")).performClick()
             waitForIdle()
             // The logo loads from disk in the background.

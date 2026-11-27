@@ -252,4 +252,23 @@ class PersistedCacheTest {
     )
 
     private fun hands() = listOf(TableHand(1, "", "", "", false, false, "", "", "", ""))
+
+    @Test
+    fun aNameWithOtherCharactersIsSavedUnderASafeNameAndReadBack() = runTest {
+        persisted.write("uñ/1", "a-b.c d", 3, Answer.serializer(), Answer(listOf("x")))
+
+        val name = device.values.keys.single()
+        assertTrue(name.all { it.isLetterOrDigit() && it.code < 128 || it == '.' || it == '-' || it == '_' }, name)
+        assertEquals(3L to Answer(listOf("x")), persisted.read("uñ/1", "a-b.c d", Answer.serializer()))
+    }
+
+    @Test
+    fun anAnswerThatCannotBeWrittenIsNotSaved() = runTest {
+        val failing = object : kotlinx.serialization.KSerializer<Answer> by Answer.serializer() {
+            override fun serialize(encoder: kotlinx.serialization.encoding.Encoder, value: Answer) = error("Not writable")
+        }
+        persisted.write("u1", "broken", 1, failing, Answer(listOf("x")))
+
+        assertTrue(device.values.isEmpty())
+    }
 }

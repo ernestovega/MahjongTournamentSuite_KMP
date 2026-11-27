@@ -193,8 +193,8 @@ object MtsFixedColors {
 private val MedalGold = Color(0xFFFFAC33)
 private val MedalSilver = Color(0xFF8A99A8)
 private val Warning = Color(0xFFB26A00)
-private val ExpertPurple = Color(0xFF8E5CD9)
-private val ExpertPurpleDark = Color(0xFF6538AD)
+internal val ExpertPurple = Color(0xFF8E5CD9)
+internal val ExpertPurpleDark = Color(0xFF6538AD)
 
 // Beginner, intermediate, advanced, expert and master.
 private val LevelColorsByLevel = listOf(

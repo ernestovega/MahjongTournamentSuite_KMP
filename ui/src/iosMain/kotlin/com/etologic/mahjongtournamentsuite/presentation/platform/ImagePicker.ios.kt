@@ -37,6 +37,10 @@ actual fun rememberImagePicker(
 ): ImagePicker {
     val selected = rememberUpdatedState(onImageSelected)
     val error = rememberUpdatedState(onError)
+    // The UI tests run on the iOS simulator too, where the photo picker of the system cannot be used.
+    LocalPickedImageForTests.current?.let { picked ->
+        return remember(picked) { ImagePicker { selected.value(picked()) } }
+    }
     return remember {
         ImagePicker {
             val configuration = PHPickerConfiguration().apply {

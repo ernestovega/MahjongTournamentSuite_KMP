@@ -25,4 +25,12 @@ class UserProfileMappingTest {
     fun readsABlankEmaIdAsNone() {
         assertNull(UserProfileDto(uid = "u1", email = "a@example.test", emaId = " ").toDomain().emaId)
     }
+
+    @Test
+    fun keepsAPhotoAndReadsABlankOneOrNoneAsNone() {
+        assertEquals("https://photos.test/a.png", UserProfileDto(uid = "u1", email = "a@example.test", photoUrl = "https://photos.test/a.png").toDomain().photoUrl)
+        assertNull(UserProfileDto(uid = "u1", email = "a@example.test", photoUrl = " ").toDomain().photoUrl)
+        assertNull(UserProfileDto(uid = "u1", email = "a@example.test").toDomain().photoUrl)
+        assertNull(UserProfileDto(uid = "u1", email = "a@example.test").toDomain().emaId)
+    }
 }

@@ -85,13 +85,15 @@ class DefaultPlayerImportRepository(
 private fun Throwable.toImportAppError(): AppError {
     if (this is BackendHttpException && (status.value == 400 || status.value == 409)) {
         val details = runCatching { Json.parseToJsonElement(responseBody).jsonObject["details"]?.jsonObject }.getOrNull()
-        val code = details?.get("code")?.jsonPrimitive?.contentOrNull
+            ?: return toRepositoryAppError()
+        // A value of the wrong shape counts as missing, so it never breaks the error.
+        val code = runCatching { details["code"]?.jsonPrimitive?.contentOrNull }.getOrNull()
             ?.let { name -> ImportFileErrorCode.entries.firstOrNull { it.name == name } }
         if (code != null) {
             val args = when (code) {
                 ImportFileErrorCode.MISSING_COLUMNS ->
-                    listOf(details["missing"]?.jsonArray?.joinToString(", ") { it.jsonPrimitive.content }.orEmpty())
-                ImportFileErrorCode.TOO_MANY_ROWS -> listOf(details["max"]?.jsonPrimitive?.content.orEmpty())
+                    listOf(runCatching { details["missing"]?.jsonArray?.joinToString(", ") { it.jsonPrimitive.content } }.getOrNull().orEmpty())
+                ImportFileErrorCode.TOO_MANY_ROWS -> listOf(runCatching { details["max"]?.jsonPrimitive?.content }.getOrNull().orEmpty())
                 else -> emptyList()
             }
             return AppError.ImportFile(code, args)
