@@ -47,3 +47,26 @@ test("the EMA report headers are always in English, whatever the language of the
     "shortname", "rules", "period", "NbDays", "Extra",
   ]);
 });
+
+test("the EMA report writes the period of any two dates and refuses missing host or names", async () => {
+  const base = {
+    tournamentName: "Open", participantCount: 4, startDate: "2025-02-01", endDate: "2025-02-01", hostCountry: "ESP", hostCity: "Madrid", shortName: "OPEN",
+    rows: [{ place: 1, firstName: "Ana", lastName: "Gil", emaId: null, tablePoints: 4, score: 10, isEmaMember: false, country: "ESP" }],
+  };
+  const period = async (startDate: string, endDate: string) => {
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(await buildEmaReport({ ...base, startDate, endDate }) as unknown as ExcelJS.Buffer);
+    const sheet = workbook.getWorksheet("MCR template");
+    assert.ok(sheet);
+    return sheet.getRow(2).values as ExcelJS.CellValue[];
+  };
+  const row = await period("2025-02-01", "2025-02-01");
+  assert.ok(row.includes("1 Feb. 2025"), JSON.stringify(row));
+  assert.ok(row.includes(""), "a player without an EMA id has an empty id");
+  assert.ok((await period("2025-02-28", "2025-03-01")).includes("28 Feb.-1 Mar. 2025"));
+  assert.ok((await period("2025-12-31", "2026-01-01")).includes("31 Dec. 2025-1 Jan. 2026"));
+
+  await assert.rejects(buildEmaReport({ ...base, hostCity: " " }), /Host country and host city/);
+  await assert.rejects(buildEmaReport({ ...base, hostCountry: "Spain" }), /Host country and host city/);
+  await assert.rejects(buildEmaReport({ ...base, rows: [{ ...base.rows[0], lastName: " " }] }), /first name and last name/);
+});
