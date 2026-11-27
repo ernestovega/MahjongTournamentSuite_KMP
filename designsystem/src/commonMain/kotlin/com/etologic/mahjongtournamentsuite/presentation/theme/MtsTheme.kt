@@ -50,13 +50,14 @@ fun MtsTheme(
 }
 
 /**
- * The hover and focus layer of every control is stronger than the Material default (8 % and 10 %). That layer is the
- * only thing that lights up (see AGENTS.md, One Lit Area Per Control), and at 8 % a hovered green button looked the
- * same as at rest.
+ * The hover layer of every control is stronger than the Material default (8 %), so a hovered green button changes
+ * visibly. The focus layer is off: the keyboard focus shows as the pink ring of the `ui` components, and only while the
+ * keyboard is in use (see [MtsInputModality]). So a control lights up in one place only (AGENTS.md, One Lit Area Per
+ * Control), and a button clicked with the mouse does not stay lit.
  */
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 val MtsRippleConfiguration = RippleConfiguration(
-    rippleAlpha = RippleAlpha(draggedAlpha = 0.24f, focusedAlpha = 0.20f, hoveredAlpha = 0.16f, pressedAlpha = 0.20f),
+    rippleAlpha = RippleAlpha(draggedAlpha = 0.24f, focusedAlpha = 0f, hoveredAlpha = 0.16f, pressedAlpha = 0.20f),
 )
 
 internal val MahjongGreen = Color(0xFF00B16A)
