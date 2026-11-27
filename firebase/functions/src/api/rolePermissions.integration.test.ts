@@ -468,7 +468,7 @@ describe("club admin rules", () => {
     assert.equal((await settings(frenchAdmin.token, ["org-se"])).status, 403);
     assert.equal((await settings(superAdmin.token, ["org-se"])).status, 200, "a super admin changes them always");
     // The tournament belongs to the Swedish club now, so the Spanish admin no longer manages it.
-    assert.equal((await server.request("GET", `/tournaments/${id}`, { token: spanishAdmin.token })).status, 403);
+    assert.equal((await server.request("GET", `/tournaments/${id}/players`, { token: spanishAdmin.token })).status, 403);
   });
 
   it("keeps the optional place of a club, read from a Google Maps link or typed", async () => {
