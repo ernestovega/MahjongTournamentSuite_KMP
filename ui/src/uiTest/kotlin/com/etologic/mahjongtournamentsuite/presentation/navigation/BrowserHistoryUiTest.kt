@@ -25,7 +25,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /** A browser history in memory: entries, the current one, and the pop states that a `go` sends later. */
-private class FakeBrowserHistory : BrowserHistoryApi {
+internal class FakeBrowserHistory : BrowserHistoryApi {
     val entries = mutableListOf<String?>(null)
     var index = 0
     private val listeners = mutableListOf<(String?) -> Unit>()

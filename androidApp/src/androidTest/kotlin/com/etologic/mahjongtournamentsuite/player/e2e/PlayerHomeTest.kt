@@ -4,8 +4,10 @@ import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
+import androidx.test.espresso.Espresso
 import org.junit.Test
 
 /** The buttons of the app ignore a second press within 500 ms. See DebouncedButtons.kt. */
@@ -23,6 +25,27 @@ class PlayerHomeTest : PlayerE2eTest() {
         // The card shows only the city and the flag. The address is behind the Directions icon and in the Info tab.
         c.assertNoText("Eskalerria - Calle Cipriano Sancho 36, Madrid")
         c.waitForText("Contact")
+    }
+
+    /**
+     * The back leaves the app only from the first tab of the start screen, In play here because a tournament is in
+     * play. From Stats or All it opens In play (Ernesto 27-nov). A back that left the app would fail pressBack.
+     */
+    @Test
+    fun backFromAnotherTabOpensTheFirstTabAndStaysInTheApp() {
+        home(E2eAccounts.PLAYER)
+        val inPlaySelected = hasText("In play", ignoreCase = true) and isSelected()
+        c.waitUntil(10_000) { c.onAllNodes(inPlaySelected).fetchSemanticsNodes().isNotEmpty() }
+        c.clickButton("Stats")
+        c.waitForText("Overall")
+        Espresso.pressBack()
+        c.waitUntil(10_000) { c.onAllNodes(inPlaySelected).fetchSemanticsNodes().isNotEmpty() }
+        c.waitForText("Test - Live ongoing tournament")
+
+        c.clickButton("All")
+        c.waitUntil(10_000) { c.onAllNodes(inPlaySelected).fetchSemanticsNodes().isEmpty() }
+        Espresso.pressBack()
+        c.waitUntil(10_000) { c.onAllNodes(inPlaySelected).fetchSemanticsNodes().isNotEmpty() }
     }
 
     @Test
