@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
@@ -31,7 +32,10 @@ import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import kotlinx.coroutines.CompletableDeferred
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalPressTimeSource
 import kotlin.test.Test
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TestTimeSource
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -69,22 +73,28 @@ class RoundControlScreenUiTest {
     ): RoundTimerController {
         val controller = RoundTimerController(server, "t1", round, deviceNowMs = { now })
         setContent {
-            MtsTheme(useDarkTheme = false) {
-                RoundControlContent(
-                    controller = controller,
-                    loadTables = { mode -> server.listTournamentTables("t1", null, mode) },
-                    loadRoundHands = { roundId -> server.getRoundTablesWithHands("t1", roundId, RefreshMode.FORCE) },
-                    onBack = {},
-                    setResultsRevealed = setResultsRevealed,
-                    deviceNowMs = { now },
-                )
+            CompositionLocalProvider(LocalPressTimeSource provides pressClock) {
+                MtsTheme(useDarkTheme = false) {
+                    RoundControlContent(
+                        controller = controller,
+                        loadTables = { mode -> server.listTournamentTables("t1", null, mode) },
+                        loadRoundHands = { roundId -> server.getRoundTablesWithHands("t1", roundId, RefreshMode.FORCE) },
+                        onBack = {},
+                        setResultsRevealed = setResultsRevealed,
+                        deviceNowMs = { now },
+                    )
+                }
             }
         }
         settle()
         return controller
     }
 
+    /** The buttons ignore a second press within a short time: each settle moves this clock past it. */
+    private val pressClock = TestTimeSource()
+
     private fun ComposeUiTest.settle() {
+        pressClock += 600.milliseconds
         mainClock.advanceTimeBy(600)
         waitForIdle()
     }

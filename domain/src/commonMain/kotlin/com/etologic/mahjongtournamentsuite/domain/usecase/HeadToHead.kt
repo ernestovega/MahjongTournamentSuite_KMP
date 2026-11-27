@@ -50,8 +50,8 @@ fun headToHead(
     return HeadToHead(
         tables = tables,
         me = HeadToHeadSide(
-            tablesAbove = theirs?.let { tables.count { t -> t.theirs != null && t.mine.position < t.theirs.position } }
-                ?: theirTallies?.sumOf { it.tablesBehind },
+            // [theirs] holds the rival's result of every shared table, in the same order.
+            tablesAbove = theirs?.let { list -> tables.zip(list).count { (table, their) -> table.mine.position < their.position } },
             tableWins = mine.count { it.position == 1 },
             averagePlace = mine.takeIf { it.isNotEmpty() }?.map { it.position }?.average(),
             points = mine.sumOf { it.points },
@@ -70,7 +70,7 @@ fun headToHead(
             handsWon = theirs?.sumOf { it.handsWon },
             winsOnTheirDiscard = tallies.sumOf { it.discardLosses },
             selfDraws = tallies.sumOf { it.selfDrawLosses },
-            bestHand = theirs?.maxOfOrNull { it.bestHand }?.takeIf { it > 0 },
+            bestHand = theirs?.maxOf { it.bestHand }?.takeIf { it > 0 },
         ),
     )
 }
