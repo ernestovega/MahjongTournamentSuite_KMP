@@ -143,7 +143,17 @@ data class MtsColors(
     val onMedal: Color,
     /** The background of the first place in a ranking. */
     val firstPlaceHighlight: Color,
-    /** Text and icons on the green header (top bar, tabs). */
+    /**
+     * The fill of the header: the top bar and the tabs under it. Green in the player app and [adminHeader] in the admin
+     * app, so the app shows at a glance (Ernesto, 2026-11-27). `MtsTheme(adminApp = true)` sets it.
+     */
+    val header: Color,
+    /**
+     * The purple of the admin app: its header, and the button of the player app that opens it. The purple of the expert
+     * level, its fill in light mode and its darker rim in dark mode, like the green header.
+     */
+    val adminHeader: Color,
+    /** Text and icons on the header (top bar, tabs), green or purple. */
     val onHeader: Color,
     val onHeaderMuted: Color,
     /**
@@ -181,13 +191,15 @@ object MtsFixedColors {
 private val MedalGold = Color(0xFFFFAC33)
 private val MedalSilver = Color(0xFF8A99A8)
 private val Warning = Color(0xFFB26A00)
+private val ExpertPurple = Color(0xFF8E5CD9)
+private val ExpertPurpleDark = Color(0xFF6538AD)
 
 // Beginner, intermediate, advanced, expert and master.
 private val LevelColorsByLevel = listOf(
     MtsLevelColors(MedalSilver, Color(0xFF5F6E7D), Color.White),
     MtsLevelColors(MahjongGreen, MahjongGreenDark, Color.White),
     MtsLevelColors(Color(0xFFF2692E), Color(0xFFB53B10), Color.White),
-    MtsLevelColors(Color(0xFF8E5CD9), Color(0xFF6538AD), Color.White),
+    MtsLevelColors(ExpertPurple, ExpertPurpleDark, Color.White),
     MtsLevelColors(Color(0xFF15181E), Color.Black, Color.White),
 )
 
@@ -207,6 +219,8 @@ internal val LightMtsColors = MtsColors(
     medalBronze = Warning,
     onMedal = Color.White,
     firstPlaceHighlight = MedalGold,
+    header = MahjongGreenDark,
+    adminHeader = ExpertPurple,
     onHeader = Color.White,
     onHeaderMuted = Color.White.copy(alpha = 0.85f),
     brandTitle = AppDarkGraySurface,
@@ -218,6 +232,8 @@ internal val DarkMtsColors = LightMtsColors.copy(
     link = MahjongGreenLight,
     gain = MahjongGreenLight,
     changed = MahjongGreenDarker,
+    header = MahjongGreenDarker,
+    adminHeader = ExpertPurpleDark,
     info = Color(0xFF4D9BFF),
     brandTitle = Color.White,
 )

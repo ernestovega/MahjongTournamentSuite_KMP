@@ -638,6 +638,32 @@ describe("club admin rules", () => {
     assert.equal(approve.status, 200);
     await assert.rejects(auth.getUser(target.uid));
   });
+
+  it("disables an account on an approved request, rejects another, and answers each request once", async () => {
+    const t = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }], hostCountry: "ES" });
+    const disabled = await createAccount({ role: "EDITOR", memberOf: [t] });
+    const kept = await createAccount({ role: "EDITOR", memberOf: [t] });
+    const ask = (uid: string, body: unknown) => server.request("POST", `/admin/users/${uid}/removal`, { token: spanishAdmin.token, body });
+    assert.equal((await ask(disabled.uid, { kind: "DISABLE" })).status, 200);
+    assert.equal((await ask(kept.uid, { kind: "DISABLE", reason: "Maybe" })).status, 200);
+    assert.equal((await ask(kept.uid, { kind: "SOMETHING" })).status, 400);
+
+    const pending = (await server.request("GET", "/admin/account-requests", { token: superAdmin.token })).body as { requests: Array<{ id: string; targetUid: string; reason: string }> };
+    const idOf = (uid: string) => pending.requests.find((item) => item.targetUid === uid)?.id;
+    const answer = (id: string | undefined, body: unknown) => server.request("POST", `/admin/account-requests/${id}`, { token: superAdmin.token, body });
+
+    assert.equal((await answer(idOf(disabled.uid), { approve: "yes" })).status, 400);
+    assert.equal((await answer(idOf(disabled.uid), { approve: true })).status, 200);
+    assert.equal((await auth.getUser(disabled.uid)).disabled, true);
+    const rejected = await answer(idOf(kept.uid), { approve: false });
+    assert.equal(rejected.status, 200);
+    assert.equal((rejected.body as { outcome: string }).outcome, "REJECTED");
+
+    const again = await answer(idOf(kept.uid), { approve: true });
+    assert.equal(again.status, 409);
+    assert.equal((again.body as { details?: { code?: string } }).details?.code, "REQUEST_RESOLVED");
+    assert.equal((await answer("no-such-request", { approve: true })).status, 404);
+  });
 });
 
 describe("tournament rules for assigned editors", () => {

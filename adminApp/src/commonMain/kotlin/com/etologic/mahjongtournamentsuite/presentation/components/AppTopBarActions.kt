@@ -122,7 +122,7 @@ fun AppTopBarActions(
 @Preview(device = Devices.DESKTOP)
 @Composable
 private fun AppTopBarActionsPreview() {
-    MtsTheme(useDarkTheme = false) {
+    MtsTheme(useDarkTheme = false, adminApp = true) {
         AppTopBarActions(
             onPlayers = {},
             onPlayerBase = {},

@@ -155,6 +155,9 @@ fun ErrorsScreen(navController: NavHostController) {
     val presenter = koinInject<ErrorsPresenter>()
     var groups by remember { mutableStateOf<List<ErrorGroup>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
+    // False until the first read ends. Only that read covers the screen with the logo; a change of the period
+    // keeps the figures and the filters on screen and shows the logo in the list, with the bar under the top bar.
+    var loadedOnce by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<UiText?>(null) }
     var query by rememberSaveable { mutableStateOf("") }
     var periodHours by rememberSaveable { mutableStateOf<Int?>(null) }
@@ -190,6 +193,7 @@ fun ErrorsScreen(navController: NavHostController) {
             }
         } while (cursor != null)
         loading = false
+        loadedOnce = true
     }
 
     val now = Clock.System.now().toEpochMilliseconds()
@@ -216,7 +220,9 @@ fun ErrorsScreen(navController: NavHostController) {
         title = stringResource(Res.string.app_errors),
         isLoading = loading,
         // The list fills in while it loads, so the logo with a progress covers it only until the first problems.
-        contentLoading = loading && groups.isEmpty(),
+        contentLoading = loading && !loadedOnce && groups.isEmpty(),
+        // A later read shows the small logo in the list, so the large faint one does not show behind it.
+        showBackgroundLogo = loading && !loadedOnce,
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
     ) {
@@ -428,7 +434,12 @@ private fun ErrorGroupsTable(
     onOpen: (ErrorGroup) -> Unit,
 ) {
     if (groups.isEmpty()) {
-        if (showEmpty) Text(emptyText, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (showEmpty) {
+            Text(emptyText, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        } else {
+            // A change of the period reads the list again: the logo shows here and the filters stay on screen.
+            AppLoadingCompact(Modifier.fillMaxWidth())
+        }
         return
     }
     val compact = LocalCompactLayout.current

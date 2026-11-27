@@ -58,7 +58,7 @@ fun SplashScreen(
 @Preview(device = Devices.DESKTOP)
 @Composable
 private fun SplashScreenPreview() {
-    MtsTheme(useDarkTheme = false) {
+    MtsTheme(useDarkTheme = false, adminApp = true) {
         AppLoading()
     }
 }

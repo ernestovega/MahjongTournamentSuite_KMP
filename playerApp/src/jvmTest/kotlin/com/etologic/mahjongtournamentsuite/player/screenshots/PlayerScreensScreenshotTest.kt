@@ -28,6 +28,7 @@ import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
+import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.MyRegistration
 import com.etologic.mahjongtournamentsuite.domain.model.MyTournamentSlot
 import com.etologic.mahjongtournamentsuite.domain.model.MyTournaments
@@ -66,6 +67,7 @@ import com.etologic.mahjongtournamentsuite.player.TournamentStanding
 import com.etologic.mahjongtournamentsuite.player.TournamentsScreen
 import com.etologic.mahjongtournamentsuite.player.WebApps
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
+import com.etologic.mahjongtournamentsuite.presentation.platform.LocalSuiteAppSwitcher
 import com.etologic.mahjongtournamentsuite.screenshots.ScreenSize
 import com.etologic.mahjongtournamentsuite.screenshots.Variant
 import com.etologic.mahjongtournamentsuite.screenshots.componentVariants
@@ -190,6 +192,29 @@ class PlayerScreensScreenshotTest {
     @Test
     fun tournaments() = playerScreenshots("tournaments", ready = { waitForText("Madrid Open 2026", substring = true) }) { nav ->
         TournamentsScreen(nav)
+    }
+
+    /**
+     * An account that can manage tournaments: the top bar has the button to the admin app, filled with the purple of
+     * the top bar of that app. On a phone it goes into the menu with the profile.
+     */
+    @Test
+    fun tournamentsAdminSwitch() = playerScreenshots(
+        "tournaments-admin-switch",
+        modules = { playerModules(account = ScreenshotData.playerAccount.copy(roles = setOf(GlobalUserRole.PLAYER, GlobalUserRole.EDITOR))) },
+        variants = listOf(ScreenSize.Phone, ScreenSize.Tablet, ScreenSize.Desktop).flatMap { size -> listOf(Variant(size, false), Variant(size, true)) },
+        ready = {
+            waitForText("Madrid Open 2026", substring = true)
+            val label = uiText("app_switch_to_admin")
+            // The button shows once the roles of the account load. On a phone it is in the menu, so it may not be there.
+            runCatching {
+                waitUntil(timeoutMillis = 3_000) {
+                    onAllNodes(hasContentDescription(label) or hasText(label)).fetchSemanticsNodes().isNotEmpty()
+                }
+            }
+        },
+    ) { nav ->
+        CompositionLocalProvider(LocalSuiteAppSwitcher provides {}) { TournamentsScreen(nav) }
     }
 
     /** The Stats tab of the start screen: the own player is chosen, with the picker to change it on top. */

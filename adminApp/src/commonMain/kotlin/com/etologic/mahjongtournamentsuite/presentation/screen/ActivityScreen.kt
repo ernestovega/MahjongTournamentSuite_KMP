@@ -49,6 +49,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.ActivitySource
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AppLoadingCompact
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
@@ -239,6 +240,9 @@ fun ActivityScreen(
     var entries by remember { mutableStateOf<List<ActivityEntry>>(emptyList()) }
     var nextCursor by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(true) }
+    // False until the first read ends. Only that read covers the screen with the logo; a search or a filter
+    // keeps the filters on screen and shows the logo in the list, with the bar under the top bar.
+    var loadedOnce by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<UiText?>(null) }
     var tournaments by remember { mutableStateOf<List<Tournament>>(emptyList()) }
     var tournamentId by rememberSaveable { mutableStateOf(initialTournamentId ?: ALL_TOURNAMENTS) }
@@ -294,6 +298,7 @@ fun ActivityScreen(
             is AppResult.Failure -> error = result.error.toUiText()
         }
         loading = false
+        loadedOnce = true
     }
 
     // A change of a filter reads the list again from the newest entry.
@@ -313,10 +318,10 @@ fun ActivityScreen(
 
     AppScaffold(
         title = stringResource(Res.string.app_activity),
-        isLoading = loading && entries.isEmpty(),
-        showProgress = loading && entries.isNotEmpty(),
-        showBackgroundLogo = loading && entries.isEmpty(),
-        contentLoading = loading && entries.isEmpty(),
+        isLoading = loading && !loadedOnce,
+        showProgress = loading && loadedOnce,
+        showBackgroundLogo = loading && !loadedOnce,
+        contentLoading = loading && !loadedOnce,
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
         actions = {
@@ -607,6 +612,9 @@ private fun ColumnScope.ActivityTable(
                 item(key = "empty") {
                     Text(stringResource(Res.string.activity_none), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+            } else {
+                // A search or a filter reads the list again: the logo shows here and the filters stay on screen.
+                item(key = "loading") { AppLoadingCompact(Modifier.fillMaxWidth()) }
             }
             return@LazyColumnWithScrollbar
         }
