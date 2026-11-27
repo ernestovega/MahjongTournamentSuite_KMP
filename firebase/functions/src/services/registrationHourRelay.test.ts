@@ -112,3 +112,17 @@ describe("the Google side of the hourly relay, faked", () => {
     }
   });
 });
+
+describe("the address of the relay", () => {
+  it("follows the project of the environment", () => {
+  const before = process.env.GCLOUD_PROJECT;
+  try {
+    process.env.GCLOUD_PROJECT = "mts---staging";
+    assert.equal(registrationsHourUrl(), "https://europe-southwest1-mts---staging.cloudfunctions.net/registrationsHourRun");
+    delete process.env.GCLOUD_PROJECT;
+    assert.equal(registrationsHourUrl(), "https://europe-southwest1-.cloudfunctions.net/registrationsHourRun");
+  } finally {
+    if (before === undefined) delete process.env.GCLOUD_PROJECT; else process.env.GCLOUD_PROJECT = before;
+  }
+});
+});
