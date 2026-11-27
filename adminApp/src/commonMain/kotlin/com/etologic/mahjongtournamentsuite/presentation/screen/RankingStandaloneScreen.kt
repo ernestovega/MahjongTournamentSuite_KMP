@@ -87,6 +87,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrol
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingSnapshot
 import com.etologic.mahjongtournamentsuite.presentation.sync.TournamentListPoll
+import com.etologic.mahjongtournamentsuite.presentation.sync.waitOrUntilHidden
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
@@ -103,7 +104,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.best_hands
 import mahjongtournamentsuite.adminapp.generated.resources.chicken_hands
@@ -200,9 +200,7 @@ private fun RankingStandaloneContent(
         // the page that shows stays. [TournamentListPoll.rankingDelay] sets how often. A hidden tab does not check.
         val isStarted = lifecycle.currentStateFlow.map { it.isAtLeast(Lifecycle.State.STARTED) }
         while (true) {
-            withTimeoutOrNull(TournamentListPoll.rankingDelay(snapshot?.tournament)) {
-                isStarted.first { !it }
-            }
+            waitOrUntilHidden(TournamentListPoll.rankingDelay(snapshot?.tournament), isStarted)
             isStarted.first { it }
             val result = presenter.load(tournamentId, checkChanges = true)
             if (result is AppResult.Success) {

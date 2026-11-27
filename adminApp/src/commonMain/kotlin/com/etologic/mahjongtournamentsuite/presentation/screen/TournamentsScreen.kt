@@ -125,6 +125,7 @@ import com.etologic.mahjongtournamentsuite.presentation.platform.openTimer
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.sync.TournamentListPoll
+import com.etologic.mahjongtournamentsuite.presentation.sync.waitOrUntilHidden
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
@@ -135,7 +136,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.best_hands_header
 import mahjongtournamentsuite.adminapp.generated.resources.chicken_hands_header
@@ -275,9 +275,7 @@ fun TournamentsScreen(
         // A hidden tab or an app in the background does not check. The return checks at once.
         val isStarted = lifecycle.currentStateFlow.map { it.isAtLeast(Lifecycle.State.STARTED) }
         while (true) {
-            withTimeoutOrNull(TournamentListPoll.nextDelay(store.tournaments.value)) {
-                isStarted.first { !it }
-            }
+            waitOrUntilHidden(TournamentListPoll.nextDelay(store.tournaments.value), isStarted)
             isStarted.first { it }
             // A failed check shows nothing. The list on screen stays, and the next check tries again.
             (presenter.loadTournaments() as? AppResult.Success)?.let { store.upsertTournaments(it.value) }

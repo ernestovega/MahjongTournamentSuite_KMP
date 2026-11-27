@@ -1,6 +1,13 @@
 package com.etologic.mahjongtournamentsuite.presentation.sync
 
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -33,4 +40,13 @@ object TournamentListPoll {
         val end = eventEndDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: start
         return today in start..end
     }
+}
+
+/**
+ * Waits [wait], or less if the screen gets hidden first ([isStarted] turns false).
+ * It counts the time with delay and not with withTimeout: in the Compose UI tests the test clock moves delay, while
+ * withTimeout keeps the real time, so a test could not see the checks.
+ */
+suspend fun waitOrUntilHidden(wait: Duration, isStarted: Flow<Boolean>) {
+    merge(flow { delay(wait); emit(Unit) }, isStarted.filter { !it }.map { }).first()
 }

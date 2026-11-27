@@ -63,7 +63,14 @@ class RankingScreenUiTest {
     private class ShownScreen : LifecycleOwner {
         private val registry = LifecycleRegistry.createUnsafe(this).apply { currentState = Lifecycle.State.RESUMED }
         override val lifecycle: Lifecycle get() = registry
+
+        /** Hides the screen (a tab in the background) or shows it again. */
+        fun shown(value: Boolean) {
+            registry.currentState = if (value) Lifecycle.State.RESUMED else Lifecycle.State.CREATED
+        }
     }
+
+    private var screen = ShownScreen()
 
     private fun androidx.compose.ui.test.ComposeUiTest.show(server: FakeTournamentRepository, compact: Boolean = false) {
         setContent {
@@ -81,7 +88,7 @@ class RankingScreenUiTest {
                 }.koin
             }
             KoinContext(koin) {
-                CompositionLocalProvider(LocalThemeController provides themeController, LocalCompactLayout provides compact, LocalLifecycleOwner provides ShownScreen()) {
+                CompositionLocalProvider(LocalThemeController provides themeController, LocalCompactLayout provides compact, LocalLifecycleOwner provides screen) {
                     RankingStandaloneScreen(tournamentId = "t1")
                 }
             }
@@ -192,5 +199,54 @@ class RankingScreenUiTest {
 
         press("Settings")
         waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Show first 3").fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    private fun FakeTournamentRepository.checks() = calls.count { it == "tournaments IF_CHANGED" }
+
+    private fun androidx.compose.ui.test.ComposeUiTest.pass(seconds: Int) {
+        mainClock.advanceTimeBy(seconds * 1_000L)
+        waitForIdle()
+    }
+
+    @Test
+    fun onTheDayOfTheTournamentTheRankingChecksForNewHandsEvery15Seconds() = runComposeUiTest {
+        val server = playedToday()
+        show(server)
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Points").fetchSemanticsNodes().isNotEmpty() }
+        assertEquals(0, server.checks())
+
+        pass(14)
+        assertEquals(0, server.checks(), "a check before 15 s: ${server.calls}")
+        pass(2)
+        assertEquals(1, server.checks(), "no check after 15 s: ${server.calls}")
+        pass(15)
+        assertEquals(2, server.checks())
+    }
+
+    @Test
+    fun aHiddenRankingDoesNotCheckAndChecksAtOnceWhenItShowsAgain() = runComposeUiTest {
+        val server = playedToday()
+        show(server)
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Points").fetchSemanticsNodes().isNotEmpty() }
+
+        runOnIdle { screen.shown(false) }
+        pass(60)
+        assertEquals(0, server.checks(), "a hidden screen checked: ${server.calls}")
+
+        runOnIdle { screen.shown(true) }
+        pass(1)
+        assertEquals(1, server.checks())
+    }
+
+    @Test
+    fun anotherDayTheRankingChecksEveryFiveMinutes() = runComposeUiTest {
+        val server = server()
+        show(server)
+        waitForIdle()
+
+        pass(4 * 60 + 50)
+        assertEquals(0, server.checks())
+        pass(20)
+        assertEquals(1, server.checks(), "no check after 5 minutes: ${server.calls}")
     }
 }
