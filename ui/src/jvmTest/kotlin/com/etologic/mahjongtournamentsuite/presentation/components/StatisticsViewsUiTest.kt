@@ -342,4 +342,23 @@ class StatisticsViewsUiTest {
         waitForIdle()
         onNodeWithText("Open 1").assertExists()
     }
+
+    @Test
+    fun tablesWithoutHandsAreExplainedUnderThePanel() = runComposeUiTest {
+        val statistics = CalculateStatisticsUseCase()(players, tables())
+        var shown by mutableStateOf(statistics.copy(tablesWithHands = 0))
+        setContent {
+            MtsTheme(useDarkTheme = false) {
+                Column(Modifier.width(520.dp).padding(16.dp)) {
+                    TournamentStatisticsPanel(shown, names, tournamentCount = 2)
+                }
+            }
+        }
+        onNodeWithText("Hand statistics need tables with entered hands. No table here has them.").assertExists()
+
+        shown = statistics.copy(tablesTotal = 4, tablesCompleted = 3, tablesWithHands = 1)
+        waitForIdle()
+        onNodeWithText("Hand values use 1 of 3 tables.", substring = true).assertExists()
+        onNodeWithText("3 of 4").assertExists()
+    }
 }

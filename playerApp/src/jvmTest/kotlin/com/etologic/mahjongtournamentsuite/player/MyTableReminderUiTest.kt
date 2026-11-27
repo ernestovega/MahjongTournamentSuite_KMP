@@ -133,4 +133,14 @@ class MyTableReminderUiTest {
         onNodeWithTag(MY_TABLE_BUTTON_TAG).assertDoesNotExist()
         onNodeWithTag(MY_TABLE_REMINDER_TAG).assertDoesNotExist()
     }
+
+    @Test
+    fun beforeThePlannedTimeTheReminderSaysInHowManyMinutes() = runComposeUiTest {
+        setContent {
+            MtsTheme(useDarkTheme = false) {
+                Text(myTableReminderTime(RoundMoment.StartsIn(2 * 60_000L + 1)))
+            }
+        }
+        onNodeWithText("3 minutes", substring = true).assertExists()
+    }
 }
