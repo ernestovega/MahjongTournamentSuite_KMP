@@ -15,7 +15,8 @@ import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalWithdrawConsent
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.AnalyticsConsent
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalAnalyticsConsent
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController
@@ -65,7 +66,7 @@ class AccessibilityChecksUiTest {
     fun everyControlOfTheProfileHasANameAndAFingerSize() = runComposeUiTest {
         setContent {
             Themed {
-                CompositionLocalProvider(LocalWithdrawConsent provides {}) {
+                CompositionLocalProvider(LocalAnalyticsConsent provides AnalyticsConsent(true) {}) {
                     ProfileDialog(
                         profile = UserProfile(uid = "u1", email = "ada@example.test", alias = "Ada", emaId = "10001", photoUrl = "https://example.test/a.png", hasOwnPhoto = true),
                         onSaveAlias = { error("unused") },

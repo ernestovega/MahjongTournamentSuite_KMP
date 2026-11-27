@@ -520,24 +520,11 @@
     <string name="spreadsheet_chooser_filter">File CSV ed Excel</string>
     <string name="spreadsheet_error_read">L'app non è riuscita a leggere il file. Scegli un file CSV o Excel e riprova.</string>
     <string name="spreadsheet_error_save">L'app non è riuscita a salvare il file. Riprova.</string>
-    <string name="consent_title">Analisi anonima</string>
-    <string name="consent_intro">Questa app raccoglie dati anonimi su come viene usata e sugli errori. Il team usa i dati solo per trovare problemi e per migliorare l'app.</string>
-    <string name="consent_collects">L'app registra questi dati:
-• Le schermate, le finestre di dialogo e le schede che apri, e per quanto tempo.
-• Le azioni che usi, come salvare un tavolo.
-• Gli errori e gli arresti anomali, con dettagli tecnici come il tipo di errore.</string>
-    <string name="consent_not_collected">L'app non registra il tuo nome, il tuo indirizzo e-mail, il tuo numero EMA né alcun testo che scrivi. I dati non ti identificano.</string>
-    <string name="consent_required">Puoi usare l'app solo se accetti. Se non accetti, non puoi entrare nell'app.</string>
-    <string name="consent_accept">Accetta e continua</string>
-    <string name="consent_decline">Rifiuta</string>
-    <string name="consent_declined_note">Non puoi usare l'app senza l'analisi anonima. Puoi chiudere l'app oppure accettare per continuare.</string>
-    <string name="consent_withdraw">Ritira il consenso all'analisi</string>
     <string name="profile_delete_account">Elimina il mio account</string>
     <string name="profile_delete_account_title">Eliminare il tuo account?</string>
     <string name="profile_delete_account_message">Il tuo account viene eliminato per sempre: l'accesso, l'email, l'alias e la foto. Il tuo giocatore EMA e i tuoi risultati dei tornei restano. Non si può annullare.</string>
     <string name="profile_delete_account_confirm">Elimina</string>
     <string name="privacy_policy">Informativa sulla privacy</string>
-    <string name="consent_withdraw_info">L'app interrompe l'analisi e te lo chiede di nuovo. Non puoi usare l'app finché non accetti.</string>
     <string name="stat_best_hand_points">Più punti in una mano</string>
     <string name="stat_average_hands_per_table">Media mani per tavolo</string>
     <string name="app_switch_to_admin">App di gestione</string>
@@ -795,4 +782,19 @@ Vince la prima che riesce</string>
     <string name="update_available_later">Più tardi</string>
     <!-- Sign-in of the web: the page of the apps -->
     <string name="sign_in_get_the_app">Scarica l'app</string>
+    <string name="consent_title">Statistiche anonime</string>
+    <string name="consent_message">L'app può inviare dati anonimi sull'uso e sugli errori? Ci aiutano a migliorarla. È facoltativo: se rifiuti, l'app funziona allo stesso modo.</string>
+    <string name="consent_more_details">Più dettagli</string>
+    <string name="consent_why_title">Perché</string>
+    <string name="consent_why">Per trovare gli errori e vedere quali parti dell'app si usano, così sappiamo cosa correggere e migliorare.</string>
+    <string name="consent_what_title">Cosa</string>
+    <string name="consent_what">Le schermate e le azioni che usi, e gli errori con dettagli tecnici. Mai il tuo nome, la tua email, il tuo numero EMA né quello che scrivi.</string>
+    <string name="consent_where_title">Dove</string>
+    <string name="consent_where">L'uso va a Google Analytics per Firebase, che lo conserva 14 mesi. Gli errori vanno al nostro registro su Firebase, nell'UE, che li cancella dopo 30 giorni.</string>
+    <string name="consent_change_title">Cambiarlo dopo</string>
+    <string name="consent_change">Nel tuo profilo, quando vuoi.</string>
+    <string name="consent_accept">Accetta</string>
+    <string name="consent_decline">Rifiuta</string>
+    <string name="profile_analytics">Invia statistiche anonime</string>
+    <string name="profile_analytics_info">Dati anonimi su come usi l'app e sui suoi errori, mai il tuo nome, la tua email né il tuo numero EMA. Disattivalo per fermarlo subito. L'app funziona allo stesso modo.</string>
 </resources>

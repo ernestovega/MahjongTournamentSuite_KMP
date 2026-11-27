@@ -1,7 +1,7 @@
 # Telemetry: Analytics and error log
 
 Both apps send usage data to Firebase Analytics (GA4). They send errors with their stack trace to our own error log in Firestore.
-Both are anonymous. The user must accept them before the app opens.
+Both are anonymous and optional. The app asks once; after "Decline" it works the same and sends nothing.
 
 ## What each platform sends
 
@@ -17,10 +17,14 @@ A platform without Analytics settings also sends no error log and shows no conse
 
 ## Consent
 
-- On the first start the app shows the screen "Anonymous analytics". It explains what the app records.
-- The user can only enter after "Accept and continue". "Decline" keeps the user on the screen with a note.
-- The answer is saved on the device. Android: `SharedPreferences` file `mts_telemetry`. Web: `localStorage` key `mtsAnalyticsConsent`. Desktop: Java preferences.
-- The user can withdraw the consent in the profile dialog. The app then stops all data and shows the screen again.
+- On the first start the app shows the screen "Anonymous analytics": one short question, and "More details" folds out
+  why, what and where the data goes. "Accept" and "Decline" are the same size (GDPR art. 7(4), App Store 5.1.1).
+- Both answers open the app. After "Decline" nothing is sent: no events, no error log, and on the web the SDK is not
+  even loaded. The app does not ask again (`Telemetry.hasAnswered`).
+- The answer is saved on the device. Android: `SharedPreferences` file `mts_telemetry`. iOS: `NSUserDefaults` key
+  `mts.telemetry.consent`. Web: `localStorage` key `mtsAnalyticsConsent` (`"1"` or `"0"`). Desktop: Java preferences.
+- The profile dialog has the switch "Send anonymous analytics". It turns the data on or off at once, and the app stays
+  open. On the web, turning it off also removes the `_ga` cookies of Google Analytics.
 - On Android, `firebase_analytics_collection_enabled` is `false` in the manifest. Collection starts only after the user accepts.
 - The Android app has no advertising ID: the manifest removes the `AD_ID` permission that Firebase Analytics adds and sets
   `google_analytics_adid_collection_enabled` to `false`. Analytics count users by the app instance id. In Play Console the

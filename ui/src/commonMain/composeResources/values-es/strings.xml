@@ -520,24 +520,11 @@
     <string name="spreadsheet_chooser_filter">Archivos CSV y Excel</string>
     <string name="spreadsheet_error_read">La aplicación no pudo leer el archivo. Elige un archivo CSV o Excel e inténtalo de nuevo.</string>
     <string name="spreadsheet_error_save">La aplicación no pudo guardar el archivo. Inténtalo de nuevo.</string>
-    <string name="consent_title">Analítica anónima</string>
-    <string name="consent_intro">Esta aplicación recoge datos anónimos sobre cómo se usa y sobre los errores. El equipo usa los datos solo para encontrar problemas y para mejorar la aplicación.</string>
-    <string name="consent_collects">La aplicación registra estos datos:
-• Las pantallas, los diálogos y las pestañas que abres, y durante cuánto tiempo.
-• Las acciones que usas, como guardar una mesa.
-• Los errores y los cierres inesperados, con datos técnicos como el tipo de error.</string>
-    <string name="consent_not_collected">La aplicación no registra tu nombre, tu correo electrónico, tu número EMA ni ningún texto que escribas. Los datos no te identifican.</string>
-    <string name="consent_required">Solo puedes usar la aplicación si aceptas. Si no aceptas, no puedes entrar en la aplicación.</string>
-    <string name="consent_accept">Aceptar y continuar</string>
-    <string name="consent_decline">Rechazar</string>
-    <string name="consent_declined_note">No puedes usar la aplicación sin la analítica anónima. Puedes cerrar la aplicación o aceptar para continuar.</string>
-    <string name="consent_withdraw">Retirar el consentimiento de analítica</string>
     <string name="profile_delete_account">Eliminar mi cuenta</string>
     <string name="profile_delete_account_title">¿Eliminar tu cuenta?</string>
     <string name="profile_delete_account_message">Tu cuenta se elimina para siempre: el acceso, el correo, el alias y la foto. Tu jugador EMA y tus resultados de torneos se conservan. No se puede deshacer.</string>
     <string name="profile_delete_account_confirm">Eliminar</string>
     <string name="privacy_policy">Política de privacidad</string>
-    <string name="consent_withdraw_info">La aplicación detiene la analítica y te lo pregunta de nuevo. No puedes usar la aplicación hasta que aceptes.</string>
     <string name="stat_best_hand_points">Más puntos en una mano</string>
     <string name="stat_average_hands_per_table">Media de manos por mesa</string>
     <string name="app_switch_to_admin">App de gestión</string>
@@ -795,4 +782,19 @@ Gana el primero que sale bien</string>
     <string name="update_available_later">Más tarde</string>
     <!-- Sign-in of the web: the page of the apps -->
     <string name="sign_in_get_the_app">Descargar la app</string>
+    <string name="consent_title">Analítica anónima</string>
+    <string name="consent_message">¿Puede la app enviar datos anónimos de uso y de errores? Nos ayudan a mejorarla. Es opcional: si lo rechazas, la app funciona igual.</string>
+    <string name="consent_more_details">Más detalles</string>
+    <string name="consent_why_title">Por qué</string>
+    <string name="consent_why">Para encontrar errores y ver qué partes de la app se usan, y así saber qué arreglar y mejorar.</string>
+    <string name="consent_what_title">Qué</string>
+    <string name="consent_what">Las pantallas y acciones que usas, y los errores con detalles técnicos. Nunca tu nombre, tu correo, tu número EMA ni lo que escribes.</string>
+    <string name="consent_where_title">Dónde</string>
+    <string name="consent_where">El uso va a Google Analytics para Firebase, que lo guarda 14 meses. Los errores van a nuestro propio registro en Firebase, en la UE, que los borra a los 30 días.</string>
+    <string name="consent_change_title">Cambiarlo después</string>
+    <string name="consent_change">En tu perfil, cuando quieras.</string>
+    <string name="consent_accept">Aceptar</string>
+    <string name="consent_decline">Rechazar</string>
+    <string name="profile_analytics">Enviar analítica anónima</string>
+    <string name="profile_analytics_info">Datos anónimos de cómo usas la app y de sus errores, nunca tu nombre, tu correo ni tu número EMA. Desactívalo para pararlo al momento. La app funciona igual.</string>
 </resources>

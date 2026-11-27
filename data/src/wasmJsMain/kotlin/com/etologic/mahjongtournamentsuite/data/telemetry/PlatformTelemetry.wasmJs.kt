@@ -14,6 +14,10 @@ private external fun sendTelemetry(kind: String, name: String, json: String)
 @JsFun("() => (typeof window.mtsTelemetryHasConsent === 'function') && window.mtsTelemetryHasConsent()")
 private external fun readConsent(): Boolean
 
+@OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
+@JsFun("() => (typeof window.mtsTelemetryHasAnswered === 'function') && window.mtsTelemetryHasAnswered()")
+private external fun readAnswered(): Boolean
+
 /** True when the settings of Analytics are filled in at the top of `telemetry.js`. */
 @OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
 @JsFun("() => (typeof window.mtsTelemetryConfigured === 'function') && window.mtsTelemetryConfigured()")
@@ -44,6 +48,8 @@ private object WebTelemetry : Telemetry {
     override val requiresConsent: Boolean get() = readConfigured()
 
     override fun hasConsent(): Boolean = readConsent()
+
+    override fun hasAnswered(): Boolean = readAnswered()
 
     override fun setConsent(granted: Boolean) = sendTelemetry("consent", "", JsonObject(mapOf("value" to JsonPrimitive(granted))).toString())
 
