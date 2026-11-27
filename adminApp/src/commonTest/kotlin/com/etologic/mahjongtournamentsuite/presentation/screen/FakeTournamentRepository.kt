@@ -22,6 +22,7 @@ internal class FakeTournamentRepository : TournamentRepository {
 
     /** The visibility that the last settings save sent. */
     var savedIsPublic: Boolean? = null
+    var savedHideResultsFromRound: Int? = null
 
     /** When true, the write methods (settings, players, teams, files) work. Otherwise they fail, like an unused method. */
     var writesSucceed = false
@@ -334,6 +335,7 @@ internal class FakeTournamentRepository : TournamentRepository {
         hideResultsFromRound: Int?,
     ): AppResult<Tournament> {
         savedIsPublic = isPublic
+        savedHideResultsFromRound = hideResultsFromRound
         return writeResult(Tournament(id = tournamentId, name = name, isTeams = false, numPlayers = 0, numRounds = 0, isPublic = isPublic ?: true))
     }
 

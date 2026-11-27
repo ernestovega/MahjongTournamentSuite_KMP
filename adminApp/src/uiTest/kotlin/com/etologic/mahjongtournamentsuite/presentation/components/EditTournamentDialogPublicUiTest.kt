@@ -9,6 +9,9 @@ import androidx.compose.ui.test.SkikoComposeUiTest
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.isToggleable
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -72,12 +75,12 @@ class EditTournamentDialogPublicUiTest {
         waitForIdle()
     }
 
-    private fun tournament(isPublic: Boolean) = Tournament(
-        id = "t1", name = "Open", isTeams = false, numPlayers = 8, numRounds = 1,
+    private fun tournament(isPublic: Boolean, numRounds: Int = 1, hideResultsFromRound: Int? = null) = Tournament(
+        id = "t1", name = "Open", isTeams = false, numPlayers = 8, numRounds = numRounds, hideResultsFromRound = hideResultsFromRound,
         eventStartDate = "2026-10-22", eventEndDate = "2026-10-24", isPublic = isPublic,
         shortName = "OPEN", primaryColor = "#02B16B", hostCountry = "ESP", hostCity = "Madrid", timeZone = "Europe/Madrid",
         venue = TournamentVenue(name = "Club", address = "Calle 1", contactEmail = "club@example.test"),
-        roundSchedules = listOf(TournamentRoundSchedule(roundId = 1, date = "2026-10-22", startTime = "10:00")),
+        roundSchedules = (1..numRounds).map { TournamentRoundSchedule(roundId = it, date = "2026-10-22", startTime = "${9 + it}:00") },
     )
 
     /** The switches of the General tab, from the top: finish the hand, best hands, chicken hands, public. */
@@ -102,5 +105,17 @@ class EditTournamentDialogPublicUiTest {
         openGeneralTab(tournament(isPublic = false))
         onNodeWithText("Public tournament").performScrollTo()
         onAllNodes(isToggleable())[publicSwitch].assertIsOff()
+    }
+
+    @Test
+    fun theHiddenResultsStartFromTheChosenRound() = runSkikoComposeUiTest(size = Size(380f, 900f)) {
+        openGeneralTab(tournament(isPublic = true, numRounds = 4, hideResultsFromRound = 4))
+        onNodeWithTag("hide_results_from_round").performScrollTo().performClick()
+        waitForIdle()
+        onAllNodesWithText("Round 2").onLast().performClick()
+        waitForIdle()
+        onNodeWithText("Save").performClick()
+        waitForIdle()
+        assertEquals(2, server.savedHideResultsFromRound)
     }
 }
