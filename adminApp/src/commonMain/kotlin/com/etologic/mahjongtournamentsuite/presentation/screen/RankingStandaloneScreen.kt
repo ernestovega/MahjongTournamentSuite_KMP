@@ -78,6 +78,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsCheckboxRow
+import com.etologic.mahjongtournamentsuite.presentation.components.EmaLogo
 import com.etologic.mahjongtournamentsuite.presentation.components.OrganizationLogo
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerPhoto
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
@@ -180,6 +181,8 @@ private fun RankingStandaloneContent(
     var maxRowsPerScreen by remember { mutableIntStateOf(MAX_ROWS_PER_SCROLL) }
     var showTopThree by rememberSaveable { mutableStateOf(false) }
     var playing by remember { mutableStateOf(false) }
+    var showOrganizerLogo by rememberSaveable { mutableStateOf(true) }
+    var showEmaLogo by rememberSaveable { mutableStateOf(true) }
     val listState = rememberLazyListState()
 
     fun refresh(force: Boolean = false) = scope.launch {
@@ -262,10 +265,13 @@ private fun RankingStandaloneContent(
             Box(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
                 Box(modifier = Modifier.fillMaxSize().appFocusGroup()) {
                     val compact = LocalCompactLayout.current
+                    // On a phone the switches under the logos would cover the first rows: while paused, the table
+                    // goes down to leave them room.
+                    val compactTop = if (!playing && snapshot?.tournament != null) COMPACT_TOP_WITH_SWITCHES else 24.dp
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(if (compact) PaddingValues(start = 8.dp, top = 24.dp, end = 8.dp, bottom = 132.dp) else PaddingValues(MtsTheme.spacing.lg))
+                            .padding(if (compact) PaddingValues(start = 8.dp, top = compactTop, end = 8.dp, bottom = 132.dp) else PaddingValues(MtsTheme.spacing.lg))
                             .appFocusGroup(),
                     ) {
                         error?.let {
@@ -301,26 +307,44 @@ private fun RankingStandaloneContent(
                         )
                     }
                     snapshot?.tournament?.let { tournament ->
-                        // The logo of the main organizer, when it has one, in the empty corner over the controls.
-                        val logoUrl = tournament.mainOrganizerLogo()
-                        if (logoUrl != null) {
-                            OrganizationLogo(
-                                name = tournament.mainOrganizerName(),
-                                logoUrl = logoUrl,
-                                primaryColor = tournament.primaryColor,
-                                size = if (compact) COMPACT_LOGO_SIZE else LOGO_SIZE,
+                        // The logos of the main organizer (when it has one), in the empty corner over the controls, and
+                        // of the EMA, in the empty corner at the right of the table.
+                        val logoSize = if (compact) COMPACT_LOGO_SIZE else LOGO_SIZE
+                        tournament.mainOrganizerLogo()?.let { logoUrl ->
+                            ProjectionLogo(
+                                running = playing,
+                                showWhileRunning = showOrganizerLogo,
+                                onShowWhileRunningChange = { showOrganizerLogo = it },
                                 modifier = Modifier
                                     .align(Alignment.TopStart)
                                     .padding(start = if (compact) 8.dp else 24.dp, top = if (compact) 20.dp else 40.dp),
-                            )
+                            ) {
+                                OrganizationLogo(
+                                    name = tournament.mainOrganizerName(),
+                                    logoUrl = logoUrl,
+                                    primaryColor = tournament.primaryColor,
+                                    size = logoSize,
+                                )
+                            }
+                        }
+                        ProjectionLogo(
+                            running = playing,
+                            showWhileRunning = showEmaLogo,
+                            onShowWhileRunningChange = { showEmaLogo = it },
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(end = if (compact) 8.dp else 24.dp, top = if (compact) 20.dp else 40.dp),
+                        ) {
+                            EmaLogo(size = logoSize)
                         }
                     }
                     if (playing) {
+                        // The seconds to the next page, in the bottom corner: the top corners hold the logos.
                         Text(
                             text = remainingSeconds.toString(),
                             style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold).inTextFont(),
                             modifier = Modifier
-                                .align(Alignment.TopEnd)
+                                .align(Alignment.BottomEnd)
                                 .padding(16.dp),
                         )
                     }
@@ -1039,6 +1063,9 @@ private val RankingTableWidth = 1_100.dp
 private val RankingHorizontalPadding = 32.dp
 private val RankingColumnSpacing = 28.dp
 
-/** The logo of the main organizer in the corner of the ranking: big on a wide screen, small on a phone. */
+/** The logos of the main organizer and of the EMA in the corners of the ranking: big on a wide screen, small on a phone. */
 private val LOGO_SIZE = 120.dp
 private val COMPACT_LOGO_SIZE = 44.dp
+
+/** The top of the ranking on a phone while paused: under the small logos and their switches. */
+private val COMPACT_TOP_WITH_SWITCHES = 128.dp

@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -20,6 +21,9 @@ import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_ORGANIZATION_COLOR
 import com.etologic.mahjongtournamentsuite.domain.model.Organization
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentOrganizer
+import mahjongtournamentsuite.ui.generated.resources.Res
+import mahjongtournamentsuite.ui.generated.resources.logo_ema
+import org.jetbrains.compose.resources.painterResource
 
 /**
  * The logo of a club or a federation, in a circle. Without a logo the circle has the color of the organization and the
@@ -80,4 +84,15 @@ fun organizationColor(hex: String): Color {
     val normalized = hex.trim().uppercase().takeIf { Regex("^#[0-9A-F]{6}$").matches(it) } ?: DEFAULT_ORGANIZATION_COLOR
     val value = normalized.substring(1).toLong(16)
     return Color(0xFF000000 or value)
+}
+
+/** The logo of the European Mahjong Association, shown on the screens that the venue projects. */
+@Composable
+fun EmaLogo(size: Dp, modifier: Modifier = Modifier) {
+    Image(
+        painter = painterResource(Res.drawable.logo_ema),
+        contentDescription = "European Mahjong Association",
+        contentScale = ContentScale.Fit,
+        modifier = modifier.size(size),
+    )
 }
