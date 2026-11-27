@@ -40,6 +40,12 @@ production data.
   password reset email) and the EMA players of `firebase/functions/src/scripts/stagingPlayers.ts`
   (the people registered for the next tournament, plus fictitious 9999xxxx numbers). The players marked `byHand` are left for the rehearsal, which creates them in Player base.
 
+- Action `tournaments`: the tournaments of the production seed (`seed:production-tournaments`, see
+  [testing-tournament-scenarios.md](testing-tournament-scenarios.md)), with players from the EMA registry of staging,
+  and then the statistics rebuilt. Run it after the copy of the EMA registry (below), so the players match production.
+  It writes only those tournament ids and their organizations, and no accounts: the testers' accounts are linked only
+  in production. The real past tournaments of production (`legacy-*`) are not part of the seed.
+
 ## The Android app
 
 `./gradlew :androidApp:assembleStaging` builds the staging app, signed with the debug key. It installs next to the real

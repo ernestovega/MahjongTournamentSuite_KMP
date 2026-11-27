@@ -28,6 +28,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryLink
@@ -57,6 +58,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.apps_ios_detail
 import mahjongtournamentsuite.playerapp.generated.resources.apps_linux_detail
 import mahjongtournamentsuite.playerapp.generated.resources.apps_mac_detail
 import mahjongtournamentsuite.playerapp.generated.resources.apps_notice_close
+import mahjongtournamentsuite.playerapp.generated.resources.apps_notice_later
 import mahjongtournamentsuite.playerapp.generated.resources.apps_notice_message
 import mahjongtournamentsuite.playerapp.generated.resources.apps_notice_never
 import mahjongtournamentsuite.playerapp.generated.resources.apps_notice_title
@@ -297,9 +299,21 @@ internal fun AppsNoticeDialog(device: AppPlatform?, onClose: (forever: Boolean) 
                 }
             },
             confirmButton = {
-                MtsDialogButtons {
-                    DebouncedButton(onClick = { onClose(false) }) { ButtonText(stringResource(Res.string.apps_notice_close)) }
-                    AppTextButton(onClick = { onClose(true) }) { ButtonText(stringResource(Res.string.apps_notice_never)) }
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
+                ) {
+                    MtsDialogButtons {
+                        DebouncedButton(onClick = { onClose(false) }) { ButtonText(stringResource(Res.string.apps_notice_close)) }
+                        AppTextButton(onClick = { onClose(true) }) { ButtonText(stringResource(Res.string.apps_notice_never)) }
+                    }
+                    Text(
+                        stringResource(Res.string.apps_notice_later),
+                        modifier = Modifier.fillMaxWidth(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                    )
                 }
             },
         )

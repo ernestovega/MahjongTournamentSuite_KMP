@@ -353,7 +353,8 @@
     <string name="apps_soon">Скоро</string>
     <string name="apps_this_device">Для этого устройства</string>
     <string name="apps_notice_title">Приложения MTS</string>
-    <string name="apps_notice_message">MTS есть и в виде приложения для Android, iPhone, Mac, Windows и Linux.\n\nПозже их можно найти в меню «Ещё», в пункте «Скачать приложение».</string>
+    <string name="apps_notice_message">MTS есть и в виде приложения для Android, iPhone, Mac, Windows и Linux.</string>
+    <string name="apps_notice_later">Позже их можно найти в меню «Ещё», в пункте «Скачать приложение».</string>
     <string name="apps_notice_close">Закрыть</string>
     <string name="apps_notice_never">Больше не показывать</string>
 </resources>

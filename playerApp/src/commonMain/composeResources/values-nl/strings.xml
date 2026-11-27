@@ -345,7 +345,8 @@ Maar één e-mailadres kan maar één account in de app hebben: wie een eigen ac
     <string name="apps_soon">Binnenkort</string>
     <string name="apps_this_device">Voor dit apparaat</string>
     <string name="apps_notice_title">MTS-apps</string>
-    <string name="apps_notice_message">MTS is ook beschikbaar als app voor Android, iPhone, Mac, Windows en Linux.\n\nJe vindt ze later in het menu Meer, onder Download de app.</string>
+    <string name="apps_notice_message">MTS is ook beschikbaar als app voor Android, iPhone, Mac, Windows en Linux.</string>
+    <string name="apps_notice_later">Je vindt ze later in het menu Meer, onder Download de app.</string>
     <string name="apps_notice_close">Sluiten</string>
     <string name="apps_notice_never">Niet meer tonen</string>
 </resources>
