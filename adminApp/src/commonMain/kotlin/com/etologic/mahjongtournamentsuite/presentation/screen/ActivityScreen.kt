@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -19,7 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -53,6 +51,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderText
@@ -69,9 +68,9 @@ import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButt
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
-import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
+import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDatePickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentTimePickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
@@ -87,6 +86,8 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.localizedDateTimeOrNull
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
@@ -106,7 +107,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.activity_action_playe
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_player_import
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_player_substitute
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registration_draw
-import mahjongtournamentsuite.adminapp.generated.resources.activity_action_tournament_player_count
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registration_update
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registry_create
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registry_delete
@@ -124,6 +124,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.activity_action_table
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_team_update
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_tournament_create
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_tournament_delete
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_tournament_player_count
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_tournament_rename
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_tournament_update
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_user_create
@@ -176,9 +177,8 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import kotlin.time.Clock
-import kotlin.time.Instant
 import com.etologic.mahjongtournamentsuite.presentation.components.FilterGroup as TitledFilterGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsFilterChip as FilterChip
 
 private val WhenColumnWidth = 150.dp
 

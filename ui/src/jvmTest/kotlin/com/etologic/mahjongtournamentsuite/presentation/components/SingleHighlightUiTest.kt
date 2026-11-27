@@ -97,12 +97,15 @@ class SingleHighlightUiTest {
         // Points near the corners of the box, inside the room of the old halo fill. A round or pill shaped control and
         // its own layer never reach them, and the focus ring passes outside them.
         // A Debounced button has no halo room: its box is the drawn control, so the points go closer to the corners.
+        // A chip is its own box, with round corners and nothing around them: there is no room for a second area.
         val c = if (idle.height < 48) 2 else 5
-        val corners = listOf(c to c, idle.width - 1 - c to c, c to idle.height - 1 - c, idle.width - 1 - c to idle.height - 1 - c)
+        val corners = if (idle.height < 40) emptyList() else listOf(c to c, idle.width - 1 - c to c, c to idle.height - 1 - c, idle.width - 1 - c to idle.height - 1 - c)
         for ((label, image) in listOf("hover" to hovered, "focus" to focused)) {
             val pixels = image.toPixelMap()
             corners.forEach { (x, y) ->
-                assertEquals(idlePixels[x, y], pixels[x, y], "$name ($theme): the corner ($x, $y) lights up on $label, so two areas light up.")
+                // A few levels of antialiasing at the round corner of a chip are fine; the old halo changed them by 30 or more.
+                val change = colorDistance(idlePixels[x, y], pixels[x, y])
+                assertTrue(change <= 8, "$name ($theme): the corner ($x, $y) lights up on $label by $change, so two areas light up.")
             }
         }
         // The hover shows clearly on the control itself, also on a filled green button (Ernesto, 27-nov). The point is
@@ -127,12 +130,41 @@ class SingleHighlightUiTest {
         "debounced-icon-button" to { m, f -> DebouncedIconButton({}, m.focusRequester(f)) { Icon(Icons.Default.Edit, contentDescription = "Edit") } },
         "debounced-button" to { m, f -> DebouncedButton({}, m.focusRequester(f)) { Text("SAVE") } },
         "debounced-text-button" to { m, f -> DebouncedTextButton({}, m.focusRequester(f)) { Text("CANCEL") } },
+        "filter-chip" to { m, f -> MtsFilterChip(selected = false, onClick = {}, label = { Text("2026") }, modifier = m.focusRequester(f)) },
     )
 
     @Test
     fun aFocusedButtonLightsUpInItsOwnShapeOnly() {
         for (dark in listOf(false, true)) {
             controls.forEach { (name, control) -> runComposeUiTest { assertOneLitArea(name, dark, control) } }
+        }
+    }
+
+    /** A tab shows the pink ring only while the keyboard is in use, inside its edges. */
+    @Test
+    fun aTabShowsTheRingOnlyWithTheKeyboard() {
+        runComposeUiTest {
+            lateinit var focus: FocusRequester
+            setContent {
+                focus = remember { FocusRequester() }
+                MtsTheme(useDarkTheme = false) {
+                    Surface(color = MaterialTheme.colorScheme.surface) {
+                        Box(Modifier.padding(24.dp).width(120.dp)) { MtsTab(selected = false, onClick = {}, title = "Ranking", modifier = Modifier.testTag(tag).focusRequester(focus)) }
+                    }
+                }
+            }
+            val node = onNodeWithTag(tag)
+            val idle = node.captureToImage()
+            MtsInputModality.keyboard = false
+            runOnIdle { focus.requestFocus() }
+            waitForIdle()
+            assertEquals(idle.toPixelMap().buffer.toList(), node.captureToImage().toPixelMap().buffer.toList(), "The tab shows its focus while the mouse is in use.")
+            MtsInputModality.keyboard = true
+            waitForIdle()
+            val focused = node.captureToImage()
+            MtsInputModality.keyboard = false
+            save(focused, "tab-light-focus")
+            assertNotEquals(idle.toPixelMap().buffer.toList(), focused.toPixelMap().buffer.toList(), "The tab does not show the keyboard focus.")
         }
     }
 

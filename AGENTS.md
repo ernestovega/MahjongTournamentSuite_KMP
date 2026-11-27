@@ -243,6 +243,9 @@ Apply these rules to every new or changed dialog:
   `ui`): with the mouse only the hover shows; with the keyboard only the pink ring (Material's own focus layer is off
   in `MtsRippleConfiguration`). A mouse press moves the focus to the pressed control (`Modifier.focusOnMousePress`),
   so Tab and the arrows go on from there. Custom focus marks read `keyboardInUse()`.
+- The ring goes just inside the drawn edge (inset), so no parent clips it. Chips, tabs and segmented buttons use
+  `MtsFilterChip`, `MtsInputChip`, `MtsTab`, `MtsTextTab` and `MtsSegmentedButton` (designsystem `MtsFocusRing.kt`), never
+  the raw Material ones.
 - `SingleHighlightUiTest` and `SingleHighlightConventionTest` (ui jvmTest) guard these rules.
 
 ## Checkboxes, Switches And Radio Buttons
