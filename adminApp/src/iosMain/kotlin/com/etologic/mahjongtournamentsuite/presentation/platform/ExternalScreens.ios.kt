@@ -38,6 +38,9 @@ actual fun openTableQrWindow(tournamentName: String, link: String, logoUrl: Stri
 }
 
 private fun presentSheet(keepScreenOn: Boolean, content: @Composable () -> Unit) {
+    // Without a window there is nothing to show the sheet over: the UI tests on the simulator, where building a
+    // ComposeUIViewController also fails (their Info.plist has no CADisableMinimumFrameDurationOnPhone).
+    if (IosViewControllers.top() == null) return
     val controller: UIViewController = ComposeUIViewController {
         if (keepScreenOn) {
             DisposableEffect(Unit) {
