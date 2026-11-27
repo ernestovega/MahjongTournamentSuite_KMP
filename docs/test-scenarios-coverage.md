@@ -15,18 +15,18 @@ untested, in order of priority. The last part lists the test tournaments of the 
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `domain`: business rules, use cases | 5,783 | 259 | – | – | – | – | – | 100 % | 95 % |
 | `data`: repositories, network, telemetry | 7,962 | 483 | – | – | – | – | – | 99 % | 90 % |
-| `designsystem`: theme, base components | 2,253 | – | 36 | 4 | – | – | – | 94 % | 61 % |
-| `ui`: shared Compose components | 18,433 | 100 | 340 | 27 | – | – | – | 97 % | 72 % |
-| `adminApp`: admin screens | 32,705 | 331 | 636 | 93 | – | 175 | 5 | 93 % | 72 % |
+| `designsystem`: theme, base components | 2,260 | – | 36 | 4 | – | – | – | 94 % | 61 % |
+| `ui`: shared Compose components | 18,472 | 100 | 340 | 27 | – | – | – | 97 % | 72 % |
+| `adminApp`: admin screens | 32,757 | 331 | 636 | 94 | – | 175 | 5 | 93 % | 72 % |
 | `playerApp`: player screens | 12,102 | 200 | 188 | 57 | – | 74 | 8 | 95 % | 69 % |
 | `androidApp`: Android entry point | 184 | – | – | – | – | – | – | – | – |
-| Backend: API routes and middleware | 4,013 | 60 | – | – | 337 | – | – | 93 % | 86 % |
-| Backend: services | 16,126 | 380 | – | – | 193 | – | – | 96 % | 88 % |
+| Backend: API routes and middleware | 4,013 | 60 | – | – | 346 | – | – | 93 % | 86 % |
+| Backend: services | 16,090 | 383 | – | – | 227 | – | – | 96 % | 88 % |
 | Backend: models, clients, setup | 323 | 33 | – | – | – | – | – | 96 % | 83 % |
 | Backend: maintenance and seed scripts | 2,837 | 6 | – | – | – | – | – | 53 % | 63 % |
 | Firestore and Storage rules (deny all) | 16 | 3 | – | – | – | – | – | – | – |
 | Repository scripts (Game day, smoke, versions) | 7,341 | 124 | – | – | – | – | – | – | – |
-| **Total** | **110,078** | **1,979** | **1,200** | **181** | **530** | **249** | **13** | **95 %** | **76 %** |
+| **Total** | **110,140** | **1,982** | **1,200** | **182** | **573** | **249** | **13** | **95 %** | **76 %** |
 
 - **Counts** are the tests in the sources of each kind. A screenshot test can record several images, and an
   Android or Web E2E test of the admin or player part counts in `adminApp` or `playerApp`.
