@@ -53,7 +53,8 @@ class DefaultTournamentRepositoryFilesAndTablesTest {
                 refuse -> respond(ByteReadChannel("""{"error":"refused"}"""), HttpStatusCode.InternalServerError)
                 path.endsWith("/id-cards") || path.endsWith("/ema-report") ->
                     respond(ByteReadChannel("%PDF"), HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/pdf"))
-                path.endsWith("/tables-with-hands") -> jsonResponse("""{"tables":[$TABLE_WITH_HANDS]}""")
+                path.endsWith("/tables-with-hands") || path.endsWith("/my-hidden-tables") -> jsonResponse("""{"tables":[$TABLE_WITH_HANDS]}""")
+                path.endsWith("/results-visibility") -> jsonResponse("""{"resultsRevealed":true}""")
                 path.endsWith("/tables") -> jsonResponse(
                     """{"tables":[{"roundId":1,"tableId":2,"playerIds":[1,2,3,4],"isCompleted":true,"hasProgress":true,""" +
                         """"completionStatus":"completed","bestHandScores":[24,8],"chickenHandCount":1,"version":5}]}""",
@@ -182,5 +183,20 @@ class DefaultTournamentRepositoryFilesAndTablesTest {
     private companion object {
         const val TABLE_WITH_HANDS = """{"table":{"version":4,"roundId":1,"tableId":2,"playerIds":[1,2,3,4],"isCompleted":false,""" +
             """"useTotalsOnly":false},"hands":[{"handId":1,"handScore":"8","isDone":true}]}"""
+    }
+
+    @Test
+    fun theRevealOfTheHiddenResultsAndTheOwnHiddenTablesReachTheServer() = runTest {
+        val repository = repository()
+        assertIs<AppResult.Success<Unit>>(repository.setResultsRevealed("t1", true))
+        assertTrue(requests.any { it.startsWith("POST /tournaments/t1/results-visibility") && it.contains("\"revealed\":true") }, requests.toString())
+
+        val own = assertIs<AppResult.Success<List<Pair<TableState, List<TableHand>>>>>(repository.getOwnHiddenTables("t1")).value
+        assertEquals(2, own.single().first.tableId)
+        assertTrue(requests.any { it.startsWith("GET /player/tournaments/t1/my-hidden-tables") })
+
+        refuse = true
+        assertIs<AppResult.Failure>(repository.setResultsRevealed("t1", false))
+        assertIs<AppResult.Failure>(repository.getOwnHiddenTables("t1"))
     }
 }

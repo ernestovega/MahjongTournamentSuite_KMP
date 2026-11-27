@@ -320,7 +320,7 @@ class CalculateStatisticsUseCase {
     private fun penaltyOf(text: String): Int = text.split(';').sumOf { it.trim().toIntOrNull() ?: 0 }
 
     /** The biggest single penalty of a penalty text, as a positive number. Only negative values are penalties. */
-    private fun worstPenaltyOf(text: String): Int = text.split(';').maxOfOrNull { -(it.trim().toIntOrNull() ?: 0) }?.coerceAtLeast(0) ?: 0
+    private fun worstPenaltyOf(text: String): Int = text.split(';').maxOf { -(it.trim().toIntOrNull() ?: 0) }.coerceAtLeast(0)
 
     private companion object {
         const val MIN_HAND_SCORE = 8
