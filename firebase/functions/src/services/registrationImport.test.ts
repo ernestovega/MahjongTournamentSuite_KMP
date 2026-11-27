@@ -81,4 +81,9 @@ describe("import of the old Google Form", () => {
     assert.equal(rows[3].firstName, "Somebody Else");
     assert.equal(rows[3].team, null);
   });
+
+  it("cuts food restrictions that are too long instead of refusing the row", () => {
+    const rows = readFormRows([FORM.split("\r\n")[0], `15/09/2026 18:28:56,ana@example.com,Ana,García,10990039,Spain,,${"x".repeat(400)}`].join("\r\n"));
+    assert.equal(rows[0].foodRestrictions.length, 300);
+  });
 });

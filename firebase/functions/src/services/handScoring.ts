@@ -104,8 +104,7 @@ export function handSeatScores(hand: Data, seats: [string, string, string, strin
   let base: SeatValues;
   if (winner === "" && loser === "" && score === "0") {
     base = [0, 0, 0, 0];
-  } else if (winner === "") {
-    return null;
+    // isResultSelectionInvalid has refused every other hand without a winner.
   } else if (loser === "") {
     const handScore = Number(score);
     const winnerPoints = (handScore + MIN_HAND_SCORE) * LOSER_COUNT;

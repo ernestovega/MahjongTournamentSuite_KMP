@@ -95,10 +95,6 @@ export const ROLE_PERMISSIONS: Readonly<Record<GlobalUserRole, readonly Permissi
   SUPER_ADMIN: PERMISSIONS.filter((permission) => permission !== "accounts.requestRemoval"),
 };
 
-export function roleHasPermission(role: GlobalUserRole, permission: Permission): boolean {
-  return ROLE_PERMISSIONS[role].includes(permission);
-}
-
 /** The roles whose permissions a super admin may change for one person or with a custom role. */
 export type CustomizableRole = "EDITOR" | "CLUB_ADMIN";
 export const CUSTOMIZABLE_ROLES: readonly CustomizableRole[] = ["EDITOR", "CLUB_ADMIN"];

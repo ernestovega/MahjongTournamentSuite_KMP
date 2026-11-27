@@ -15,6 +15,7 @@ import {
   type ImportRow,
   type ExportSlot,
   type PlanInput,
+  readSpreadsheetRecords,
 } from "./playerImport";
 
 function slot(id: number, overrides: Partial<ExportSlot> = {}): ExportSlot {
@@ -385,4 +386,21 @@ test("each file that is not a player list is refused with its code", async () =>
   await assert.rejects(parsePlayerImportFile("header.csv", Buffer.from("id,ema id\n\n")), code("NO_ROWS"));
   const tooMany = ["id,ema id", ...Array.from({ length: 1001 }, (_, index) => `${index + 1},${10000000 + index}`)].join("\n");
   await assert.rejects(parsePlayerImportFile("many.csv", Buffer.from(tooMany)), code("TOO_MANY_ROWS"));
+});
+
+test("cells read their text, the address of a link, and nothing from an unknown object", () => {
+  assert.equal(cellText({ text: "Ana" }), "Ana");
+  assert.equal(cellText({ hyperlink: "mailto:ana@example.com" }), "ana@example.com");
+  assert.equal(cellText({ other: 1 }), "");
+});
+
+test("a file that looks like a zip but whose entries are broken is not an Excel file", async () => {
+  // One entry in the central directory that points at no local header.
+  const buffer = Buffer.alloc(46 + 22);
+  buffer.writeUInt32LE(0x02014b50, 0);
+  buffer.writeUInt32LE(0x06054b50, 46);
+  buffer.writeUInt16LE(1, 46 + 8);
+  buffer.writeUInt16LE(1, 46 + 10);
+  buffer.writeUInt32LE(46, 46 + 12);
+  await assert.rejects(readSpreadsheetRecords("players.xlsx", buffer), (error: { details?: { code?: string } }) => error.details?.code === "NOT_EXCEL");
 });

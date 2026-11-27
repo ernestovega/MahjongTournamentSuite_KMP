@@ -77,4 +77,14 @@ describe("route edges", () => {
     assert.equal(response.status, 403);
     assert.match(String((response.body as { message?: string }).message), /cannot make it a player/);
   });
+
+  it("refuses a player account as an editor of a tournament, and the removal of a super admin from it", async () => {
+    const player = await createAccount({ role: "PLAYER" });
+    const asEditor = await server.request("PUT", `/tournaments/${tournamentId}/members/${player.uid}`, { token: admin.token });
+    assert.equal(asEditor.status, 400);
+    assert.match(String((asEditor.body as { message?: string }).message), /player account cannot be assigned/);
+    const removed = await server.request("DELETE", `/tournaments/${tournamentId}/members/${admin.uid}`, { token: admin.token });
+    assert.equal(removed.status, 400);
+    assert.match(String((removed.body as { message?: string }).message), /Super admins cannot be removed/);
+  });
 });

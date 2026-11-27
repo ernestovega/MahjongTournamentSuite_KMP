@@ -6,6 +6,8 @@ import {
   matchPhaseAt,
   normalizeMatchExtraMinutes,
   normalizeTimeZone,
+  readStoredMatchExtraMinutes,
+  readStoredTimeZone,
   plannedRoundClocks,
   seatingIsOpen,
   tournamentMatchPhase,
@@ -201,4 +203,11 @@ test("gives a clock at the planned start to each past round without one", () => 
   assert.deepEqual([...clocks.entries()], [[1, { startedAtMs: Date.UTC(2026, 9, 10, 10, 0), pausedAtMs: null, pausedMs: 0, adjustMs: 0 }]]);
   assert.equal(plannedRoundClocks({ ...tournament, isCompleted: true }, Date.UTC(2026, 9, 10, 13, 0)).size, 0);
   assert.equal(plannedRoundClocks({ ...tournament, timeZone: "" }, Date.UTC(2026, 9, 10, 13, 0)).size, 0);
+});
+
+test("stored time zones and extra minutes that do not fit read as none and as the default", () => {
+  assert.equal(readStoredTimeZone("Not/AZone"), null);
+  assert.equal(readStoredTimeZone("Europe/Madrid"), "Europe/Madrid");
+  assert.equal(readStoredMatchExtraMinutes(-3), normalizeMatchExtraMinutes(null));
+  assert.equal(readStoredMatchExtraMinutes(7), 7);
 });
