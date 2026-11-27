@@ -5,13 +5,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailItem
@@ -23,6 +29,8 @@ import com.etologic.mahjongtournamentsuite.domain.repository.PlayerAccountReposi
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerImportRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
+import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
+import com.etologic.mahjongtournamentsuite.presentation.platform.LocalPickedSpreadsheetForTests
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerImportPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayersPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
@@ -57,7 +65,7 @@ class PlayersScreenAccountsUiTest {
         val store = AppMemoryStore()
     }
 
-    private fun ComposeUiTest.show(world: World, waitForMenus: Boolean = true) {
+    private fun ComposeUiTest.show(world: World, waitForMenus: Boolean = true, openedUsers: MutableList<String?>? = null) {
         setContent {
             val themeController = ThemeController(ThemePreference.Light, false, {})
             val koin = remember {
@@ -80,8 +88,15 @@ class PlayersScreenAccountsUiTest {
                 }.koin
             }
             KoinContext(koin) {
-                CompositionLocalProvider(LocalThemeController provides themeController) {
-                    MtsTheme(useDarkTheme = false) { PlayersScreen(rememberNavController(), "t1") }
+                // The file chooser of the import is cancelled.
+                CompositionLocalProvider(LocalThemeController provides themeController, LocalPickedSpreadsheetForTests provides { null }) {
+                    MtsTheme(useDarkTheme = false) {
+                        val navController = rememberNavController()
+                        NavHost(navController, startDestination = "players") {
+                            composable("players") { PlayersScreen(navController, "t1") }
+                            composable<UsersRoute> { entry -> openedUsers?.add(entry.toRoute<UsersRoute>().editUid) }
+                        }
+                    }
                 }
             }
         }
@@ -188,6 +203,28 @@ class PlayersScreenAccountsUiTest {
         openMenu(0)
 
         onAllNodesWithText("Edit email").assertCountEquals(0)
+    }
+
+    @Test
+    fun editAccountOpensTheAccountInTheUsers() = runComposeUiTest {
+        val opened = mutableListOf<String?>()
+        show(World(GlobalUserRole.SUPER_ADMIN, listOf(withAccount, withoutAccount)), openedUsers = opened)
+
+        openMenu(0)
+        onNodeWithText("Edit account").performClick()
+        waitUntil(timeoutMillis = 5_000) { opened.isNotEmpty() }
+
+        assertEquals(listOf<String?>("u1"), opened)
+    }
+
+    @Test
+    fun aCancelledImportLeavesThePlayers() = runComposeUiTest {
+        show(World(GlobalUserRole.SUPER_ADMIN, listOf(withAccount, withoutAccount)))
+
+        onAllNodes(hasText("Import") and hasClickAction()).onFirst().performClick()
+        waitForIdle()
+
+        onAllNodesWithContentDescription("Player actions").assertCountEquals(2)
     }
 }
 
