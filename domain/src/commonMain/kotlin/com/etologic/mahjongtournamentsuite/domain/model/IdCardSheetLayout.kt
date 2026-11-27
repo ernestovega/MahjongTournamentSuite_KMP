@@ -44,7 +44,8 @@ data class IdCardSheetLayout(
     fun grid(): IdCardSheetGrid? {
         val maxColumns = maxColumns()
         val maxRows = maxRows()
-        if (maxColumns < 1 || maxRows < 1) return null
+        // Both counts are 0 or more, so their product is 0 when either is.
+        if (maxColumns * maxRows < 1) return null
         val count = cardsPerSheet.coerceIn(1, maxColumns * maxRows)
         val columns = min(maxColumns, count)
         val rows = ceil(count.toDouble() / columns).toInt()

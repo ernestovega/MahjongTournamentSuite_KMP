@@ -65,6 +65,20 @@ class CalculateStatisticsEdgeBranchesTest {
     }
 
     @Test
+    fun anOpenTableCountsOnlyItsDoneHandsAndAChickenWithoutAWinnerIsNotAHand() {
+        val hands = listOf(
+            hand(1, winner = "1", loser = "2", score = "10"),
+            hand(2, winner = "3", loser = "4", score = "8").copy(isDone = false),
+            hand(3, winner = "", loser = "", score = "", chicken = true),
+        )
+        val open = table(scores = listOf("0", "0", "0", "0")).copy(isCompleted = false)
+
+        val result = calculate(players, listOf(RankingTable(open, hands)))
+
+        assertEquals(0, result.players.first { it.playerId == 3 }.handsWon)
+    }
+
+    @Test
     fun aHandOfOnlyPenaltiesCountsAndAScoreWithoutWinnerDoesNot() {
         val hands = listOf(
             hand(1, winner = "1", loser = "2", score = "10"),
