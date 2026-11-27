@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -17,6 +16,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -69,7 +69,7 @@ fun AppTopBarButton(
                     iconContent != null -> iconContent()
                     // In the menu the fill is a small circle behind the icon, so the item keeps the look of the menu.
                     filled -> Box(
-                        modifier = Modifier.size(MenuIconFillSize).background(containerColor, CircleShape),
+                        modifier = Modifier.size(MenuIconFillSize).background(containerColor, MaterialTheme.shapes.small),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(imageVector = icon, contentDescription = null, tint = textColor, modifier = Modifier.size(MenuIconSize))
@@ -118,6 +118,8 @@ fun AppTopBarButton(
         // A filled button keeps a gap above and below inside the top bar.
         contentPadding = if (filled) FilledContentPadding else ButtonDefaults.TextButtonContentPadding,
         modifier = if (filled) Modifier.padding(vertical = MtsTheme.spacing.xs) else Modifier,
+        // A filled button is a rounded rectangle, not a pill (Ernesto, 2026-11-27).
+        shape = if (filled) MaterialTheme.shapes.small else ButtonDefaults.textShape,
     ) {
         Column(
             modifier = Modifier.alpha(if (buttonEnabled) 1f else DisabledTopBarButtonAlpha).then(dim),

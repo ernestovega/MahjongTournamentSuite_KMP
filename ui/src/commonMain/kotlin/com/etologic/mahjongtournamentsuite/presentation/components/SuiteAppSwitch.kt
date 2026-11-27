@@ -18,7 +18,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -55,8 +54,11 @@ fun SuiteAppSwitchButton(target: SuiteApp) {
         text = label,
         icon = target.icon,
         onClick = { switcher(target) },
-        // The button to the admin app has the purple of its top bar, so the player sees where it goes.
-        containerColor = if (target == SuiteApp.ADMIN) MtsTheme.colors.adminHeader else Color.Unspecified,
+        // Each button has the color of the top bar of the app it opens: purple for the admin app, green for the player app.
+        containerColor = when (target) {
+            SuiteApp.ADMIN -> MtsTheme.colors.adminHeader
+            SuiteApp.PLAYER -> MtsTheme.colors.playerHeader
+        },
     )
 }
 
