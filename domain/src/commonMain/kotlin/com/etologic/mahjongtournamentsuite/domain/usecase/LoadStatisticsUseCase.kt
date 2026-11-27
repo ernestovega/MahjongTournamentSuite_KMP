@@ -149,10 +149,8 @@ class LoadStatisticsUseCase(
     private fun slotNames(slots: List<TournamentPlayer>, registry: List<Player>): Map<Int, String> {
         val byEma = registry.associateBy { it.emaId }
         return slots.associate { slot ->
-            slot.id to (
-                slot.assignedEmaId?.let(byEma::get)?.displayName
-                    ?: "Player ${slot.id}"
-                )
+            val player = slot.assignedEmaId?.let(byEma::get)
+            slot.id to (if (player == null) "Player ${slot.id}" else player.displayName)
         }
     }
 }

@@ -97,6 +97,17 @@ class PlayerCountRulesTest {
     }
 
     @Test
+    fun theNewSlotsFollowTheHighestNumberWhateverTheOrderOfTheSlots() {
+        val shuffled = teamsOf24.reversed()
+
+        val slots = PlayerCountRules.targetSlots(shuffled, emptyList(), 28, isTeams = true)
+
+        assertEquals((25..28).toList(), slots.filter { it.id > 24 }.map { it.id })
+        assertEquals(listOf(7, 7, 7, 7), slots.filter { it.id > 24 }.map { it.team })
+        assertEquals((1..4).toList(), PlayerCountRules.targetSlots(emptyList(), emptyList(), 4, isTeams = false).map { it.id }, "a draw without slots starts at 1")
+    }
+
+    @Test
     fun aChoiceIsCompleteWithExactlyTheSlotsToRemove() {
         assertFalse(PlayerCountRules.isChoiceComplete(20, 16, setOf(1, 2, 3), emptyList()))
         assertTrue(PlayerCountRules.isChoiceComplete(20, 16, setOf(1, 2, 3, 4), emptyList()))

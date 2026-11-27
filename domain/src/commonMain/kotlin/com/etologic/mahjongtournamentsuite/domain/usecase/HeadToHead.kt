@@ -70,7 +70,7 @@ fun headToHead(
             handsWon = theirs?.sumOf { it.handsWon },
             winsOnTheirDiscard = tallies.sumOf { it.discardLosses },
             selfDraws = tallies.sumOf { it.selfDrawLosses },
-            bestHand = theirs?.maxOf { it.bestHand }?.takeIf { it > 0 },
+            bestHand = theirs?.let { list -> list.maxOf { it.bestHand }.takeIf { it > 0 } },
         ),
     )
 }

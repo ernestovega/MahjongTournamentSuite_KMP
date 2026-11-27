@@ -10,7 +10,7 @@ const val MY_TABLE_PATH_WORD = "my-table"
  */
 fun Tournament.myTableQrLink(site: String): String {
     val base = site.trimEnd('/')
-    val slug = registration?.slug?.trim().orEmpty()
+    val slug = registration?.slug.orEmpty().trim()
     val tournamentPath = if (slug.isNotEmpty()) slug else "t/$id"
     return "$base/$tournamentPath/$MY_TABLE_PATH_WORD"
 }

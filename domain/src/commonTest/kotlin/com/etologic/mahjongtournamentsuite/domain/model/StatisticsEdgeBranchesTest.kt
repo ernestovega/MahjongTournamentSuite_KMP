@@ -82,4 +82,19 @@ class StatisticsEdgeBranchesTest {
         assertEquals(listOf(best, other), statistics.lowestDealInLeaders)
         assertEquals(listOf(best), statistics.selfDrawLeaders)
     }
+
+    @Test
+    fun theRecordsOfATableAreTheHighestWhicheverTableComesFirst() {
+        val high = result(score = 10, hands = true, handsWon = 4, bestHand = 40, maxPenalty = 30).copy(chickenHands = 3)
+        val low = result(score = 5, hands = true, handsWon = 1, bestHand = 8, maxPenalty = 10).copy(chickenHands = 1)
+
+        listOf(listOf(high, low), listOf(low, high)).forEach { order ->
+            val player = PlayerStatistics(1, order)
+            assertEquals(3, player.mostChickenHandsAtATable)
+            assertEquals(30, player.highestPenalty)
+            assertEquals(40, player.bestHand)
+            assertEquals(4, player.mostHandsWonAtATable)
+        }
+        assertNull(PlayerStatistics(1, listOf(result(score = 10, hands = false))).mostChickenHandsAtATable, "no table has hands")
+    }
 }

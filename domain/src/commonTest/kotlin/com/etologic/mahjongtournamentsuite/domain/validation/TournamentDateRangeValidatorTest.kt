@@ -42,4 +42,14 @@ class TournamentDateRangeValidatorTest {
         assertFalse(TournamentDateRangeValidator.isValidRange("2026-02-30", "2026-03-01"))
         assertFalse(TournamentDateRangeValidator.isValidRange("2026-03-01", "soon"))
     }
+
+    @Test
+    fun everyMonthEndsOnItsLastDay() {
+        val lastDays = listOf(31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+        lastDays.forEachIndexed { index, last ->
+            val month = (index + 1).toString().padStart(2, '0')
+            assertTrue(TournamentDateRangeValidator.isValidDate("2027-$month-$last"), "2027-$month-$last")
+            assertFalse(TournamentDateRangeValidator.isValidDate("2027-$month-${last + 1}"), "2027-$month-${last + 1}")
+        }
+    }
 }
