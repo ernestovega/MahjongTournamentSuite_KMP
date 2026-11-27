@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
+import com.etologic.mahjongtournamentsuite.presentation.components.DialogBackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -26,7 +27,7 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material3.AlertDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AlertDialog
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -243,6 +244,7 @@ fun PlayerImportDialog(
         is ImportStep.Preview -> {
             val preview = current.preview
             TrackedDialog("ImportPlayersPreview") {
+                DialogBackHandler(onDismiss = onDismiss)
                 Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
                     Surface(
                         modifier = Modifier.appFocusGroup().widthIn(max = 1100.dp).fillMaxWidth(0.92f).fillMaxHeight(0.94f),

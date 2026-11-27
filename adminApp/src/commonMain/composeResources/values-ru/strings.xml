@@ -465,6 +465,12 @@
     <string name="hand_score_whole">Счёт должен быть целым числом.</string>
     <string name="hand_score_minimum">Минимальный счёт для победы в раздаче — 8.</string>
     <string name="hand_chicken_maximum">Курица не может дать больше 12 очков.</string>
+    <string name="hand_self_draw">Со стены</string>
+    <string name="chicken_hand_two_lines">Рука-\nкурица</string>
+    <string name="penalty_incomplete">Штраф %1$d не заполнен: у одного игрока должно быть отрицательное значение, одно или разделённое между тремя другими так, чтобы сумма была нулём.</string>
+    <string name="hand_draw">Ничья</string>
+    <string name="open_hand_n">Открыть руку %1$d</string>
+    <string name="close_hand_n">Закрыть руку %1$d</string>
     <string name="seat_positions_first">Сначала выберите все четыре места</string>
     <string name="table_done">Готово</string>
     <string name="edit_seats">Изменить рассадку</string>

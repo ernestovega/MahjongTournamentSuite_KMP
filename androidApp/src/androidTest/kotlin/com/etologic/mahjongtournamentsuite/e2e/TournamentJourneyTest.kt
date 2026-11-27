@@ -1,11 +1,11 @@
 package com.etologic.mahjongtournamentsuite.e2e
 
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onLast
@@ -127,29 +127,15 @@ class TournamentJourneyTest : AdminE2eTest() {
         c.waitForText("Players & results")
     }
 
-    // The table editor, as in TableEditingTest. An empty winner or loser cell shows "-".
-    private val emptyChoice = SemanticsMatcher("empty winner or loser") { node ->
-        node.config.getOrNull(SemanticsProperties.Role) == Role.DropdownList &&
-            node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == "-" } == true
-    }
-
-    private fun playerOption(id: Int) = SemanticsMatcher("player $id") { node ->
-        node.config.getOrNull(SemanticsProperties.Text)?.any { it.text.startsWith("$id - ") } == true
-    } and hasClickAction()
-
     /** Writes the last hand of the table in the editor: [winner] wins with 8 from the discard of [loser]. */
     private fun writeTheLastHandInTheEditor(winner: Int, loser: Int) {
-        val cells = c.onAllNodes(emptyChoice)
-        val count = cells.fetchSemanticsNodes().size
-        cells[count - 2].performScrollTo()
-        cells[count - 2].performClick()
-        c.onAllNodes(playerOption(winner)).onLast().performClick()
-        c.onAllNodes(emptyChoice).let { it[it.fetchSemanticsNodes().size - 1].performClick() }
-        c.onAllNodes(playerOption(loser)).onLast().performClick()
-        c.onAllNodes(hasSetTextAction() and hasText("")).onLast().performTextInput("8")
+        // Hand 16 is the open hand: a button for each seat, tagged with the id of its player.
+        c.onNode(hasTestTag("hand-16-winner-$winner"), useUnmergedTree = true).performScrollTo().performClick()
+        c.onNode(hasTestTag("hand-16-loser-$loser"), useUnmergedTree = true).performScrollTo().performClick()
+        c.onNode(hasSetTextAction() and hasAnyAncestor(hasTestTag("hand-16-score")), useUnmergedTree = true).performTextInput("8")
         // Only the Done box of hand 16. With every hand done the server closes the table: no "Completed" switch. By its
         // click action: a touch at its centre can land on the sticky header of the table.
-        c.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.ToggleableState)).onLast()
+        c.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.ToggleableState) and hasAnyAncestor(hasTestTag("hand-16-done")), useUnmergedTree = true)
             .performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.OnClick)
         c.clickButton("Save")
         c.waitForText("16 of 16 hands done.")

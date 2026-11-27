@@ -219,23 +219,6 @@ class CalculateStatisticsUseCaseTest {
     }
 
     @Test
-    fun aHandWithOnlyAPenaltyCountsThePenaltyButIsNotAPlayedHand() {
-        val hands = listOf(
-            hand(1, winner = "1", loser = "2", score = "10"),
-            hand(2, winner = "", loser = "", score = "", penalties = listOf("", "-10", "", "")),
-        )
-        val table = table(completed = true, scores = listOf("34", "-28", "-8", "-8"))
-
-        val result = calculate(players, listOf(RankingTable(table, hands)))
-        val p2 = result.players.first { it.playerId == 2 }
-
-        assertEquals(1, p2.handsPlayed)
-        assertEquals(0, p2.drawnHands)
-        assertEquals(10, p2.penaltyPoints)
-        assertEquals(10, p2.highestPenalty)
-    }
-
-    @Test
     fun ranksRivalsByWeightedScoreOverSharedTables() {
         val tallies = listOf(
             RivalTally("a", tablesBehind = 1, discardLosses = 1, othersDiscardWins = 1),

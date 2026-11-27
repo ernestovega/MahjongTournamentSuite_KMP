@@ -788,7 +788,7 @@
     <!-- Sign-in of the web: the page of the apps -->
     <string name="sign_in_get_the_app">Скачать приложение</string>
     <string name="consent_title">Анонимная аналитика</string>
-    <string name="consent_message">Можно ли приложению отправлять анонимные данные об использовании и ошибках? Они помогают нам его улучшать. Это необязательно: если вы откажетесь, приложение работает так же.</string>
+    <string name="consent_message">Поможете нам улучшить приложение? Оно отправляет только анонимные данные об использовании и ошибках.</string>
     <string name="consent_more_details">Подробнее</string>
     <string name="consent_why_title">Зачем</string>
     <string name="consent_why">Чтобы находить ошибки и видеть, какими частями приложения пользуются, и понимать, что исправить и улучшить.</string>

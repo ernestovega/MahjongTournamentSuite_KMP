@@ -90,7 +90,7 @@ class TelemetryUiTest {
             }
         }
 
-        onNodeWithText("It is optional", substring = true).assertExists()
+        onNodeWithText("Will you help us improve the app?", substring = true).assertExists()
         onNodeWithText("Google Analytics for Firebase", substring = true).assertDoesNotExist()
 
         onNodeWithTag(CONSENT_DETAILS_TAG).performClick()

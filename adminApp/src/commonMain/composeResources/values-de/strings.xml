@@ -459,6 +459,12 @@
     <string name="hand_score_whole">Der Wert muss eine ganze Zahl sein.</string>
     <string name="hand_score_minimum">Der Mindestwert, um eine Hand zu gewinnen, ist 8.</string>
     <string name="hand_chicken_maximum">Eine Hühnerhand kann nicht mehr als 12 Punkte haben.</string>
+    <string name="hand_self_draw">Selbst gezogen</string>
+    <string name="chicken_hand_two_lines">Hühner-\nhand</string>
+    <string name="penalty_incomplete">Strafe %1$d ist unvollständig: Ein Spieler braucht einen negativen Wert, allein oder auf die anderen drei verteilt, sodass die Summe null ergibt.</string>
+    <string name="hand_draw">Remis</string>
+    <string name="open_hand_n">Hand %1$d öffnen</string>
+    <string name="close_hand_n">Hand %1$d schließen</string>
     <string name="seat_positions_first">Wähle zuerst alle vier Plätze</string>
     <string name="table_done">Erledigt</string>
     <string name="edit_seats">Plätze bearbeiten</string>

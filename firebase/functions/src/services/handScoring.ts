@@ -49,16 +49,6 @@ function isCompletelyEmpty(hand: Data): boolean {
     && !hand.isChickenHand;
 }
 
-const PENALTY_FIELDS = ["playerEastPenalty", "playerSouthPenalty", "playerWestPenalty", "playerNorthPenalty"] as const;
-
-/**
- * True when the hand has no result but has a penalty. A penalty can be given at any moment, also before the hand
- * is played, so it counts on its own: the hand changes the seats by its penalties only. It is not a played hand.
- */
-export function isPenaltyOnly(hand: Data): boolean {
-  return isCompletelyEmpty(hand) && PENALTY_FIELDS.some((field) => penalty(hand[field]) !== 0);
-}
-
 function penalty(value: unknown): number {
   return text(value).split(";").reduce((sum, part) => {
     const parsed = /^-?\d+$/.test(part.trim()) ? Number(part.trim()) : 0;
@@ -66,16 +56,53 @@ function penalty(value: unknown): number {
   }, 0);
 }
 
+const PENALTY_FIELDS = ["playerEastPenalty", "playerSouthPenalty", "playerWestPenalty", "playerNorthPenalty"] as const;
+
+/**
+ * True when one penalty (the values of the four seats, east to north) is complete: one player has a negative value and
+ * the others have nothing, or one player has a negative value and the other three have positive values that add up to
+ * zero with it (a shared penalty). A penalty with no value at all is no penalty. Anything else is incomplete.
+ */
+export function isPenaltyRowComplete(cells: string[]): boolean {
+  const values = cells.map((cell) => cell.trim());
+  if (values.every((value) => value === "" || /^-?0+$/.test(value))) return true;
+  if (values.some((value) => value !== "" && !/^-?\d+$/.test(value))) return false;
+  const numbers = values.map((value) => (value === "" ? 0 : Number(value)));
+  const negatives = numbers.filter((value) => value < 0).length;
+  const positives = numbers.filter((value) => value > 0).length;
+  if (negatives !== 1) return false;
+  if (positives === 0) return true;
+  return positives === 3 && numbers.reduce((sum, value) => sum + value, 0) === 0;
+}
+
+/** The penalties of a hand, one row of four cells per penalty. The seat texts hold the penalties joined with ";". */
+export function penaltyRowsOf(hand: Data): string[][] {
+  const seats = PENALTY_FIELDS.map((field) => (text(hand[field]) === "" ? [] : text(hand[field]).split(";")));
+  const rows = Math.max(0, ...seats.map((parts) => parts.length));
+  return Array.from({ length: rows }, (_, row) => seats.map((parts) => parts[row] ?? ""));
+}
+
+/** True when every penalty of the hand is complete. */
+export function arePenaltiesComplete(hand: Data): boolean {
+  return penaltyRowsOf(hand).every(isPenaltyRowComplete);
+}
+
+/**
+ * True when the hand can be marked done: its result counts (a draw needs a score of 0) and its penalties are complete.
+ */
+export function canBeDone(hand: Data, seats: [string, string, string, string]): boolean {
+  return handSeatScores(hand, seats) != null && arePenaltiesComplete(hand);
+}
+
 /** The score change of every seat for one hand, or null when the hand does not count. */
 export function handSeatScores(hand: Data, seats: [string, string, string, string]): SeatValues | null {
-  if (isResultSelectionInvalid(hand)) return null;
-  if (isCompletelyEmpty(hand) && !isPenaltyOnly(hand)) return null;
+  if (isResultSelectionInvalid(hand) || isCompletelyEmpty(hand)) return null;
   const score = text(hand.handScore);
   const winner = text(hand.playerWinnerId);
   const loser = normalizedLoser(hand);
 
   let base: SeatValues;
-  if (winner === "" && loser === "" && (score === "0" || score === "")) {
+  if (winner === "" && loser === "" && score === "0") {
     base = [0, 0, 0, 0];
   } else if (winner === "") {
     return null;
@@ -94,7 +121,8 @@ export function handSeatScores(hand: Data, seats: [string, string, string, strin
       return -MIN_HAND_SCORE;
     }) as SeatValues;
   }
-  const penalties = PENALTY_FIELDS.map((field) => penalty(hand[field]));
+  const penalties = [hand.playerEastPenalty, hand.playerSouthPenalty, hand.playerWestPenalty, hand.playerNorthPenalty]
+    .map(penalty);
   return base.map((value, index) => value + penalties[index]) as SeatValues;
 }
 

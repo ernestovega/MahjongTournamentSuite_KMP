@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 
-import { handSeatScores, pointsFromScores, SeatTexts, tablePointsOf, tableTotalsPatch } from "./handScoring";
+import { handSeatScores, isPenaltyRowComplete, pointsFromScores, SeatTexts, tablePointsOf, tableTotalsPatch } from "./handScoring";
 
 /**
  * Checks the shared scoring cases in testdata/scoring-cases.json. The app tests check the same file,
@@ -26,6 +26,7 @@ type Cases = {
     points: string[];
   }[];
   points: { name: string; scores: string[]; forcedZeroSeat?: number; points: string[] | null }[];
+  penaltyRows: { name: string; cells: string[]; complete: boolean }[];
 };
 
 const cases = JSON.parse(
@@ -81,3 +82,9 @@ for (const entry of cases.points) {
     assert.deepEqual(pointsFromScores(entry.scores as SeatTexts, entry.forcedZeroSeat ?? null), entry.points);
   });
 }
+
+test("shared penalty cases: a penalty is complete or not", () => {
+  for (const entry of cases.penaltyRows) {
+    assert.equal(isPenaltyRowComplete(entry.cells), entry.complete, entry.name);
+  }
+});

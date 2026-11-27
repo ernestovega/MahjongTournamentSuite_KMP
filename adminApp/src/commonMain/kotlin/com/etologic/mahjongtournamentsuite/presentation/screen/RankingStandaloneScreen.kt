@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.foundation.layout.Arrangement
+import com.etologic.mahjongtournamentsuite.presentation.components.DialogBackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -528,6 +529,7 @@ private fun RankingControls(
         }
         if (settingsOpen) {
             TrackedDialog("RankingsSettings") {
+                DialogBackHandler(onDismiss = { settingsOpen = false })
                 ModalBottomSheet(onDismissRequest = { settingsOpen = false }) {
                     Column(
                         modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 24.dp).appFocusGroup(),

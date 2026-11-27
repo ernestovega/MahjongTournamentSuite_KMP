@@ -459,6 +459,12 @@
     <string name="hand_score_whole">La puntuación debe ser un número entero.</string>
     <string name="hand_score_minimum">La puntuación mínima para ganar una mano es 8.</string>
     <string name="hand_chicken_maximum">Una mano del pollo no puede valer más de 12 puntos.</string>
+    <string name="hand_self_draw">Del muro</string>
+    <string name="chicken_hand_two_lines">Mano\npollo</string>
+    <string name="penalty_incomplete">La penalización %1$d está incompleta: un jugador necesita un valor negativo, solo o repartido entre los otros tres para que sume cero.</string>
+    <string name="hand_draw">Empate</string>
+    <string name="open_hand_n">Abrir la mano %1$d</string>
+    <string name="close_hand_n">Cerrar la mano %1$d</string>
     <string name="seat_positions_first">Elige primero las cuatro posiciones de los asientos</string>
     <string name="table_done">Hecho</string>
     <string name="edit_seats">Editar asientos</string>

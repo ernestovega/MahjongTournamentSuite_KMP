@@ -1,14 +1,12 @@
 package com.etologic.mahjongtournamentsuite.e2e
 
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
@@ -18,12 +16,6 @@ import org.junit.Test
 
 /** Hand entry in the admin table editor. The tests use the last table of `test-last-table`, which has 15 hands. */
 class TableEditingTest : AdminE2eTest() {
-    // The winner and loser cells are select fields. An empty one shows "-".
-    private val emptyChoice = SemanticsMatcher("empty winner or loser") { node ->
-        node.config.getOrNull(SemanticsProperties.Role) == Role.DropdownList &&
-            node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == "-" } == true
-    }
-
     @After
     fun restoreData() {
         E2eApi.reset("test-last-table")
@@ -39,45 +31,36 @@ class TableEditingTest : AdminE2eTest() {
         c.waitForText("15 of 16 hands done.")
     }
 
-    private fun pickFromList(option: String) {
-        c.onAllNodes(hasText(option) and hasClickAction()).onLast().performClick()
+    /** The node with this tag, inside the card of a hand. The tags are "hand-<number>-<field>". */
+    private fun tagged(tag: String) = c.onNode(hasTestTag(tag), useUnmergedTree = true)
+
+    /** The seat buttons of the open hand carry the id of their player. A second tap on a chosen one clears it. */
+    private fun chooseWinner(id: String, hand: Int = LAST_HAND) {
+        tagged("hand-$hand-winner-$id").performScrollTo().performClick()
     }
 
-    /** A menu option or a cell that shows the player with this id, as "13 - NAME". */
-    private fun playerOption(id: String) = SemanticsMatcher("player $id") { node ->
-        node.config.getOrNull(SemanticsProperties.Text)?.any { it.text.startsWith("$id - ") } == true
-    } and hasClickAction()
-
-    /** The open menu is the last one in the tree. */
-    private fun pickPlayer(id: String) {
-        c.onAllNodes(playerOption(id)).onLast().performClick()
+    private fun chooseLoser(id: String, hand: Int = LAST_HAND) {
+        tagged("hand-$hand-loser-$id").performScrollTo().performClick()
     }
 
-    private fun chooseWinner(id: String) {
-        val cells = c.onAllNodes(emptyChoice)
-        val count = cells.fetchSemanticsNodes().size
-        cells[count - 2].performScrollTo()
-        cells[count - 2].performClick()
-        pickPlayer(id)
-    }
-
-    private fun chooseLoser(id: String) {
-        val cells = c.onAllNodes(emptyChoice)
-        cells[cells.fetchSemanticsNodes().size - 1].performClick()
-        pickPlayer(id)
-    }
-
-    private fun typeScore(score: String) {
-        c.onAllNodes(hasSetTextAction() and hasText("")).onLast().performTextInput(score)
+    private fun typeScore(score: String, hand: Int = LAST_HAND) {
+        c.onNode(hasSetTextAction() and hasAnyAncestor(hasTestTag("hand-$hand-score")), useUnmergedTree = true)
+            .performScrollTo().performTextInput(score)
     }
 
     /**
-     * The Done box of the last hand, by its click action: a touch at its centre can land on the sticky header of the
-     * table, which stays over the first rows while the table scrolls.
+     * The Done box of a hand, by its click action: a touch at its centre can land on the sticky header of the hands,
+     * which stays over the first hands while the page scrolls.
      */
-    private fun tickDone() {
-        c.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.ToggleableState)).onLast()
+    private fun tickDone(hand: Int = LAST_HAND) {
+        c.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.ToggleableState) and hasAnyAncestor(hasTestTag("hand-$hand-done")), useUnmergedTree = true)
             .performSemanticsAction(SemanticsActions.OnClick)
+    }
+
+    /** Done can be ticked only when the hand has a valid result. */
+    private fun assertDoneDisabled(hand: Int = LAST_HAND) {
+        c.onNode(SemanticsMatcher.keyIsDefined(SemanticsProperties.ToggleableState) and hasAnyAncestor(hasTestTag("hand-$hand-done")), useUnmergedTree = true)
+            .assertIsNotEnabled()
     }
 
     /** The switches above the rows are "Manual scores" and then "Completed". The rows follow with one "Done" box each. */
@@ -201,7 +184,7 @@ class TableEditingTest : AdminE2eTest() {
     fun winnerWithoutScoreShowsMissingFields() {
         openLastTable()
         chooseWinner(winner)
-        tickDone()
+        assertDoneDisabled()
         c.waitForText("This hand is invalid and cannot be marked as done or completed.", substring = true)
         c.scrollListTo("There are missing fields.", substring = true)
     }
@@ -221,9 +204,8 @@ class TableEditingTest : AdminE2eTest() {
         chooseWinner(winner)
         chooseLoser(loser)
         typeScore("8")
-        // The loser list stays closed until a winner exists, so the winner is cleared after the loser is chosen.
-        c.onAllNodes(playerOption(winner)).onLast().performClick()
-        pickFromList("-")
+        // A second tap on the winner clears it, and the loser stays.
+        chooseWinner(winner)
         c.scrollListTo("A loser cannot be selected without a winner.", substring = true)
     }
 
@@ -246,15 +228,17 @@ class TableEditingTest : AdminE2eTest() {
         c.waitForText("Players & results")
         c.selectTable(8)
         c.waitForText("0 of 16 hands done.")
-        chooseWinner(players[0])
-        chooseLoser(players[1])
-        typeScore("13")
-        val toggles = c.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.ToggleableState))
-        toggles[toggles.fetchSemanticsNodes().size - 2].performClick()
+        chooseWinner(players[0], hand = 1)
+        chooseLoser(players[1], hand = 1)
+        typeScore("13", hand = 1)
+        tagged("hand-1-chicken").performScrollTo().performSemanticsAction(SemanticsActions.OnClick)
         c.scrollListTo("A chicken hand cannot score more than 12 points.", substring = true)
     }
 
     private companion object {
         const val SERVER_WAIT_MS = 20_000L
+
+        /** The last table has 15 done hands: the 16th is the open one. */
+        const val LAST_HAND = 16
     }
 }

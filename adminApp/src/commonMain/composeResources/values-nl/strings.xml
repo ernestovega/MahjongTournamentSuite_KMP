@@ -459,6 +459,12 @@
     <string name="hand_score_whole">De score moet een geheel getal zijn.</string>
     <string name="hand_score_minimum">De minimale score om een hand te winnen is 8.</string>
     <string name="hand_chicken_maximum">Een kippenhand kan niet meer dan 12 punten scoren.</string>
+    <string name="hand_self_draw">Zelf getrokken</string>
+    <string name="chicken_hand_two_lines">Kippen-\nhand</string>
+    <string name="penalty_incomplete">Straf %1$d is onvolledig: één speler heeft een negatieve waarde nodig, alleen of verdeeld over de andere drie zodat het samen nul is.</string>
+    <string name="hand_draw">Remise</string>
+    <string name="open_hand_n">Hand %1$d openen</string>
+    <string name="close_hand_n">Hand %1$d sluiten</string>
     <string name="seat_positions_first">Kies eerst alle vier de plaatsen</string>
     <string name="table_done">Klaar</string>
     <string name="edit_seats">Plaatsen bewerken</string>

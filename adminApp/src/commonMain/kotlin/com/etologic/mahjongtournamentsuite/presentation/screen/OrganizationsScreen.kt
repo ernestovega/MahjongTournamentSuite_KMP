@@ -1,9 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.screenFullBleed
-import com.etologic.mahjongtournamentsuite.presentation.components.screenListPadding
-import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
-import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,11 +21,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.AlertDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -50,6 +48,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
@@ -64,8 +63,9 @@ import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExtendedFloatingActionButton as ExtendedFloatingActionButton
+import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExtendedFloatingActionButton as ExtendedFloatingActionButton
 import com.etologic.mahjongtournamentsuite.presentation.components.EmaCountryDropdown
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
@@ -73,22 +73,20 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconBu
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollArea
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogButtons
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsRadioRow
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.OrganizationLogo
 import com.etologic.mahjongtournamentsuite.presentation.components.RequiredLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
-import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
-import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
-import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
-import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
-import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollArea
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
+import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorField
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorPickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoCropDialog
@@ -97,11 +95,17 @@ import com.etologic.mahjongtournamentsuite.presentation.components.TournamentPla
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.horizontalScrollWithIndicators
+import com.etologic.mahjongtournamentsuite.presentation.components.organizationColor
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberCountryNames
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
+import com.etologic.mahjongtournamentsuite.presentation.components.screenFullBleed
+import com.etologic.mahjongtournamentsuite.presentation.components.screenListPadding
+import com.etologic.mahjongtournamentsuite.presentation.components.verticalScrollWithIndicators
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberImagePicker
 import com.etologic.mahjongtournamentsuite.presentation.presenter.OrganizationsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
@@ -392,6 +396,12 @@ private fun OrganizationCard(organization: Organization, details: String, enable
             colors = CardDefaults.cardColors().let { it.copy(disabledContainerColor = it.containerColor, disabledContentColor = it.contentColor) },
         ) {
             Box(Modifier.fillMaxSize()) {
+                // A corner in the color of the club. The card clips it to its round corner.
+                Box(
+                    Modifier.align(Alignment.TopStart)
+                        .size(OrganizationCardCornerSize)
+                        .background(organizationColor(organization.primaryColor), OrganizationCardCornerShape),
+                )
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -433,6 +443,22 @@ private fun OrganizationCard(organization: Organization, details: String, enable
 }
 
 private val OrganizationCardMinWidth = 220.dp
+
+private val OrganizationCardCornerSize = 40.dp
+
+/** The triangle of the top start corner of a card: its two sides are the edges of the card. */
+private val OrganizationCardCornerShape = GenericShape { size, layoutDirection ->
+    if (layoutDirection == LayoutDirection.Ltr) {
+        moveTo(0f, 0f)
+        lineTo(size.width, 0f)
+        lineTo(0f, size.height)
+    } else {
+        moveTo(size.width, 0f)
+        lineTo(0f, 0f)
+        lineTo(size.width, size.height)
+    }
+    close()
+}
 
 /**
  * Creates an organization, or edits one: name, type, country, color, logo, and the optional premises of a club. The

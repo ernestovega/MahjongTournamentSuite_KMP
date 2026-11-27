@@ -8,7 +8,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.getBoundsInRoot
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.v2.runDesktopComposeUiTest
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
@@ -47,7 +50,7 @@ class CompactLayoutUiTest {
     }
 
     @Test
-    fun onAPhoneEveryHandIsACardWithItsWinnerAndLoser() = runDesktopComposeUiTest(390, 2400) {
+    fun onAPhoneEveryHandIsACardAndTheOpenHandPicksSeatsWithButtons() = runDesktopComposeUiTest(390, 2400) {
         val editor = previewTableManagerEditorState().apply { useTotalsOnly = false }
         setContent {
             CompositionLocalProvider(LocalCompactLayout provides true) {
@@ -57,8 +60,19 @@ class CompactLayoutUiTest {
             }
         }
         editor.hands.indices.forEach { onNodeWithText("#${it + 1}").assertExists() }
-        assertEquals(editor.hands.size, onAllNodesWithText("Winner").fetchSemanticsNodes().size)
-        assertEquals(editor.hands.size, onAllNodesWithText("Loser").fetchSemanticsNodes().size)
+        // Only the first hand that is not done is open.
+        val open = editor.hands.indexOfFirst { !it.isDone } + 1
+        assertEquals(1, onAllNodesWithText("Winner").fetchSemanticsNodes().size)
+        assertEquals(1, onAllNodesWithText("Loser").fetchSemanticsNodes().size)
+
+        onNodeWithTag("hand-$open-winner-102").performClick()
+        assertEquals("102", editor.hands[open - 1].playerWinnerId)
+        onNodeWithTag("hand-$open-loser-103").performClick()
+        assertEquals("103", editor.hands[open - 1].normalizedLoserId)
+        onNodeWithTag("hand-$open-loser-self").performClick()
+        assertEquals("", editor.hands[open - 1].normalizedLoserId)
+        // The winner cannot be the loser too.
+        onNodeWithTag("hand-$open-loser-102").assertIsNotEnabled()
     }
 
     @Test
