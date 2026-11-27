@@ -912,14 +912,23 @@ private fun HiddenResultsNotice(fromRound: Int, revealed: Boolean, enabled: Bool
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.weight(1f),
             )
+            // The button text goes on two lines, so the text on the left keeps its room on a phone (Ernesto, 2026-11-27).
+            val buttonModifier = Modifier.widthIn(max = HIDDEN_RESULTS_BUTTON_MAX_WIDTH)
             if (revealed) {
-                FocusedButton(enabled = enabled, onClick = onHideAgain) { ButtonText(stringResource(Res.string.hide_results_again)) }
+                FocusedButton(enabled = enabled, onClick = onHideAgain, modifier = buttonModifier) {
+                    ButtonText(stringResource(Res.string.hide_results_again), textAlign = TextAlign.Center)
+                }
             } else {
-                FocusedButton(enabled = enabled, onClick = onReveal) { ButtonText(stringResource(Res.string.reveal_results)) }
+                FocusedButton(enabled = enabled, onClick = onReveal, modifier = buttonModifier) {
+                    ButtonText(stringResource(Res.string.reveal_results), textAlign = TextAlign.Center)
+                }
             }
         }
     }
 }
+
+/** Narrow enough to break "Reveal results" and "Hide results again" into two lines. */
+private val HIDDEN_RESULTS_BUTTON_MAX_WIDTH = 140.dp
 
 @Composable
 private fun Notice(text: String, warning: Boolean) {

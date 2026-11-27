@@ -719,7 +719,8 @@ private fun RankingPage(
 ) {
     // A phone reads the ranking in the hand: a normal text size, the full width, and the name column takes the space left.
     val compact = LocalCompactLayout.current
-    val spacing = if (compact) 10.dp else RankingColumnSpacing
+    // On a phone the columns sit closer, so the name keeps the room (Ernesto, 2026-11-27).
+    val spacing = if (compact) 6.dp else RankingColumnSpacing
     Column(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -838,7 +839,8 @@ private fun RankingPage(
                             )
                             if (page.showCountry) {
                                 if (row.isMasked) {
-                                    RankingCell("???", widths.country, TextAlign.Center, textStyle)
+                                    // A phone has room for one sign only.
+                                    RankingCell(if (compact) "?" else "???", widths.country, TextAlign.Center, textStyle)
                                 } else {
                                     RankingCountryCell(row.country, widths.country, textStyle)
                                 }
@@ -944,7 +946,7 @@ private fun RankingColumnWidths.fitNameTo(total: Dp, spacing: Dp, photo: Dp?, co
     // (the player app shows it) and the extra column is cut short, so the name keeps most of the width.
     val fitted = if (compact) {
         copy(
-            country = if (showCountry) 40.dp else country,
+            country = if (showCountry) 28.dp else country,
             extra = extra.coerceAtMost(72.dp),
             showTeam = false,
         )
