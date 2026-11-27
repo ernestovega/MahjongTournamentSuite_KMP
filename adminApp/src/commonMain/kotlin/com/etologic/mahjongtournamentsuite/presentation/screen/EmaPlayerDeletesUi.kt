@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectShownCheckbox
 import com.etologic.mahjongtournamentsuite.presentation.components.ButtonText
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -40,7 +41,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
-import mahjongtournamentsuite.adminapp.generated.resources.clear
 import mahjongtournamentsuite.adminapp.generated.resources.delete_players_count
 import mahjongtournamentsuite.adminapp.generated.resources.dialog_done_title
 import mahjongtournamentsuite.adminapp.generated.resources.ema_player_delete_failure_not_found
@@ -54,7 +54,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.ok
 import mahjongtournamentsuite.adminapp.generated.resources.result_section_deactivated
 import mahjongtournamentsuite.adminapp.generated.resources.result_section_deleted
 import mahjongtournamentsuite.adminapp.generated.resources.result_section_not_deleted
-import mahjongtournamentsuite.adminapp.generated.resources.select_all_shown
 import mahjongtournamentsuite.adminapp.generated.resources.selected_count
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.pluralStringResource
@@ -81,11 +80,19 @@ internal fun PlayerSelectionBar(
         verticalArrangement = Arrangement.spacedBy(if (compact) 0.dp else 4.dp),
         itemVerticalAlignment = Alignment.CenterVertically,
     ) {
-        TextButton(enabled = shownCount > 0 && !busy, onClick = onSelectAllShown) {
-            ButtonText(stringResource(Res.string.select_all_shown, shownCount))
+        // The box in the header of the list selects every player that it shows. A phone has no header: the box goes here.
+        if (compact) {
+            SelectShownCheckbox(
+                shownCount = shownCount,
+                selectedCount = selectedCount,
+                enabled = !busy,
+                onSelectAllShown = onSelectAllShown,
+                onClear = onClear,
+                label = stringResource(Res.string.selected_count, selectedCount),
+            )
+        } else {
+            Text(stringResource(Res.string.selected_count, selectedCount), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        TextButton(enabled = selectedCount > 0 && !busy, onClick = onClear) { ButtonText(stringResource(Res.string.clear)) }
-        Text(stringResource(Res.string.selected_count, selectedCount), color = MaterialTheme.colorScheme.onSurfaceVariant)
         TextButton(
             enabled = selectedCount > 0 && !busy,
             onClick = onDelete,

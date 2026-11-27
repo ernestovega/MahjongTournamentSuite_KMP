@@ -44,10 +44,12 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHead
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderText
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.FilterGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectShownCheckbox
 import com.etologic.mahjongtournamentsuite.presentation.components.ShowTabsAtTop
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.label
@@ -93,6 +95,9 @@ internal fun UsersTable(
     onEdit: (ManagedUser) -> Unit,
     // The space after the last account, so the floating buttons do not cover it.
     bottomPadding: Dp = 24.dp,
+    selectedCount: Int = 0,
+    onSelectAllShown: () -> Unit = {},
+    onClearSelection: () -> Unit = {},
 ) {
     val compact = LocalCompactLayout.current
     val listState = rememberPersistentLazyListState("users")
@@ -109,7 +114,16 @@ internal fun UsersTable(
         if (!compact) {
             item {
                 DataTableHeaderRow {
-                    if (selectable) Spacer(Modifier.width(UserCheckboxColumnWidth))
+                    if (selectable) {
+                        SelectShownCheckbox(
+                            shownCount = users.size,
+                            selectedCount = selectedCount,
+                            enabled = enabled,
+                            onSelectAllShown = onSelectAllShown,
+                            onClear = onClearSelection,
+                            modifier = Modifier.width(UserCheckboxColumnWidth),
+                        )
+                    }
                     DataTableHeaderText(stringResource(Res.string.photo), modifier = Modifier.width(PlayerPhotoColumnWidth))
                     DataTableHeaderText(stringResource(Res.string.country), modifier = Modifier.width(UserCountryColumnWidth))
                     DataTableHeaderText(stringResource(Res.string.alias), modifier = Modifier.weight(0.25f))
@@ -288,30 +302,50 @@ internal fun UserFilters(
                 modifier = if (compact) fieldModifier else Modifier.weight(1f),
             )
         }
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            RoleFilterOrder.forEach { role ->
-                FilterChip(
-                    selected = role in selectedRoles,
-                    onClick = { onRoleToggle(role) },
-                    label = { Text(role.label()) },
-                )
-            }
-            // The photo filters let an admin review quickly the photos that the list shows.
-            UserPhotoFilter.entries.forEach { filter ->
-                FilterChip(
-                    selected = filter in selectedPhotoFilters,
-                    onClick = { onPhotoFilterToggle(filter) },
-                    label = {
-                        Text(
-                            stringResource(
-                                when (filter) {
-                                    UserPhotoFilter.EMA -> Res.string.filter_ema_photo
-                                    UserPhotoFilter.OWN -> Res.string.filter_own_photo
-                                },
-                            ),
+        val roleGroup: @Composable (Modifier) -> Unit = { modifier ->
+            FilterGroup(stringResource(Res.string.role), modifier) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    RoleFilterOrder.forEach { role ->
+                        FilterChip(
+                            selected = role in selectedRoles,
+                            onClick = { onRoleToggle(role) },
+                            label = { Text(role.label()) },
                         )
-                    },
-                )
+                    }
+                }
+            }
+        }
+        // The photo filters let an admin review quickly the photos that the list shows.
+        val photoGroup: @Composable (Modifier) -> Unit = { modifier ->
+            FilterGroup(stringResource(Res.string.photo), modifier) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    UserPhotoFilter.entries.forEach { filter ->
+                        FilterChip(
+                            selected = filter in selectedPhotoFilters,
+                            onClick = { onPhotoFilterToggle(filter) },
+                            label = {
+                                Text(
+                                    stringResource(
+                                        when (filter) {
+                                            UserPhotoFilter.EMA -> Res.string.filter_ema_photo
+                                            UserPhotoFilter.OWN -> Res.string.filter_own_photo
+                                        },
+                                    ),
+                                )
+                            },
+                        )
+                    }
+                }
+            }
+        }
+        // A phone puts each group on its own line. A wider screen puts them side by side, under the two fields.
+        if (compact) {
+            roleGroup(Modifier.fillMaxWidth())
+            photoGroup(Modifier.fillMaxWidth())
+        } else {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                roleGroup(Modifier.weight(1f))
+                photoGroup(Modifier.weight(1f))
             }
         }
     }
