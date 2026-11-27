@@ -471,9 +471,6 @@
     <string name="table_points">Points de table</string>
     <string name="score_sum_zero">Les quatre scores totalisent 0.</string>
     <string name="score_sum_manual">Les quatre scores totalisent %1$s au lieu de 0.\nLes scores manuels sont acceptés tels quels.</string>
-    <string name="score_target_zero">0</string>
-    <string name="score_target_penalties">%1$s, la somme des pénalités</string>
-    <string name="score_sum_mismatch">Les quatre scores totalisent %1$s au lieu de %2$s.</string>
     <string name="score_has_penalty">%1$s a une pénalité de %2$s</string>
     <string name="score_matches_penalty">Les scores totalisent %1$s au lieu de 0, mais cela correspond aux pénalités.\n%2$s a une pénalité de %3$s.</string>
     <string name="score_matches_penalties">Les scores totalisent %1$s au lieu de 0, mais cela correspond aux pénalités.\n%2$s.</string>

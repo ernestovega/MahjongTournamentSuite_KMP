@@ -5,15 +5,21 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.pressKey
+import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.test.runComposeUiTest
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
@@ -34,7 +40,7 @@ class TableResultsCardUiTest {
     private val clock = TestTimeSource()
     private val names = mapOf(1 to "Ana", 2 to "Bo", 3 to "Cai", 4 to "Dan")
 
-    private fun table(manual: Boolean, scores: List<String> = listOf("", "", "", "")) = TableState(
+    private fun table(manual: Boolean, scores: List<String> = listOf("", "", "", ""), substitute: String = "") = TableState(
         roundId = 1,
         tableId = 1,
         playerIds = listOf(1, 2, 3, 4),
@@ -52,6 +58,7 @@ class TableResultsCardUiTest {
         manualPlayerNorthScore = scores[3],
         isCompleted = false,
         useTotalsOnly = manual,
+        forcedZeroPlayerId = substitute,
     )
 
     private fun hand(id: Int, eastPenalty: String = "", southPenalty: String = "") = TableHand(
@@ -119,5 +126,32 @@ class TableResultsCardUiTest {
         onAllNodes(hasText("Manual scores", substring = true) and hasClickAction()).onFirst().performSemanticsAction(SemanticsActions.OnClick)
         waitForIdle()
         assertFalse(editor.useTotalsOnly)
+    }
+
+    @Test
+    fun aSubstituteSeatSaysSo() = runComposeUiTest {
+        show(TableManagerEditorState.from(table(manual = true, scores = listOf("10", "-10", "0", "0"), substitute = " 2 "), emptyList()))
+
+        assertTrue(hint("(Substitute)"))
+    }
+
+    @Test
+    fun theArrowKeysMoveBetweenTheManualScores() = runComposeUiTest {
+        show(TableManagerEditorState.from(table(manual = true), emptyList()))
+        val first = onNodeWithTag("table-total-0")
+        first.requestFocus()
+        first.performKeyInput { pressKey(Key.DirectionLeft) }
+        waitForIdle()
+        first.assertIsFocused()
+
+        first.performKeyInput { pressKey(Key.DirectionRight) }
+        waitForIdle()
+        onNodeWithTag("table-total-1").assertIsFocused()
+
+        val last = onNodeWithTag("table-total-3")
+        last.requestFocus()
+        last.performKeyInput { pressKey(Key.DirectionRight) }
+        waitForIdle()
+        last.assertIsFocused()
     }
 }

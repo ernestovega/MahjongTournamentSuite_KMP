@@ -471,9 +471,6 @@
     <string name="table_points">Table points</string>
     <string name="score_sum_zero">The four scores add up to 0.</string>
     <string name="score_sum_manual">The four scores add up to %1$s rather than 0.\nThe manual scores are accepted as they are.</string>
-    <string name="score_target_zero">0</string>
-    <string name="score_target_penalties">%1$s, the sum of the penalties</string>
-    <string name="score_sum_mismatch">The four scores add up to %1$s rather than %2$s.</string>
     <string name="score_has_penalty">%1$s has a penalty of %2$s</string>
     <string name="score_matches_penalty">The scores add up to %1$s rather than 0, but this matches the penalties.\n%2$s has a penalty of %3$s.</string>
     <string name="score_matches_penalties">The scores add up to %1$s rather than 0, but this matches the penalties.\n%2$s.</string>

@@ -471,9 +471,6 @@
     <string name="table_points">Punti tavolo</string>
     <string name="score_sum_zero">I quattro punteggi sommano 0.</string>
     <string name="score_sum_manual">I quattro punteggi sommano %1$s invece di 0.\nI punteggi manuali sono accettati così come sono.</string>
-    <string name="score_target_zero">0</string>
-    <string name="score_target_penalties">%1$s, la somma delle penalità</string>
-    <string name="score_sum_mismatch">I quattro punteggi sommano %1$s invece di %2$s.</string>
     <string name="score_has_penalty">%1$s ha una penalità di %2$s</string>
     <string name="score_matches_penalty">I punteggi sommano %1$s invece di 0, ma questo corrisponde alle penalità.\n%2$s ha una penalità di %3$s.</string>
     <string name="score_matches_penalties">I punteggi sommano %1$s invece di 0, ma questo corrisponde alle penalità.\n%2$s.</string>
