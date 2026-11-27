@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -40,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.presentation.language.LanguageSelector
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.ConsentDialog
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalAnalyticsConsent
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -54,8 +54,7 @@ import mahjongtournamentsuite.ui.generated.resources.action_cancel
 import mahjongtournamentsuite.ui.generated.resources.action_close
 import mahjongtournamentsuite.ui.generated.resources.action_logout
 import mahjongtournamentsuite.ui.generated.resources.action_save
-import mahjongtournamentsuite.ui.generated.resources.profile_analytics
-import mahjongtournamentsuite.ui.generated.resources.profile_analytics_info
+import mahjongtournamentsuite.ui.generated.resources.consent_title
 import mahjongtournamentsuite.ui.generated.resources.field_email
 import mahjongtournamentsuite.ui.generated.resources.profile_alias
 import mahjongtournamentsuite.ui.generated.resources.profile_alias_info
@@ -83,8 +82,8 @@ const val MAX_ALIAS_LENGTH = 60
  * The alias is private and the photo is public: an info icon on each says so. [onSetPublicPhoto] hides the photo.
  * [onSavePhoto] and [onRemovePhoto] save the own photo. After a save, [onSaved] gets the new profile and the dialog stays open.
  * The title is centered. The app version from [LocalAppVersion] sits faint in the top left corner.
- * A switch turns the anonymous analytics on and off, when the app asks for them ([LocalAnalyticsConsent]).
- * The account actions (logout, delete the account) are red buttons under the form.
+ * The account actions (logout, delete the account, the anonymous analytics) are red buttons under the form.
+ * "Anonymous analytics" shows again the screen of the first start, when the app asks for them ([LocalAnalyticsConsent]).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -153,6 +152,19 @@ fun ProfileDialog(
         scope.launch {
             savePhoto { call(visible) }?.let { visibilityError = it }
             savingVisibility = false
+        }
+    }
+
+    var askingAnalytics by remember { mutableStateOf(false) }
+    LocalAnalyticsConsent.current?.let { consent ->
+        if (askingAnalytics) {
+            ConsentDialog(
+                onAnswer = {
+                    consent.onChange(it)
+                    askingAnalytics = false
+                },
+                onDismiss = { askingAnalytics = false },
+            )
         }
     }
 
@@ -296,22 +308,6 @@ fun ProfileDialog(
                             Text(it.asString(), Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.error, textAlign = TextAlign.Center)
                         }
                     }
-                    // The anonymous analytics are optional. The switch turns them on and off at once, and the app stays open.
-                    LocalAnalyticsConsent.current?.let { consent ->
-                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                            MtsSwitchRow(
-                                checked = consent.enabled,
-                                onCheckedChange = consent.onChange,
-                                enabled = !saving,
-                                switchFirst = true,
-                                gap = 12.dp,
-                                modifier = Modifier.weight(1f, fill = false).testTag(PROFILE_ANALYTICS_TAG),
-                            ) {
-                                Text(stringResource(Res.string.profile_analytics), Modifier.weight(1f, fill = false).padding(end = 12.dp))
-                            }
-                            InfoIcon(stringResource(Res.string.profile_analytics_info))
-                        }
-                    }
                     OutlinedTextField(
                         value = profile.email,
                         onValueChange = {},
@@ -327,13 +323,24 @@ fun ProfileDialog(
                         FocusedButton(enabled = canSave, onClick = { save() }) { ButtonText(stringResource(Res.string.action_save)) }
                     }
                     // The actions on the account, apart from the form: all of them are secondary destructive buttons.
-                    if (onSignOut != null || onDeleteAccount != null) {
+                    // The anonymous analytics are one of them, not a switch in the form (Ernesto, 2026-11-27): the button opens
+                    // the same screen as the first start, where the user accepts or declines again.
+                    val analyticsConsent = LocalAnalyticsConsent.current
+                    if (onSignOut != null || onDeleteAccount != null || analyticsConsent != null) {
                         // The same room above and below the line, more than between the fields.
                         HorizontalDivider(Modifier.padding(vertical = 8.dp))
                         AccountActions {
                             // The special cases, rarely used, first and as red text without a border. Logout last, red and filled.
                             if (onDeleteAccount != null) {
                                 DestructiveButton(Res.string.profile_delete_account, !saving, filled = false) { confirmingDelete = true }
+                            }
+                            if (analyticsConsent != null) {
+                                DestructiveButton(
+                                    Res.string.consent_title,
+                                    !saving,
+                                    filled = false,
+                                    modifier = Modifier.testTag(PROFILE_ANALYTICS_TAG),
+                                ) { askingAnalytics = true }
                             }
                             onSignOut?.let {
                                 // A text button looks shorter than its height, so the filled one needs more room to look evenly spaced.
@@ -370,7 +377,13 @@ private fun AccountActions(content: @Composable () -> Unit) {
 
 /** A red button of the account: filled for the usual action (logout), only text for the special ones. */
 @Composable
-private fun DestructiveButton(text: StringResource, enabled: Boolean, filled: Boolean, onClick: () -> Unit) {
+private fun DestructiveButton(
+    text: StringResource,
+    enabled: Boolean,
+    filled: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
     if (filled) {
         FocusedButton(
             enabled = enabled,
@@ -385,7 +398,7 @@ private fun DestructiveButton(text: StringResource, enabled: Boolean, filled: Bo
             enabled = enabled,
             onClick = onClick,
             modifier = Modifier.fillMaxWidth(),
-            buttonModifier = Modifier.fillMaxWidth().heightIn(min = 32.dp),
+            buttonModifier = modifier.fillMaxWidth().heightIn(min = 32.dp),
             contentPadding = PaddingValues(horizontal = 12.dp),
             colors = MtsButtons.destructiveTextColors(),
         ) { ButtonText(stringResource(text), textAlign = TextAlign.Center) }

@@ -16,6 +16,7 @@ import {
   getRoundTablesWithHands,
   resetTable,
   saveTableState,
+  saveTableStateInTransaction,
 } from "./tableManagerService";
 
 const BASE = { roundId: 1 };
@@ -451,5 +452,25 @@ describe("tournament manifest with the Firestore emulator", () => {
     const error = await conflictOf(getTournamentManifest("test-missing-tournament"));
 
     assert.equal(error.status, 404);
+  });
+});
+
+describe("table save inside a transaction of the caller", () => {
+  before(requireEmulator);
+
+  // Every route saves through runTableTransaction. A caller with its own transaction gets every write in it.
+  const saveInOwnTransaction = (tournamentId: string, tableId: number, tablePatch: Record<string, boolean>) =>
+    db.runTransaction((transaction) => saveTableStateInTransaction(transaction, {
+      tournamentId, roundId: 1, tableId, expectedVersion: 0, tablePatch, handPatches: [],
+    }));
+
+  it("completes the tournament with the last table, and opens it again", async () => {
+    const id = await seedTournament({ tables: [{ roundId: 1, tableId: 1, isCompleted: true }, { roundId: 1, tableId: 2 }] });
+    await saveInOwnTransaction(id, 2, { isCompleted: true });
+    assert.equal((await readTournament(id)).isCompleted, true);
+
+    const reopened = await seedTournament({ isCompleted: true, tables: [{ roundId: 1, tableId: 1, isCompleted: true }] });
+    await saveInOwnTransaction(reopened, 1, { isCompleted: false });
+    assert.equal((await readTournament(reopened)).isCompleted, false);
   });
 });

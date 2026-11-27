@@ -819,3 +819,45 @@ describe("input checks on public and path values", () => {
     }
   });
 });
+
+describe("removal by a club admin", () => {
+  let server: TestServer;
+
+  before(async () => {
+    requireAuthEmulator();
+    server = await startServer();
+    for (const id of ["org-rm-a", "org-rm-b"]) await seedOrganization({ id });
+  });
+  after(async () => {
+    await server.close();
+  });
+
+  it("takes its own organization from another club admin and leaves the other one", async () => {
+    const admin = await createAccount({ role: "CLUB_ADMIN", organizations: ["org-rm-a"] });
+    const target = await createAccount({ role: "CLUB_ADMIN", organizations: ["org-rm-a", "org-rm-b"] });
+    const removed = await server.request("POST", `/admin/users/${target.uid}/removal`, { token: admin.token, body: {} });
+    assert.equal(removed.status, 200, JSON.stringify(removed.body));
+    assert.equal((removed.body as { request: unknown }).request, null);
+    assert.deepEqual((await db.doc(`users/${target.uid}`).get()).get("adminOrganizations"), ["org-rm-b"]);
+  });
+
+  it("refuses malformed assignments and organizations, and frees the club admins of a deleted organization", async () => {
+    const superAdmin = await createAccount({ role: "SUPER_ADMIN" });
+    const create = (body: Record<string, unknown>) => server.request("POST", "/admin/users", {
+      token: superAdmin.token, body: { email: `rm-${randomUUID().slice(0, 8)}@example.test`, ...body },
+    });
+    const badAssignment = await create({ role: "EDITOR", tournamentAssignments: [null] });
+    assert.equal(badAssignment.status, 400, JSON.stringify(badAssignment.body));
+    assert.match(JSON.stringify(badAssignment.body), /Invalid tournament assignment/);
+    const badOrganizations = await create({ role: "CLUB_ADMIN", adminOrganizations: ["org-rm-b", null] });
+    assert.equal(badOrganizations.status, 400, JSON.stringify(badOrganizations.body));
+    assert.match(JSON.stringify(badOrganizations.body), /without repeats/);
+
+    await seedOrganization({ id: "org-rm-gone" });
+    const lonely = await createAccount({ role: "CLUB_ADMIN", organizations: ["org-rm-gone"] });
+    const deleted = await server.request("DELETE", "/admin/organizations/org-rm-gone", { token: superAdmin.token });
+    assert.equal(deleted.status, 200, JSON.stringify(deleted.body));
+    assert.equal((await auth.getUser(lonely.uid)).customClaims?.clubAdmin, undefined);
+  });
+});
+

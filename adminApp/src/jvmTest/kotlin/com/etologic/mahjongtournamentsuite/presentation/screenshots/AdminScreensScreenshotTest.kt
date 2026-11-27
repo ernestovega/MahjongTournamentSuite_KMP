@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.presentation.screenshots
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -12,6 +13,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
@@ -26,6 +28,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
+import com.etologic.mahjongtournamentsuite.presentation.platform.LocalSuiteAppSwitcher
 import com.etologic.mahjongtournamentsuite.presentation.screen.ActivityScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.ErrorsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.GlobalUsersScreen
@@ -68,6 +71,16 @@ class AdminScreensScreenshotTest {
 
     @Test
     fun tournaments() = adminScreenshots("tournaments", ready = { waitForText("Madrid Open 2026") }) { nav -> TournamentsScreen(nav) }
+
+    /** Where the platform can switch apps: the button to the player app, filled with the green of its top bar. */
+    @Test
+    fun tournamentsPlayerSwitch() = adminScreenshots(
+        "tournaments-player-switch",
+        variants = listOf(ScreenSize.Desktop, ScreenSize.Phone).flatMap { listOf(Variant(it, false), Variant(it, true)) },
+        ready = { waitForText("Madrid Open 2026") },
+    ) { nav ->
+        CompositionLocalProvider(LocalSuiteAppSwitcher provides {}) { TournamentsScreen(nav) }
+    }
 
     /** The DEV menu of an administrator, open. On a phone it is an entry of a three-dots menu with its own menu. */
     @Test
@@ -297,13 +310,20 @@ class AdminScreensScreenshotTest {
         ready = { waitForText("2:00:00") },
     ) { TimerStandaloneScreen(ONGOING, initialRound = 3) }
 
-    /** The projected ranking shows the color of the main organizer of the tournament, here a blue. */
+    /** The projected ranking, playing, with the logo of the main organizer of the tournament in the corner. */
     @Test
     fun rankingStandaloneBranded() = adminScreenshots(
         "ranking-standalone-branded",
-        modules = { adminModules(tournaments = BrandedTournamentRepository("#1565C0")) },
+        modules = { adminModules(tournaments = BrandedTournamentRepository("#1565C0", fakeClubLogo)) },
         variants = brandedVariants,
-        ready = { waitForText("LUCÍA MARTÍN", substring = true) },
+        ready = {
+            waitForText("LUCÍA MARTÍN", substring = true)
+            onNodeWithContentDescription(adminText("paging_start")).performClick()
+            waitForIdle()
+            // The logo loads from disk in the background.
+            Thread.sleep(1_500)
+            waitForIdle()
+        },
     ) { RankingStandaloneScreen(ONGOING, clock = FixedClock) }
 
     @Test
@@ -313,9 +333,16 @@ class AdminScreensScreenshotTest {
 }
 
 /** The tournaments of the screenshots, with [ONGOING] organized by a club of the color [hex]. */
-private class BrandedTournamentRepository(hex: String) : ScreenshotTournamentRepository(
-    ScreenshotData.tournaments.map { if (it.id == ONGOING) it.copy(primaryColor = hex) else it },
+private class BrandedTournamentRepository(hex: String, logoUrl: String? = null) : ScreenshotTournamentRepository(
+    ScreenshotData.tournaments.map { tournament ->
+        if (tournament.id != ONGOING) return@map tournament
+        val organizers = tournament.organizers.mapIndexed { index, organizer -> if (index == 0) organizer.copy(primaryColor = hex, logoUrl = logoUrl) else organizer }
+        tournament.copy(primaryColor = hex, organizers = organizers)
+    },
 )
+
+/** A club logo on disk, so the screenshot needs no network. */
+private val fakeClubLogo: String = checkNotNull(BrandedTournamentRepository::class.java.getResource("/fake-club-logo.png")).toString()
 
 /** The device and server time of the running Timer capture. */
 private const val RUNNING_NOW_MS = 1_779_000_000_000L

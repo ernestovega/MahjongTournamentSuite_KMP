@@ -78,9 +78,9 @@ class ProfilePhotoVisibilityUiTest {
 
         onNodeWithContentDescription("Edit photo").performClick()
         onNodeWithText("Your photo will be public").assertExists()
-        onNodeWithText("everyone can see it", substring = true).assertExists()
-        onNodeWithText("Show my photo publicly\" in your profile", substring = true).assertExists()
-        onNodeWithText("Accept and choose").assertExists()
+        onNodeWithText("show in rankings", substring = true).assertExists()
+        onNodeWithText("EMA player", substring = true).assertExists()
+        onNodeWithText("Accept").assertExists()
         onNodeWithText("Cancel").performClick()
         onNodeWithText("Your photo will be public").assertDoesNotExist()
     }

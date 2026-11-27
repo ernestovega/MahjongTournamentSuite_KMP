@@ -54,6 +54,7 @@ fun DateField(label: String, value: String, onChange: (String) -> Unit, modifier
     if (open) {
         val state = rememberDatePickerState(initialSelectedDateMillis = isoDateToEpochMillis(value))
         TrackedDialog("DatePicker") {
+            DialogBackHandler(onDismiss = { open = false })
             DatePickerDialog(
                 onDismissRequest = { open = false },
                 confirmButton = {

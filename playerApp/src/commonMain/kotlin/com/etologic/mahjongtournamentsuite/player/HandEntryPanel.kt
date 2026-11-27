@@ -24,7 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material3.AlertDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
@@ -1369,7 +1369,7 @@ private fun TableChangedDialog(
     )
     val lastHand = table.hands.filter { it.isDone }.maxByOrNull { it.handId }
     TrackedDialog("EntryTableChanged") {
-        androidx.compose.material3.AlertDialog(
+        AlertDialog(
             onDismissRequest = onClose,
             title = { MtsDialogTitle(stringResource(Res.string.changed_title)) },
             text = {

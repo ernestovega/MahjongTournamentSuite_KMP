@@ -169,8 +169,8 @@ export async function generateEmaReport(params: {
   const reportRows: EmaReportRow[] = reportedRows.map((ranking) => {
     const slot = slotsById.get(ranking.playerId);
     if (!slot) throw badRequest("Ranking contains an unknown tournament player", { playerId: ranking.playerId });
-    const emaId = typeof slot.get("assignedEmaId") === "string" ? String(slot.get("assignedEmaId")) : null;
-    if (emaId == null) throw badRequest("Every ranked player must have an EMA assignment", { playerId: ranking.playerId });
+    // hasPerson keeps only the slots with an EMA id.
+    const emaId = String(slot.get("assignedEmaId"));
     const player = playersById.get(emaId);
     if (!player) throw badRequest("Assigned EMA player does not exist", { playerId: ranking.playerId, emaId });
     return {

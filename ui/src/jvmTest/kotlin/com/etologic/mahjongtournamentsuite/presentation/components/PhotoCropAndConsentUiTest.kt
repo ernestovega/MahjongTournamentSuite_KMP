@@ -7,8 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsOff
-import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -22,6 +21,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.AnalyticsConsent
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.CONSENT_DIALOG_TAG
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalAnalyticsConsent
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -33,6 +33,8 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import javax.imageio.ImageIO
 import kotlin.test.Test
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TestTimeSource
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
@@ -155,12 +157,17 @@ class PhotoCropAndConsentUiTest {
     }
 
     @Test
-    fun theProfileSwitchesTheAnalyticsOffAndOnAgain() = runComposeUiTest {
+    fun theProfileShowsTheConsentScreenAgainToDeclineOrAccept() = runComposeUiTest {
         val answers = mutableListOf<Boolean>()
         var enabled by mutableStateOf(true)
+        // The buttons ignore a second press within 500 ms: the test moves this clock before each press.
+        val clock = TestTimeSource()
         setContent {
             ProfileTheme {
-                CompositionLocalProvider(LocalAnalyticsConsent provides AnalyticsConsent(enabled) { answers += it; enabled = it }) {
+                CompositionLocalProvider(
+                    LocalAnalyticsConsent provides AnalyticsConsent(enabled) { answers += it; enabled = it },
+                    LocalPressTimeSource provides clock,
+                ) {
                     ProfileDialog(
                         profile = player,
                         onSavePhoto = { _, _ -> error("unused") },
@@ -173,17 +180,29 @@ class PhotoCropAndConsentUiTest {
             }
         }
 
-        onNodeWithText("Send anonymous analytics").assertExists()
-        onNodeWithTag(PROFILE_ANALYTICS_TAG).performScrollTo().assertIsOn().performClick()
-        onNodeWithTag(PROFILE_ANALYTICS_TAG).assertIsOff().performClick()
-        onNodeWithTag(PROFILE_ANALYTICS_TAG).assertIsOn()
+        // An account action under the line, not a switch in the form (Ernesto, 2026-11-27).
+        onNodeWithTag(PROFILE_ANALYTICS_TAG).performScrollTo().assertHasClickAction().performClick()
+        onNodeWithTag(CONSENT_DIALOG_TAG).assertExists()
+        onNodeWithText("Will you help us improve the app?", substring = true).assertExists()
+        clock += 1.seconds
+        onNodeWithText("DECLINE", ignoreCase = true).performClick()
+        waitForIdle()
+        onNodeWithTag(CONSENT_DIALOG_TAG).assertDoesNotExist()
+        assertEquals(listOf(false), answers)
+
+        // Accepting again works the same way. The profile stays open: the app does not close or ask again.
+        clock += 1.seconds
+        onNodeWithTag(PROFILE_ANALYTICS_TAG).performScrollTo().performClick()
+        clock += 1.seconds
+        onNodeWithText("ACCEPT", ignoreCase = true).performClick()
+        waitForIdle()
+        onNodeWithTag(CONSENT_DIALOG_TAG).assertDoesNotExist()
         assertEquals(listOf(false, true), answers)
-        // The dialog stays open: the app does not ask again.
         onNodeWithText("Profile").assertExists()
     }
 
     @Test
-    fun anAppThatDoesNotAskHasNoAnalyticsSwitch() = runComposeUiTest {
+    fun anAppThatDoesNotAskHasNoAnalyticsButton() = runComposeUiTest {
         setContent {
             ProfileTheme {
                 ProfileDialog(player, onSaveAlias = { error("unused") }, onSavePhoto = { _, _ -> error("unused") }, onRemovePhoto = { error("unused") }, onSaved = {}, onDismiss = {})
@@ -191,7 +210,7 @@ class PhotoCropAndConsentUiTest {
         }
 
         onNodeWithText("Profile").assertExists()
-        onNodeWithText("Send anonymous analytics").assertDoesNotExist()
+        onNodeWithText("Anonymous analytics", ignoreCase = true).assertDoesNotExist()
         onNodeWithTag(PROFILE_ANALYTICS_TAG).assertDoesNotExist()
     }
 }

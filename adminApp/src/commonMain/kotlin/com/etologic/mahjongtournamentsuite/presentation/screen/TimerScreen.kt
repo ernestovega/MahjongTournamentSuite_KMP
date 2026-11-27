@@ -22,7 +22,7 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material3.AlertDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -151,6 +151,12 @@ fun TimerStandaloneScreen(
         }
     }
 }
+
+/** Below this width the buttons of the Timer go in a row under the gong, so they never cover it. */
+private val STACKED_CONTROLS_MAX_WIDTH = 600.dp
+
+/** The room the row of buttons takes under the gong. */
+private val STACKED_CONTROLS_HEIGHT = 56.dp
 
 /** Pause and Stop while the round runs: almost invisible, so the room sees only the clock. They still work. */
 private const val RUNNING_CONTROLS_ALPHA = 0.15f
@@ -451,7 +457,11 @@ internal fun TimerContent(
                 )
             }
 
-            Box(modifier = Modifier.fillMaxWidth()) {
+            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                // On a phone the buttons at the right would cover the gong: they go in a row under it.
+                val stacked = showControls && maxWidth < STACKED_CONTROLS_MAX_WIDTH
+                val startAlignment = if (stacked) Alignment.TopCenter else Alignment.Center
+                val startModifier = Modifier.align(startAlignment).padding(bottom = if (stacked) STACKED_CONTROLS_HEIGHT else 0.dp)
                 val startPreviousWhenRunning = if (canStop) stopFocusRequester else startFocusRequester
                 val startPrevious = when {
                     isRunning -> startPreviousWhenRunning
@@ -471,9 +481,7 @@ internal fun TimerContent(
                         showFocusHighlight = false,
                         enabled = state.canControl,
                         onClick = { scope.launch { controller.pause() } },
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .alpha(RUNNING_CONTROLS_ALPHA),
+                        modifier = startModifier.alpha(RUNNING_CONTROLS_ALPHA),
                         buttonModifier = Modifier
                             .size(56.dp)
                             .focusLoop(previous = startPrevious, next = startNext),
@@ -492,7 +500,7 @@ internal fun TimerContent(
                         onClick = { scope.launch { controller.play() } },
                         shape = MaterialTheme.shapes.large,
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
-                        modifier = Modifier.align(Alignment.Center),
+                        modifier = startModifier,
                         buttonModifier = Modifier.focusLoop(previous = startPrevious, next = startNext),
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -527,7 +535,7 @@ internal fun TimerContent(
 
                 if (showControls) {
                     Row(
-                        modifier = Modifier.align(Alignment.CenterEnd),
+                        modifier = Modifier.align(if (stacked) Alignment.BottomCenter else Alignment.CenterEnd),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {

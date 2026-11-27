@@ -45,9 +45,9 @@
     <string name="profile_public_photo">Mein Foto öffentlich zeigen</string>
     <string name="profile_public_photo_info">Dein Foto ist öffentlich in Ranglisten, Statistiken und Anmeldelisten zu sehen.\n\nOhne eigenes Foto wird das deines EMA-Spielers verwendet.\nOhne beide wird kein Foto gezeigt.\n\nSchalte dies aus, um gar kein Foto zu zeigen, weder deines noch das der EMA.</string>
     <string name="photo_public_notice_title">Dein Foto wird öffentlich</string>
-    <string name="photo_public_notice_text">Dein Foto wird öffentlich: Alle können es in Ranglisten, Statistiken und Anmeldelisten der Turniere sehen.</string>
-    <string name="photo_public_notice_hide">Du kannst es jederzeit mit "Mein Foto öffentlich zeigen" in deinem Profil ausblenden.</string>
-    <string name="photo_public_notice_accept">Akzeptieren und wählen</string>
+    <string name="photo_public_notice_text">Dein Foto erscheint in Ranglisten, Statistiken und Anmeldelisten.</string>
+    <string name="photo_public_notice_hide">Wenn du kein eigenes Foto hast, wird das deines EMA-Spielers verwendet (falls vorhanden).\n\nIn deinem Profil kannst du festlegen, keines zu zeigen.</string>
+    <string name="photo_public_notice_accept">Akzeptieren</string>
     <string name="photo_error_type">Wähle ein JPEG-, PNG-, WebP- oder GIF-Bild.</string>
     <string name="photo_error_size">Wähle ein Foto mit höchstens 5 MB.</string>
     <string name="photo_edit">Foto bearbeiten</string>
@@ -794,6 +794,4 @@ Die erste, die klappt, gewinnt</string>
     <string name="consent_change">In deinem Profil, jederzeit.</string>
     <string name="consent_accept">Zustimmen</string>
     <string name="consent_decline">Ablehnen</string>
-    <string name="profile_analytics">Anonyme Analyse senden</string>
-    <string name="profile_analytics_info">Anonyme Daten darüber, wie du die App nutzt, und über ihre Fehler, nie dein Name, deine E-Mail oder deine EMA-Nummer. Schalte es aus, um es sofort zu stoppen. Die App funktioniert genauso.</string>
 </resources>
