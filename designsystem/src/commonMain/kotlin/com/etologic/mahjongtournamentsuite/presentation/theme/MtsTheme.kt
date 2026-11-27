@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.presentation.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.LocalRippleConfiguration
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material.ripple.RippleAlpha
@@ -19,7 +20,11 @@ import androidx.compose.ui.text.TextStyle
 @Composable
 fun MtsTheme(
     useDarkTheme: Boolean = isSystemInDarkTheme(),
-    /** True in the admin app: its header (top bar and tabs) is purple instead of green. See [MtsColors.header]. */
+    /**
+     * True in the admin app: the green of the suite turns purple, the header (top bar and tabs) and also the buttons,
+     * selections, links and hovers (Ernesto, 2026-11-27). The greens that mean something (a valid score, a gain, a
+     * self-drawn hand) stay. See [adminColors].
+     */
     adminApp: Boolean = false,
     content: @Composable () -> Unit,
 ) {
@@ -37,18 +42,49 @@ fun MtsTheme(
     }
 
     MaterialTheme(
-        colorScheme = if (useDarkTheme) DarkColors else LightColors,
+        colorScheme = (if (useDarkTheme) DarkColors else LightColors).let { if (adminApp) it.adminColors(useDarkTheme) else it },
         typography = typography,
         shapes = MtsMaterialShapes,
     ) {
         CompositionLocalProvider(
             LocalMtsColors provides (if (useDarkTheme) DarkMtsColors else LightMtsColors).let { colors ->
-                if (adminApp) colors.copy(header = colors.adminHeader) else colors
+                if (adminApp) colors.copy(header = colors.adminHeader, link = if (useDarkTheme) AdminPurpleLight else ExpertPurpleDark) else colors
             },
             LocalMtsTypography provides mtsTypography,
             LocalMtsWindowWidth provides windowWidth,
             LocalRippleConfiguration provides MtsRippleConfiguration,
             content = content,
+        )
+    }
+}
+
+/** A light purple for text and small marks on the dark pages of the admin app, like the light green of the player app. */
+internal val AdminPurpleLight = Color(0xFFC9A8FF)
+
+/**
+ * The colors of the admin app: the purple of the expert level where the suite has its green (filled buttons, selected
+ * chips, switches, sliders, focus of fields, links). The text purple is darker in light mode and lighter in dark mode, so
+ * it reads at 4.5:1 like the text green. The grey containers, the pink focus ring and the error red stay.
+ */
+internal fun ColorScheme.adminColors(dark: Boolean): ColorScheme = copy(
+    primary = ExpertPurple,
+    onPrimary = Color.White,
+    primaryContainer = ExpertPurpleDark,
+    onPrimaryContainer = Color.White,
+    secondary = if (dark) AdminPurpleLight else ExpertPurpleDark,
+    onSecondary = if (dark) Color(0xFF2A1250) else Color.White,
+    inversePrimary = if (dark) ExpertPurple else AdminPurpleLight,
+    surfaceTint = ExpertPurple,
+).let { scheme ->
+    if (!dark) {
+        scheme
+    } else {
+        // The dark theme has dark green containers: they turn dark purple.
+        scheme.copy(
+            secondaryContainer = Color(0xFF4A2D7A),
+            onSecondaryContainer = Color(0xFFE9DDFF),
+            tertiaryContainer = Color(0xFF3D2566),
+            onTertiaryContainer = Color(0xFFE9DDFF),
         )
     }
 }

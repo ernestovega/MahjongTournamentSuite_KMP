@@ -330,8 +330,7 @@ private fun RankingStandaloneContent(
                         )
                     }
                     snapshot?.tournament?.let { tournament ->
-                        // The logos of the main organizer (when it has one), in the empty corner over the controls, and
-                        // of the EMA, in the empty corner at the right of the table.
+                        // The logos of the main organizer (when it has one), over the controls, and of the EMA.
                         val logoSize = if (compact) COMPACT_LOGO_SIZE else LOGO_SIZE
                         tournament.mainOrganizerLogo()?.let { logoUrl ->
                             ProjectionLogo(
@@ -354,9 +353,12 @@ private fun RankingStandaloneContent(
                             running = playing,
                             showWhileRunning = showEmaLogo,
                             onShowWhileRunningChange = { showEmaLogo = it },
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(end = if (compact) 8.dp else 24.dp, top = if (compact) MtsTheme.spacing.xl else 40.dp),
+                            // On a wide screen at the bottom left, under the controls, so the table keeps its width.
+                            modifier = if (compact) {
+                                Modifier.align(Alignment.TopEnd).padding(end = 8.dp, top = MtsTheme.spacing.xl)
+                            } else {
+                                Modifier.align(Alignment.BottomStart).padding(start = 24.dp, bottom = 24.dp)
+                            },
                         ) {
                             EmaLogo(size = logoSize)
                         }
@@ -675,10 +677,16 @@ private fun RankingPage(
             // The photo is as tall as a line of text, so it does not change the rows that fit on a page.
             val photoSize = with(androidx.compose.ui.platform.LocalDensity.current) { textStyle.lineHeight.toDp() }
             val headerStyle = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
-            val measuredWidths = rememberRankingColumnWidths(page, textStyle)
-            val widths = if (compact) measuredWidths.fitNameTo(maxWidth, spacing, if (page.showPhoto) photoSize else null) else measuredWidths
+            // The team in a smaller text, up to two lines in the height of one line (Ernesto, 2026-11-27).
+            val teamStyle = textStyle.copy(
+                fontSize = (textStyle.lineHeight.value * TEAM_TEXT_SCALE).sp,
+                lineHeight = (textStyle.lineHeight.value / 2f).sp,
+            )
+            val measuredWidths = rememberRankingColumnWidths(page, textStyle, headerStyle, teamStyle)
+            val tableWidth = if (compact) maxWidth else RankingTableWidth
+            val widths = measuredWidths.fitNameTo(tableWidth, spacing, if (page.showPhoto) photoSize else null, compact)
 
-            Column(modifier = Modifier.width(if (compact) maxWidth else RankingTableWidth).fillMaxHeight()) {
+            Column(modifier = Modifier.width(tableWidth).fillMaxHeight()) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -688,16 +696,17 @@ private fun RankingPage(
                         Alignment.CenterHorizontally,
                     ),
                 ) {
+                    // The flag goes right after the position (Ernesto, 2026-11-27), then the photo.
                     RankingCell("#", widths.position, TextAlign.Center, headerStyle)
-                    if (page.showPhoto) RankingCell("", photoSize, TextAlign.Center, headerStyle)
                     if (page.showCountry) RankingCell(if (compact) "" else stringResource(Res.string.country), widths.country, TextAlign.Center, headerStyle)
+                    if (page.showPhoto) RankingCell("", photoSize, TextAlign.Center, headerStyle)
                     RankingCell(page.nameHeader, widths.name, TextAlign.Center, headerStyle)
                     if (page.extraHeader != null) {
                         RankingCell(page.extraHeader, widths.extra, TextAlign.Center, headerStyle)
                     }
                     if (page.showPoints) RankingCell(stringResource(Res.string.points), widths.points, TextAlign.Center, headerStyle)
                     if (page.showScore) RankingCell(stringResource(Res.string.score), widths.score, TextAlign.Center, headerStyle)
-                    if (page.teamHeader != null) RankingCell(page.teamHeader, widths.team, TextAlign.Center, headerStyle)
+                    if (widths.showTeam && page.teamHeader != null) RankingCell(page.teamHeader, widths.team, TextAlign.Center, headerStyle)
                 }
                 LazyColumn(
                     state = listState,
@@ -728,16 +737,16 @@ private fun RankingPage(
                                 TextAlign.Center,
                                 textStyle,
                             )
-                            if (page.showPhoto) {
-                                // A hidden top three shows the empty photo, so the photo does not tell the name.
-                                PlayerPhoto(if (row.isMasked) null else row.photoUrl, row.name, size = photoSize)
-                            }
                             if (page.showCountry) {
                                 if (row.isMasked) {
                                     RankingCell("???", widths.country, TextAlign.Center, textStyle)
                                 } else {
                                     RankingCountryCell(row.country, widths.country, textStyle)
                                 }
+                            }
+                            if (page.showPhoto) {
+                                // A hidden top three shows the empty photo, so the photo does not tell the name.
+                                PlayerPhoto(if (row.isMasked) null else row.photoUrl, row.name, size = photoSize)
                             }
                             RankingCell(
                                 text = if (row.isMasked) "???" else row.name,
@@ -770,13 +779,12 @@ private fun RankingPage(
                                     textStyle,
                                 )
                             }
-                            if (page.teamHeader != null) {
-                                RankingCell(
-                                    if (row.isMasked) "???" else row.team.orEmpty(),
-                                    widths.team,
-                                    TextAlign.Center,
-                                    textStyle,
-                                )
+                            if (widths.showTeam) {
+                                if (row.isMasked) {
+                                    RankingCell("???", widths.team, TextAlign.Center, textStyle)
+                                } else {
+                                    RankingCell(row.team.orEmpty(), widths.team, TextAlign.Center, teamStyle, maxLines = 2)
+                                }
                             }
                         }
                     }
@@ -793,12 +801,13 @@ private fun RankingCell(
     textAlign: TextAlign,
     style: TextStyle,
     strikethrough: Boolean = false,
+    maxLines: Int = 1,
 ) {
     Text(
         text = text,
         modifier = Modifier.width(width),
         textAlign = textAlign,
-        maxLines = 1,
+        maxLines = maxLines,
         overflow = TextOverflow.Ellipsis,
         style = if (strikethrough) style.copy(textDecoration = TextDecoration.LineThrough) else style,
     )
@@ -811,7 +820,7 @@ private fun RankingCountryCell(
     textStyle: TextStyle,
 ) {
     val density = androidx.compose.ui.platform.LocalDensity.current
-    val flagWidth = with(density) { (textStyle.fontSize.toDp() * 1.25f).coerceIn(24.dp, 64.dp) }
+    val flagWidth = with(density) { rankingFlagWidth(textStyle.fontSize.toDp()) }
     Box(
         modifier = Modifier.width(width),
         contentAlignment = Alignment.Center,
@@ -824,16 +833,26 @@ private fun RankingCountryCell(
     }
 }
 
-/** Gives the name column the width that the other columns leave free in [total]. */
-private fun RankingColumnWidths.fitNameTo(total: Dp, spacing: Dp, photo: Dp?): RankingColumnWidths {
-    // The flag alone tells the country, so the column loses the width of its title.
-    // The team and the extra column are cut short, so the name keeps most of the width.
-    val fitted = copy(
-        country = if (showCountry) 40.dp else country,
-        extra = extra.coerceAtMost(72.dp),
-        team = team.coerceAtMost(72.dp),
-    )
-    val others = with(fitted) {
+/** The width of a flag for a text of [fontSize]. */
+private fun rankingFlagWidth(fontSize: Dp): Dp = (fontSize * 1.25f).coerceIn(24.dp, 64.dp)
+
+/**
+ * Gives the name column, and on a wide screen also the team, the width that the other columns leave free in [total].
+ * The flag and the points keep only the room they need (Ernesto, 2026-11-27).
+ */
+private fun RankingColumnWidths.fitNameTo(total: Dp, spacing: Dp, photo: Dp?, compact: Boolean): RankingColumnWidths {
+    // On a phone the flag alone tells the country, so the column loses the width of its title. The team does not fit
+    // (the player app shows it) and the extra column is cut short, so the name keeps most of the width.
+    val fitted = if (compact) {
+        copy(
+            country = if (showCountry) 40.dp else country,
+            extra = extra.coerceAtMost(72.dp),
+            showTeam = false,
+        )
+    } else {
+        this
+    }
+    val fixed = with(fitted) {
         listOfNotNull(
             position,
             photo,
@@ -841,11 +860,18 @@ private fun RankingColumnWidths.fitNameTo(total: Dp, spacing: Dp, photo: Dp?): R
             extra.takeIf { showExtra },
             points.takeIf { showPoints },
             score.takeIf { showScore },
-            team.takeIf { showTeam },
         )
     }
-    val used = others.fold(0.dp) { sum, width -> sum + width } + spacing * others.size
-    return fitted.copy(name = (total - used).coerceAtLeast(80.dp))
+    val columns = fixed.size + 1 + (if (fitted.showTeam) 1 else 0)
+    val used = fixed.fold(0.dp) { sum, width -> sum + width } + spacing * (columns - 1)
+    val free = total - used
+    if (compact || !fitted.showTeam) {
+        val teamWidth = if (fitted.showTeam) fitted.team else 0.dp
+        return fitted.copy(name = (free - teamWidth).coerceAtLeast(80.dp))
+    }
+    // A wide screen shares the free room: the team takes what it needs, up to a third, in two lines if it must.
+    val team = fitted.team.coerceAtMost(free / 3f)
+    return fitted.copy(team = team, name = (free - team).coerceAtLeast(80.dp))
 }
 
 private data class RankingColumnWidths(
@@ -867,27 +893,38 @@ private data class RankingColumnWidths(
 private fun rememberRankingColumnWidths(
     page: RankingPage,
     textStyle: TextStyle,
+    headerStyle: TextStyle,
+    teamStyle: TextStyle,
 ): RankingColumnWidths {
     val textMeasurer = rememberTextMeasurer()
     val density = androidx.compose.ui.platform.LocalDensity.current
     val countryHeader = stringResource(Res.string.country)
     val pointsHeader = stringResource(Res.string.points)
     val scoreHeader = stringResource(Res.string.score)
-    return remember(page, textStyle, countryHeader, pointsHeader, scoreHeader) {
-        fun widthFor(values: List<String>, minimum: Dp = 0.dp): Dp {
+    return remember(page, textStyle, headerStyle, teamStyle, countryHeader, pointsHeader, scoreHeader) {
+        fun widthFor(values: List<String>, minimum: Dp = 0.dp, style: TextStyle = textStyle, margin: Dp = 14.dp): Dp {
             val widest = values.ifEmpty { listOf("") }
-                .maxOf { textMeasurer.measure(it, textStyle).size.width }
-            return maxOf(minimum, with(density) { widest.toDp() + 14.dp })
+                .maxOf { textMeasurer.measure(it, style).size.width }
+            return maxOf(minimum, with(density) { widest.toDp() + margin })
         }
+        val flag = with(density) { rankingFlagWidth(textStyle.fontSize.toDp()) }
 
         RankingColumnWidths(
             position = widthFor(listOf("#") + page.rows.map { it.position.toString() }, 34.dp),
-            country = widthFor(listOf(countryHeader) + page.rows.map { it.country }, 34.dp),
+            // The flag and its title, no more (the title is small).
+            country = maxOf(flag, widthFor(listOf(countryHeader), style = headerStyle, margin = 0.dp)) + 6.dp,
             name = widthFor(listOf(page.nameHeader) + page.rows.map { it.name }, 80.dp),
             extra = widthFor(listOfNotNull(page.extraHeader) + page.rows.mapNotNull { it.extra }, 34.dp),
-            points = widthFor(listOf(pointsHeader) + page.rows.map { formatPoints(it.points) }, 50.dp),
+            points = maxOf(
+                widthFor(listOf(pointsHeader), style = headerStyle, margin = 6.dp),
+                // A hidden top three shows "???" in the column.
+                widthFor(page.rows.map { if (it.isMasked) "???" else formatPoints(it.points) }, margin = 6.dp),
+            ),
             score = widthFor(listOf(scoreHeader) + page.rows.map { it.score.toString() }, 50.dp) + 10.dp,
-            team = widthFor(listOfNotNull(page.teamHeader) + page.rows.mapNotNull { it.team }, 50.dp),
+            team = maxOf(
+                widthFor(listOfNotNull(page.teamHeader), style = headerStyle),
+                widthFor(page.rows.mapNotNull { it.team }, 50.dp, style = teamStyle),
+            ),
             showCountry = page.showCountry,
             showExtra = page.extraHeader != null,
             showPoints = page.showPoints,
@@ -1085,6 +1122,9 @@ private val ROW_VERTICAL_OVERHEAD = 6.dp
 private val RankingTableWidth = 1_100.dp
 private val RankingHorizontalPadding = 32.dp
 private val RankingColumnSpacing = 28.dp
+
+/** The size of the team text against the height of a line: two lines of it fit in one line of the ranking. */
+private const val TEAM_TEXT_SCALE = 0.45f
 
 /** The logos of the main organizer and of the EMA in the corners of the ranking: big on a wide screen, small on a phone. */
 private val LOGO_SIZE = 120.dp

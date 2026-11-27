@@ -26,9 +26,9 @@ class MtsContrastTest {
         return (light + 0.05) / (dark + 0.05)
     }
 
-    private fun themeOf(dark: Boolean): Pair<ColorScheme, MtsColors> {
+    private fun themeOf(dark: Boolean, adminApp: Boolean = false): Pair<ColorScheme, MtsColors> {
         var theme: Pair<ColorScheme, MtsColors>? = null
-        runComposeUiTest { setContent { MtsTheme(useDarkTheme = dark) { theme = MaterialTheme.colorScheme to MtsTheme.colors } } }
+        runComposeUiTest { setContent { MtsTheme(useDarkTheme = dark, adminApp = adminApp) { theme = MaterialTheme.colorScheme to MtsTheme.colors } } }
         return theme!!
     }
 
@@ -56,7 +56,7 @@ class MtsContrastTest {
         "muted icons on admin header" to Triple(c.onHeaderMuted.compositeOver(c.adminHeader), c.adminHeader, 3.0),
     )
 
-    private fun gaps(dark: Boolean): Map<String, Double> = themeOf(dark).let { (scheme, colors) -> pairs(scheme, colors) }
+    private fun gaps(dark: Boolean, adminApp: Boolean = false): Map<String, Double> = themeOf(dark, adminApp).let { (scheme, colors) -> pairs(scheme, colors) }
         .filter { (_, pair) -> ratio(pair.first, pair.second) < pair.third }
         .mapValues { (_, pair) -> (ratio(pair.first, pair.second) * 100).roundToInt() / 100.0 }
 
@@ -68,5 +68,12 @@ class MtsContrastTest {
     @Test
     fun theDarkThemeHasNoGaps() {
         assertEquals(emptyMap(), gaps(dark = true))
+    }
+
+    /** The admin app is purple where the player app is green (Ernesto, 2026-11-27): the same contrast holds. */
+    @Test
+    fun thePurpleThemesOfTheAdminAppHaveNoGaps() {
+        assertEquals(emptyMap(), gaps(dark = false, adminApp = true))
+        assertEquals(emptyMap(), gaps(dark = true, adminApp = true))
     }
 }
