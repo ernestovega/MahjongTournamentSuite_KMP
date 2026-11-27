@@ -10,6 +10,7 @@ import { setMailTransportForTests, type OutgoingEmail } from "./mailService";
 import { getTournamentManifest } from "./dataVersionsService";
 import { changePlayerCount } from "./playerCountChange";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "./playersService";
+import * as tournamentsService from "./tournamentsService";
 import { createTournament } from "./tournamentsService";
 
 /**
@@ -149,6 +150,8 @@ describe("change of the number of players", () => {
     const tag = String(Date.now()).slice(-6);
     const { id, ref } = await create(16);
     await assign(ref, 3, `3${tag}3`);
+    // A table of an older app, without its players: its hands are written back all the same.
+    await ref.collection("tables").doc("1_1").update({ playerIds: FieldValue.delete() });
     // The batch that writes the log fails, after the new slots and the new table are written.
     const batch = db.batch.bind(db);
     const failing = mock.method(db, "batch", () => {
@@ -252,7 +255,7 @@ describe("change of the number of players with teams", () => {
     };
     await strip("players", ["id", "name"]);
     await strip("teams", ["id", "name"]);
-    await strip("tables", ["version"]);
+    await strip("tables", ["version", "playerIds"]);
     await ref.update({ tablesWithProgress: FieldValue.delete(), hostCountry: FieldValue.delete(), contactEmail: FieldValue.delete() });
 
     const result = await run(id, 16, { isTeams: true, removed: [5, 6, 7, 8] });
@@ -264,6 +267,18 @@ describe("change of the number of players with teams", () => {
     assert.equal((await ref.collection("teams").get()).size, 4);
     // A table without a version counts as version 0, so the table that keeps its key goes to 1.
     assert.equal((await ref.collection("tables").doc("1_1").get()).get("version"), 1);
+  });
+
+  it("refuses a tournament without rounds, and removes a team whose slots lost their team", async () => {
+    const empty = await create(16);
+    await empty.ref.update({ numRounds: FieldValue.delete() });
+    await assert.rejects(run(empty.id, 20), (error: unknown) => error instanceof HttpError && (error.details as { code?: string }).code === "BAD_DRAW");
+
+    const { id, ref } = await create(20, { isTeams: true });
+    await Promise.all([17, 18, 19, 20].map((slot) => ref.collection("players").doc(String(slot)).update({ team: FieldValue.delete() })));
+    await run(id, 16, { isTeams: true, removed: [17, 18, 19, 20] });
+    assert.equal((await slotsOf(ref)).size, 16);
+    assert.equal((await ref.collection("teams").get()).size, 4);
   });
 
   it("refuses part of a team and adds a new empty team", async () => {
@@ -469,6 +484,45 @@ describe("change of the number of players of a tournament with registrations", (
     const slots = await slotsOf(ref);
     assert.deepEqual([17, 18, 19, 20].map((slot) => slots.get(slot)?.assignedEmaId), people);
     assert.equal((await ref.get()).get("registration.maxPlayers") ?? null, null);
+  });
+
+  it("keeps the default name of a new team whose registration team has no name, and no country unknown to the registry", async () => {
+    const tag = String(Date.now()).slice(-6);
+    const { id, ref } = await create(16, { isTeams: true, registration: { ...registration, maxPlayers: null } });
+    await ref.collection("registrationTeams").doc("rt2").set({ captainEmaId: `7${tag}1` });
+    const people = [1, 2, 3, 4].map((index) => `7${tag}${index}`);
+    for (const emaId of people) await register(ref, emaId, "WAITING", "rt2");
+    await db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(people[0]).set({ firstName: "Reg", lastName: "NoCountry" });
+
+    await run(id, 20, { isTeams: true, waiting: people });
+
+    assert.equal((await ref.collection("teams").doc("5").get()).get("name"), "Team 5");
+    assert.equal((await slotsOf(ref)).get(17)?.assignedCountry, "");
+  });
+
+  it("fills a slot from a waiting registration that misses its fields and its EMA player", async () => {
+    const tag = String(Date.now()).slice(-6);
+    const { id, ref } = await create(16, { isTeams: true, registration: { ...registration, maxPlayers: null } });
+    const people = [1, 2, 3, 4].map((index) => `8${tag}${index}`);
+    for (const emaId of people) {
+      await ref.collection("registrations").doc(emaId).set({ email: "", status: "WAITING", order: Number(emaId), paid: false, language: "en", source: "ADMIN", manageToken: "t" });
+    }
+
+    await run(id, 20, { isTeams: true, waiting: people });
+
+    const slot = (await slotsOf(ref)).get(17);
+    assert.deepEqual([slot?.name, slot?.country, slot?.assignedCountry, slot?.assignedEmaId], ["Player 17", "", "", people[0]]);
+    assert.equal((await ref.collection("teams").doc("5").get()).get("name"), "Team 5");
+  });
+
+  it("refuses to answer when the tournament is gone after the change", async () => {
+    const { id } = await create(16);
+    const gone = mock.method(tournamentsService, "getTournament", async () => null);
+    try {
+      await expectConflict(run(id, 20), "TOURNAMENT_GONE");
+    } finally {
+      gone.mock.restore();
+    }
   });
 });
 

@@ -121,7 +121,8 @@ export function planPlayerCountChange(params: {
           if (ids.length !== 4) return { problem: `Team ${team} must have 4 players`, code: "PARTIAL_TEAM" };
           teamSourceOf.set(team, team);
         } else {
-          if (currentTeamIds.has(team)) return { problem: `Team ${team} left and cannot come back`, code: "BAD_DRAW" };
+          // A new team never has the number of a team of now: a smaller draw has only the slots that stay, and a
+          // bigger one keeps every team.
           if (ids.length !== 4) return { problem: "Every new team needs 4 slots", code: "BAD_DRAW" };
           teamSourceOf.set(team, null);
         }
@@ -144,7 +145,7 @@ export function planPlayerCountChange(params: {
     }
     const removedTeams = new Set(current.filter((slot) => removedSet.has(slot.id)).map((slot) => slot.team));
     for (const team of removedTeams) {
-      if ((currentTeams.get(team) ?? []).some((id) => !removedSet.has(id))) {
+      if (currentTeams.get(team)!.some((id) => !removedSet.has(id))) {
         return { problem: `Team ${team} must leave whole`, code: "PARTIAL_TEAM" };
       }
     }
@@ -154,8 +155,8 @@ export function planPlayerCountChange(params: {
     targetTeams.forEach((team, index) => {
       const source = keptTeams[index] ?? null;
       teamSourceOf.set(team, source);
-      const sourceSlots = source == null ? [] : currentTeams.get(source) ?? [];
-      (newTeams.get(team) ?? []).forEach((slotId, position) => {
+      const sourceSlots = source == null ? [] : currentTeams.get(source)!;
+      newTeams.get(team)!.forEach((slotId, position) => {
         const from = sourceSlots[position] ?? null;
         sourceOf.set(slotId, from);
         if (from == null) newSlots.push(slotId);
@@ -280,7 +281,7 @@ export async function changePlayerCount(params: {
     const fill = plan.fills.get(player.id);
     const slotRef = ref.collection("players").doc(String(player.id));
     if (source != null) {
-      const { substitution: _substitution, ...data } = slotById.get(source)?.data() ?? {};
+      const { substitution: _substitution, ...data } = slotById.get(source)!.data();
       const emaId = typeof data.assignedEmaId === "string" && data.assignedEmaId !== "" ? data.assignedEmaId : null;
       if (emaId != null) finalOwner.set(emaId, player.id);
       newOps.push({ kind: "set", ref: slotRef, data: { ...data, id: player.id, team: player.team, name: slotNameFor(data.name, player.id), updatedAt: now } });
@@ -289,7 +290,7 @@ export async function changePlayerCount(params: {
       finalOwner.set(fill, player.id);
       const email = waitingEmails.get(fill) ?? null;
       newOps.push({ kind: "set", ref: slotRef, data: {
-        id: player.id, team: player.team, name: registration?.name || `Player ${player.id}`, country: registration?.country ?? "",
+        id: player.id, team: player.team, name: registration!.name || `Player ${player.id}`, country: registration!.country,
         assignedEmaId: fill, assignedCountry: registryCountry.get(fill) ?? "", ...(email == null ? {} : { email }),
         createdAt: now, updatedAt: now,
       } });
@@ -314,7 +315,7 @@ export async function changePlayerCount(params: {
       if (source == null) {
         const fillTeams = players.filter((player) => player.team === teamId).map((player) => {
           const fill = plan.fills.get(player.id);
-          return fill == null ? null : waitingByEma.get(fill)?.teamId ?? null;
+          return fill == null ? null : waitingByEma.get(fill)!.teamId ?? null;
         });
         if (fillTeams.length === 4 && fillTeams[0] != null && fillTeams.every((team) => team === fillTeams[0])) {
           name = registrationTeamNames.get(fillTeams[0]) || name;

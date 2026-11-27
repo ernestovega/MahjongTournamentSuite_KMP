@@ -270,3 +270,29 @@ describe("names of the moved slots and teams", () => {
     assert.equal(teamNameFor("Dragons", 2), "Dragons");
   });
 });
+
+describe("plan of a bigger draw that renumbers the slots of an older app", () => {
+  it("moves the people who stay to the lowest slots and leaves the extra slots empty", () => {
+    const current = slots(24).filter((slot) => slot.id <= 4 || slot.id >= 21);
+    const result = plan(planPlayerCountChange({ current, isTeams: false, newPlayers: newPlayers(16), removedSlotIds: [], waitingEmaIds: [] }));
+    assert.deepEqual(range(1, 12).map((id) => result.sourceOf.get(id)), [1, 2, 3, 4, 21, 22, 23, 24, null, null, null, null]);
+    assert.equal(result.sourceOf.get(16), null);
+  });
+
+  it("gives the teams that stay the lowest team numbers, and a team that had fewer slots its missing slots empty", () => {
+    // Team 6 has only three slots: data of an older app.
+    const current = [...slots(4, true), ...[21, 22, 23].map((id) => ({ id, team: 6, emaId: `E${id}` }))];
+    const result = plan(planPlayerCountChange({ current, isTeams: true, newPlayers: newPlayers(16, true), removedSlotIds: [], waitingEmaIds: [] }));
+    assert.deepEqual([...result.teamSourceOf.entries()], [[1, 1], [2, 6], [3, null], [4, null]]);
+    assert.deepEqual(range(5, 8).map((id) => result.sourceOf.get(id)), [21, 22, 23, null]);
+    assert.equal(result.sourceOf.get(9), null);
+  });
+});
+
+describe("plan of a team draw that the rules refuse", () => {
+  it("refuses a renumbered team draw with slots outside a team", () => {
+    const current = slots(20, true);
+    const players = newPlayers(16, true).map((player) => (player.id === 1 ? { ...player, team: 0 } : player));
+    assert.equal(code(planPlayerCountChange({ current, isTeams: true, newPlayers: players, removedSlotIds: [5, 6, 7, 8], waitingEmaIds: [] })), "BAD_DRAW");
+  });
+});
