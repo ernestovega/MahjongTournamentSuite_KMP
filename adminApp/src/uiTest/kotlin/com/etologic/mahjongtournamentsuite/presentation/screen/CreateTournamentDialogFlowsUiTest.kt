@@ -236,6 +236,20 @@ class CreateTournamentDialogFlowsUiTest {
     }
 
     @Test
+    fun withoutAnyDateBothDatesAreMarked() = runComposeUiTest {
+        show()
+        fillGeneral()
+        fillVenue()
+        click("Schedule")
+        field("From").performTextReplacement("")
+        field("To").performTextReplacement("")
+        waitForIdle()
+        create()
+
+        assertEquals(2, count("Use DD/MM/YYYY."))
+    }
+
+    @Test
     fun theDatePickerGivesBackTheChosenDates() = runComposeUiTest {
         show()
         click("Schedule")
