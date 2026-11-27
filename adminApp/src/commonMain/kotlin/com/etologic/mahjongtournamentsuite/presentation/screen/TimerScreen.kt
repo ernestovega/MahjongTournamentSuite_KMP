@@ -72,10 +72,12 @@ import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogText
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsDialogTitle
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
+import com.etologic.mahjongtournamentsuite.presentation.components.organizationColor
 import com.etologic.mahjongtournamentsuite.presentation.components.toDigitsInput
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.GangOfThreeFontFamily
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsBrandTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
 import com.etologic.mahjongtournamentsuite.presentation.theme.contentDescription
@@ -131,15 +133,20 @@ fun TimerStandaloneScreen(
     val telemetry = LocalTelemetry.current
     val controller = remember(tournamentId) { RoundTimerController(repository, tournamentId, initialRound, telemetry = telemetry) }
 
-    MtsTheme(useDarkTheme = themeController.isDarkTheme, adminApp = true) {
-        Surface(modifier = Modifier.fillMaxSize().appFocusGroup()) {
-            // Edge to edge: the background fills the whole window, the content stays clear of the system bars and the cutout.
-            Box(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
-                TimerContent(
-                    controller = controller,
-                    themePreference = themeController.preference,
-                    onToggleTheme = themeController.onTogglePreference,
-                )
+    val state by controller.state.collectAsState()
+
+    MtsTheme(useDarkTheme = themeController.isDarkTheme) {
+        // The room sees the color of the main organizer of the tournament, not the green of the suite.
+        MtsBrandTheme(state.tournament?.let { organizationColor(it.primaryColor) }) {
+            Surface(modifier = Modifier.fillMaxSize().appFocusGroup()) {
+                // Edge to edge: the background fills the whole window, the content stays clear of the system bars and the cutout.
+                Box(modifier = Modifier.fillMaxSize().safeDrawingPadding()) {
+                    TimerContent(
+                        controller = controller,
+                        themePreference = themeController.preference,
+                        onToggleTheme = themeController.onTogglePreference,
+                    )
+                }
             }
         }
     }
