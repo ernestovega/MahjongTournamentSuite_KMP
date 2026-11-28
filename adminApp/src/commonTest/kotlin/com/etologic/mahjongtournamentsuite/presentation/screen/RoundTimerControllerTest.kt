@@ -117,6 +117,42 @@ class RoundTimerControllerTest {
     }
 
     @Test
+    fun theQuestionsOfTheTimerCanBeClosed() = runTest {
+        val (repository, controller) = setup()
+        controller.refresh()
+        controller.play()
+        repository.roundsWithHands = setOf(1)
+        controller.reset()
+        controller.dismissResetConfirmation()
+        assertFalse(controller.state.value.confirmReset)
+        controller.dismissClosePrevious()
+        controller.dismissRefusal()
+        assertNull(controller.state.value.closePrevious)
+        assertNull(controller.state.value.refusal)
+    }
+
+    @Test
+    fun aSecondPressWithoutNetworkKeepsWhatTheScreenShows() = runTest {
+        val (repository, controller) = setup()
+        controller.refresh()
+        repository.clockError = AppError.Network
+        controller.play()
+        val shown = controller.state.value.clocks
+        controller.pause()
+        assertEquals(shown, controller.state.value.clocks)
+        assertTrue(controller.state.value.isOffline)
+    }
+
+    @Test
+    fun aPressThatTheServerRefusesForAnotherReasonIsDropped() = runTest {
+        val (repository, controller) = setup()
+        controller.refresh()
+        repository.clockError = AppError.Unexpected("boom")
+        controller.play()
+        assertFalse(controller.state.value.isOffline)
+    }
+
+    @Test
     fun setTimeAndStartedAgoSendTheirMinutes() = runTest {
         val (repository, controller) = setup()
         controller.refresh()
