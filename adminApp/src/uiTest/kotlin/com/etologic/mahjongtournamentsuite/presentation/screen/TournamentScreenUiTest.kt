@@ -817,6 +817,39 @@ class TournamentScreenUiTest {
     }
 
     @Test
+    fun scoreSheetsInMoreOpensItsDialogAndCloses() = runComposeUiTest {
+        with(ScreenHarness()) {
+            loadScreen()
+            openMore()
+            onNodeWithText("Score sheets").performClick()
+            waitForText("Score sheets to print on A4", substring = true)
+            onAllNodesWithText("Cancel").onLast().performClick()
+            waitForIdle()
+            onAllNodesWithText("Score sheets to print on A4", substring = true).assertCountEquals(0)
+        }
+    }
+
+    @Test
+    fun aRoundWithoutTablesOpensTheStatsOfTheTournament() = runComposeUiTest {
+        with(ScreenHarness(tableCount = 0)) {
+            show()
+            waitForIdle()
+            openMore()
+            onNodeWithText("Stats").performClick()
+            waitForText("Stats TOURNAMENT null null")
+        }
+    }
+
+    @Test
+    fun aTournamentWithoutRoundsOpensWithoutATable() = runComposeUiTest {
+        with(ScreenHarness(roundCount = 0)) {
+            show()
+            waitForIdle()
+            onAllNodesWithText("Round 1 • Table 1").assertCountEquals(0)
+        }
+    }
+
+    @Test
     fun backGoesToTheScreenBefore() = runComposeUiTest {
         with(ScreenHarness(fromList = true)) {
             show()
