@@ -1,8 +1,8 @@
 package com.etologic.mahjongtournamentsuite.data.repository
 
 import com.etologic.mahjongtournamentsuite.data.backend.BackendHttpException
-import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentAgendaItemDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentRoundScheduleDto
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
@@ -12,10 +12,10 @@ import com.etologic.mahjongtournamentsuite.domain.model.SavedCredentials
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import io.ktor.http.HttpStatusCode
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
-import kotlinx.coroutines.test.runTest
 
 class RepositorySupportTest {
     @Test
@@ -165,10 +165,19 @@ class RepositorySupportTest {
 
     private class FakeConnectException(message: String) : Exception(message)
 
+    private class DarwinHttpRequestException(message: String) : Exception(message)
+
     @Test
     fun connectionFailuresBecomeNetworkErrors() {
         assertEquals(AppError.Network, FakeConnectException("Connection refused").toRepositoryAppError())
         assertEquals(AppError.Network, IllegalStateException("wrapper", FakeConnectException("down")).toRepositoryAppError())
+    }
+
+    @Test
+    fun theFailuresOfNsUrlSessionOnIosAreNetworkErrors() {
+        assertEquals(AppError.Network, DarwinHttpRequestException("Could not connect to the server.").toRepositoryAppError())
+        val wrapped = IllegalStateException("Exception in http request: Error Domain=NSURLErrorDomain Code=-1004")
+        assertEquals(AppError.Network, wrapped.toRepositoryAppError())
     }
 
     @Test

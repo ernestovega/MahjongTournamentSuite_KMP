@@ -3,8 +3,8 @@ package com.etologic.mahjongtournamentsuite.data.network
 import com.etologic.mahjongtournamentsuite.data.platform.IosPlatform
 import com.etologic.mahjongtournamentsuite.data.platform.platformCpuCount
 import com.etologic.mahjongtournamentsuite.data.session.PlatformCredentialStore
-import com.etologic.mahjongtournamentsuite.domain.model.SavedCredentials
 import com.etologic.mahjongtournamentsuite.domain.AppVersion
+import com.etologic.mahjongtournamentsuite.domain.model.SavedCredentials
 import io.ktor.client.engine.darwin.Darwin
 import kotlinx.coroutines.test.runTest
 import kotlin.test.AfterTest

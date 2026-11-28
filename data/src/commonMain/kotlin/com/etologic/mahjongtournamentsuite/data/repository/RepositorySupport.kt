@@ -41,7 +41,9 @@ internal fun Throwable.toRepositoryAppError(
     is BackendHttpException -> codedConflictOrNull() ?: AppError.Unexpected(
         "Backend error ${status.value}: ${responseBody.limitForUi()}",
     )
-    else -> if (isConnectionFailure()) AppError.Network else {
+    else -> if (isConnectionFailure()) {
+        AppError.Network
+    } else {
         val kind = this::class.simpleName ?: "Error"
         val details = message?.trim().orEmpty().let { if (it.isBlank()) "" else ": $it" }
         AppError.Unexpected(if (details.isEmpty()) fallbackMessage ?: kind else "$kind$details")
@@ -72,12 +74,22 @@ internal fun Throwable.codedConflictOrNull(): AppError.Conflict? {
     return AppError.Conflict(message = message, code = code, args = args)
 }
 
-private val connectionFailureNames = listOf("ConnectException", "UnknownHost", "SocketException", "SocketTimeout", "IOException", "NoRouteToHost")
+// The iOS engine of Ktor sends every failure of NSURLSession (no network, a refused connection, a timeout) as a
+// DarwinHttpRequestException of the NSURLErrorDomain.
+private val connectionFailureNames = listOf(
+    "ConnectException",
+    "UnknownHost",
+    "SocketException",
+    "SocketTimeout",
+    "IOException",
+    "NoRouteToHost",
+    "DarwinHttpRequestException",
+)
 
 /** True when the request did not reach the server: no network, a refused connection or a failed DNS lookup. */
 internal fun Throwable.isConnectionFailure(): Boolean = generateSequence(this) { it.cause }.take(6).any { error ->
     val name = error::class.simpleName.orEmpty()
-    connectionFailureNames.any(name::contains) || error.message.orEmpty().contains("Failed to fetch", ignoreCase = true)
+    connectionFailureNames.any(name::contains) || error.message.orEmpty().let { it.contains("Failed to fetch", ignoreCase = true) || it.contains("NSURLErrorDomain") }
 }
 
 internal fun String.limitForUi(limit: Int = MAX_UI_ERROR_LENGTH): String {
