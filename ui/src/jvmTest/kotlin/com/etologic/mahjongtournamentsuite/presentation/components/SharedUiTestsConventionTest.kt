@@ -6,12 +6,12 @@ import kotlin.test.assertEquals
 
 /**
  * The UI tests in `src/uiTest` run on the desktop and on the iOS simulator alike (docs/ios-release.md), so they can
- * use only common Kotlin. A test that needs Java (`java.util.Locale`, `java.lang.reflect.Proxy`, `::class.java`) or
- * the desktop test runner (`runDesktopComposeUiTest`) goes into `src/jvmTest` instead. Without this check the
+ * use only common Kotlin. A test that needs Java (`java.util.Locale`, `java.lang.reflect.Proxy`, `::class.java`,
+ * `"%08d".format(…)`) or the desktop test runner (`runDesktopComposeUiTest`) goes into `src/jvmTest` instead. Without this check the
  * workflow Build · iOS fails to compile the tests, and only on macOS.
  */
 class SharedUiTestsConventionTest {
-    private val javaOnly = Regex("""^\s*import java\.|runDesktopComposeUiTest|java\.lang\.reflect|::class\.java\b""")
+    private val javaOnly = Regex("""^\s*import java\.|runDesktopComposeUiTest|java\.lang\.reflect|::class\.java\b|"\.format\(""")
 
     @Test
     fun sharedUiTestsUseOnlyCommonKotlin() {

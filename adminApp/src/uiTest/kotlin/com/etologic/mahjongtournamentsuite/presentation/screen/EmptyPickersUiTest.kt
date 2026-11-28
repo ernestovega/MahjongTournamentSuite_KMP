@@ -15,7 +15,7 @@ import kotlin.test.Test
 class EmptyPickersUiTest {
     @Test
     fun theEmaPickerSaysWhenItShowsTheFirstPlayersOnlyAndWhenNothingMatches() = runComposeUiTest {
-        val players = (1..150).map { Player(emaId = "%08d".format(4_000_000 + it), firstName = "Ana$it", lastName = "Lopez", country = "ESP") }
+        val players = (1..150).map { Player(emaId = (4_000_000 + it).toString().padStart(8, '0'), firstName = "Ana$it", lastName = "Lopez", country = "ESP") }
         setContent {
             MtsTheme(useDarkTheme = false) {
                 EmaPlayerPickerDialog(players = players, owners = emptyMap(), selectedEmaId = null, onSelect = {}, onDismiss = {})
