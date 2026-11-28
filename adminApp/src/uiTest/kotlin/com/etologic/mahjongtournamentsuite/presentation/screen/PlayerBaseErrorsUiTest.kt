@@ -142,7 +142,7 @@ class PlayerBaseErrorsUiTest {
     /** What the photo picker of the screen returns next, in place of the file chooser. */
     private var nextImage = SelectedImage("ada.png", "image/png", ByteArray(16))
 
-    private fun ComposeUiTest.show(registry: PlayerRepository) {
+    private fun ComposeUiTest.show(registry: PlayerRepository, tournaments: TournamentRepository = FakeTournamentRepository()) {
         setContent {
             val store = remember { AppMemoryStore().also { it.adminStatus.value = AdminStatus("me", GlobalUserRole.SUPER_ADMIN) } }
             val koin = remember {
@@ -150,7 +150,7 @@ class PlayerBaseErrorsUiTest {
                     modules(
                         module {
                             single { Logger.withTag("ui-test") }
-                            single<TournamentRepository> { FakeTournamentRepository() }
+                            single<TournamentRepository> { tournaments }
                             single<AdminRepository> { FakeAdminRepository(GlobalUserRole.SUPER_ADMIN, emptyList()) }
                             single<AuthRepository> { FakeSignedInAuthRepository() }
                             single<PlayerRepository> { registry }
@@ -241,6 +241,15 @@ class PlayerBaseErrorsUiTest {
         waitForIdle()
         add("OK")
         assertEquals(listOf("create:00099999"), registry.calls)
+    }
+
+    @Test
+    fun countriesThatDoNotLoadShowTheError() = runComposeUiTest {
+        val noCountries = object : TournamentRepository by FakeTournamentRepository() {
+            override suspend fun listCountries(refreshMode: RefreshMode): AppResult<List<com.etologic.mahjongtournamentsuite.domain.model.Country>> = AppResult.Failure(AppError.Network)
+        }
+        show(FailingRegistry(listOf(ada)), noCountries)
+        awaitText("OK")
     }
 
     @Test
