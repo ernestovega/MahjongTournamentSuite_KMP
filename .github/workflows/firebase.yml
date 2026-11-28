@@ -24,6 +24,10 @@ on:
         description: "Also upload the Play store listing (texts, screenshots, feature graphic of docs/play-store/) after the app"
         type: boolean
         default: false
+      play_promote:
+        description: "Also release the app's version on these Google Play tracks, comma separated (for example production,beta,alpha)"
+        type: string
+        default: ""
 
 concurrency:
   # Never cancel a deploy halfway. A newer push waits for the running one. A run by hand on another branch only tests:
@@ -421,6 +425,13 @@ jobs:
         run: |
           python3 scripts/play.py upload admin androidApp/build/outputs/bundle/release/*.aab \
             androidApp/build/outputs/mapping/release/mapping.txt
+
+      # Releases the version (just uploaded, or already on Google Play) on more tracks, such as production.
+      - name: Release the app on more tracks
+        if: inputs.play_promote != ''
+        env:
+          PLAY_PROMOTE: ${{ inputs.play_promote }}
+        run: python3 scripts/play.py promote admin "$PLAY_PROMOTE"
 
       # The mapping file of R8 turns the obfuscated names of a stack trace back into the real ones, also for the
       # reports of the Errors screen: `retrace mapping.txt stacktrace.txt` (docs/android-release.md).

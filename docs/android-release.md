@@ -85,6 +85,11 @@ repository variables in **Settings > Secrets and variables > Actions > Variables
 | `PLAY_TRACK` | `internal` | `internal`, `alpha` (closed testing), `beta` (open testing), `production` |
 | `PLAY_RELEASE_STATUS` | `completed` | `completed` (roll out at once), `draft` (prepare it, roll it out by hand in Play Console) |
 
+To release the same version on more tracks (for example production after internal testing), start the workflow on
+`main` with the input **play_promote** set to a comma separated list such as `production,beta,alpha`. It runs
+`scripts/play.py promote` after the upload; with managed publishing, Play reviews it and it waits in Play Console
+until it is published. The service account needs **Release to production** for the production track.
+
 The script that talks to Google Play is `scripts/play.py`. The job also runs from **Actions > Deploy · Production > Run
 workflow** on `main`, for example to retry a failed upload.
 
