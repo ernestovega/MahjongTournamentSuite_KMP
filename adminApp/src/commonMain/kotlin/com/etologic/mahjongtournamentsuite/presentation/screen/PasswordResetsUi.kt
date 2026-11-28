@@ -136,7 +136,7 @@ internal fun PasswordResetsConfirmDialog(count: Int, busy: Boolean, onConfirm: (
     }
 }
 
-private fun PasswordResetFailure?.textRes(): StringResource = when (this) {
+internal fun PasswordResetFailure?.textRes(): StringResource = when (this) {
     PasswordResetFailure.NOT_FOUND -> Res.string.reset_failure_not_found
     PasswordResetFailure.NO_EMAIL -> Res.string.reset_failure_no_email
     PasswordResetFailure.DISABLED -> Res.string.reset_failure_disabled

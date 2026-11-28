@@ -171,7 +171,7 @@ internal fun EmaPlayerDeletesConfirmDialog(
     }
 }
 
-private fun EmaPlayerDeleteFailure?.textRes(): StringResource = when (this) {
+internal fun EmaPlayerDeleteFailure?.textRes(): StringResource = when (this) {
     EmaPlayerDeleteFailure.NOT_FOUND -> Res.string.ema_player_delete_failure_not_found
     EmaPlayerDeleteFailure.UNKNOWN, null -> Res.string.ema_player_delete_failure_unknown
 }
