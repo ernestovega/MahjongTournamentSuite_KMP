@@ -187,6 +187,7 @@ fun TournamentsScreen(
     var editDialogTournament by remember { mutableStateOf<Tournament?>(null) }
     // The form stays open when the activity is created again, for example after a rotation or a new window size.
     var showCreateTournamentDialog by rememberSaveable { mutableStateOf(false) }
+    var createdTournament by remember { mutableStateOf<Tournament?>(null) }
     var restoreNewTournamentFocus by remember { mutableStateOf(false) }
     var tournamentFocusApplied by remember { mutableStateOf(false) }
     var lastFocusedTournamentId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -331,6 +332,18 @@ fun TournamentsScreen(
         }
     }
 
+    // The new tournament opens once the dialog has gone. Opened from inside the dialog, as it closes, the tournament
+    // under its players stayed without a lifecycle on iOS, and the navigation library failed when it removed it.
+    LaunchedEffect(createdTournament) {
+        val tournament = createdTournament ?: return@LaunchedEffect
+        createdTournament = null
+        if (tournament.drawPending) {
+            navController.navigate(RegistrationsRoute(tournamentId = tournament.id))
+        } else {
+            navController.navigate(TournamentRoute(tournamentId = tournament.id, openPlayers = true))
+        }
+    }
+
     if (showCreateTournamentDialog) {
         CreateTournamentDialog(
             onDismiss = {
@@ -339,11 +352,7 @@ fun TournamentsScreen(
             },
             onCreated = { tournament ->
                 showCreateTournamentDialog = false
-                if (tournament.drawPending) {
-                    navController.navigate(RegistrationsRoute(tournamentId = tournament.id))
-                    return@CreateTournamentDialog
-                }
-                navController.navigate(TournamentRoute(tournamentId = tournament.id, openPlayers = true))
+                createdTournament = tournament
             },
         )
     }

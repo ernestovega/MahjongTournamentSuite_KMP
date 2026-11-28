@@ -1,8 +1,8 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
 import com.etologic.mahjongtournamentsuite.presentation.screen.RankingDisplayCrossWindow
-import platform.Foundation.localeIdentifier
 import com.etologic.mahjongtournamentsuite.presentation.screen.rankingControlsInSeparateScreen
+import platform.Foundation.localeIdentifier
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
