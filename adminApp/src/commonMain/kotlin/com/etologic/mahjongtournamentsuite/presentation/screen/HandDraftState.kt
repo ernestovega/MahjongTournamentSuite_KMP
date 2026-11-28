@@ -75,12 +75,6 @@ internal class HandDraftState private constructor(
     val hasLoserSelected: Boolean
         get() = normalizedLoserId.isNotEmpty()
 
-    val selectedWinnerPlayerId: Int?
-        get() = playerWinnerId.trim().toIntOrNull()
-
-    val selectedLoserPlayerId: Int?
-        get() = normalizedLoserId.toIntOrNull()
-
     val normalizedLoserId: String
         get() = playerLooserId.trim().takeUnless { it == "-" }.orEmpty()
 
@@ -145,8 +139,6 @@ internal class HandDraftState private constructor(
             return messages.distinct()
         }
 
-    val hasWinnerChanged: Boolean get() = playerWinnerId.trim() != initial.playerWinnerId
-    val hasLoserChanged: Boolean get() = normalizedLoserId != initial.playerLooserId
     val hasScoreChanged: Boolean get() = handScore.trim() != initial.handScore
     val hasChickenHandChanged: Boolean get() = isChickenHand != initial.isChickenHand
     val hasDoneChanged: Boolean get() = isDone != initial.isDone
