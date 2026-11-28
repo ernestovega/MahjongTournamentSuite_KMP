@@ -6,6 +6,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.navigation.compose.composable
@@ -56,5 +57,16 @@ class TournamentScreenNavigationUiTest {
         tap("Red Dragons")
         tap("Lucía Martín")
         waitForText("Player ", substring = true)
+    }
+
+    @Test
+    fun aTeamShowsItsStatistics() = runComposeUiTest {
+        show()
+        tap("Teams")
+        tap("Red Dragons")
+        val stats = hasText("Stats") and hasClickAction()
+        waitUntil(timeoutMillis = 10_000) { onAllNodes(stats).fetchSemanticsNodes().size > 1 }
+        onAllNodes(stats).onLast().performClick()
+        waitForText(uiText("stats_totals"))
     }
 }
