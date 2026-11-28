@@ -1,16 +1,19 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Print
 import androidx.compose.material.icons.filled.QrCode2
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.outlined.Assessment
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -23,15 +26,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.navigation.NavHostController
+import com.etologic.mahjongtournamentsuite.data.network.PublicSite
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Permission
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
@@ -41,8 +41,9 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
 import com.etologic.mahjongtournamentsuite.domain.model.map
-import com.etologic.mahjongtournamentsuite.presentation.PlayerCountRoute
+import com.etologic.mahjongtournamentsuite.domain.model.myTableQrLink
 import com.etologic.mahjongtournamentsuite.presentation.ActivityRoute
+import com.etologic.mahjongtournamentsuite.presentation.PlayerCountRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.RankingControlRoute
 import com.etologic.mahjongtournamentsuite.presentation.RoundControlRoute
@@ -54,10 +55,10 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButt
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarMenuNote
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarMoreMenu
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.ExportFile
 import com.etologic.mahjongtournamentsuite.presentation.components.HandStatOptions
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHandStatOptions
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
@@ -67,8 +68,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.UnsavedChange
 import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberBackgroundExports
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentOptionalInt
-import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusIfAttached
 import com.etologic.mahjongtournamentsuite.presentation.platform.openRankings
+import com.etologic.mahjongtournamentsuite.presentation.platform.openTableQrWindow
 import com.etologic.mahjongtournamentsuite.presentation.platform.openTimer
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TableManagerPresenter
@@ -102,20 +103,16 @@ import mahjongtournamentsuite.adminapp.generated.resources.scope_tournament
 import mahjongtournamentsuite.adminapp.generated.resources.score_sheets_title
 import mahjongtournamentsuite.adminapp.generated.resources.statistics
 import mahjongtournamentsuite.adminapp.generated.resources.table_qr_button
+import mahjongtournamentsuite.adminapp.generated.resources.table_qr_show
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.time.Clock
-import androidx.compose.material.icons.filled.Badge
-import androidx.compose.material.icons.filled.Print
-import com.etologic.mahjongtournamentsuite.data.network.PublicSite
-import com.etologic.mahjongtournamentsuite.domain.model.myTableQrLink
-import com.etologic.mahjongtournamentsuite.presentation.platform.openTableQrWindow
-import mahjongtournamentsuite.adminapp.generated.resources.table_qr_show
 
 private sealed class RoundEditorAction {
     data object Back : RoundEditorAction()
     data class SelectRound(val roundId: Int) : RoundEditorAction()
     data class SelectTable(val tableId: Int) : RoundEditorAction()
+
     /** Opens the next table that needs data. It runs after the current table is saved. */
     data class NextTable(val fromTableId: Int) : RoundEditorAction()
     data object Players : RoundEditorAction()
@@ -132,6 +129,7 @@ private sealed class RoundEditorAction {
 fun TournamentScreen(
     navController: NavHostController,
     tournamentId: String,
+    openPlayers: Boolean = false,
     // Tests replace these to control the clock and the polling pace.
     activity: ActivityTracker = remember { ActivityTracker() },
     pollSchedule: PollSchedule = PollSchedule.TOURNAMENT_SCREEN,
@@ -142,6 +140,14 @@ fun TournamentScreen(
     val rankingPresenter = koinInject<RankingPresenter>()
     val store = koinInject<AppMemoryStore>()
     val scope = rememberCoroutineScope()
+    // Once: back from the players shows the tournament, and it is saved with the screen.
+    var playersOpened by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        if (openPlayers && !playersOpened) {
+            playersOpened = true
+            navController.navigate(PlayersRoute(tournamentId))
+        }
+    }
     val backgroundExports = rememberBackgroundExports()
     val profile by store.profile.collectAsState()
     val adminStatus by store.adminStatus.collectAsState()
@@ -154,7 +160,11 @@ fun TournamentScreen(
     // The tables and the rules that keep them in step with the server live in this object.
     val sync = remember(tournamentId) {
         RoundEditorSync(
-            tournamentId, tablePresenter, tablesPresenter, { selectedRoundId }, { selectedTableId },
+            tournamentId,
+            tablePresenter,
+            tablesPresenter,
+            { selectedRoundId },
+            { selectedTableId },
             reloadTournaments = {
                 // Another user changed the tournament settings. The screen reads them from the store.
                 val result = tournamentsPresenter.loadTournaments(force = true)
@@ -381,7 +391,10 @@ fun TournamentScreen(
         pendingAction = null
         when (action) {
             RoundEditorAction.Back -> navController.popBackStack()
-            is RoundEditorAction.SelectRound -> scope.launch { selectedRoundId = action.roundId; loadRound(action.roundId) }
+            is RoundEditorAction.SelectRound -> scope.launch {
+                selectedRoundId = action.roundId
+                loadRound(action.roundId)
+            }
             is RoundEditorAction.SelectTable -> selectedTableId = action.tableId
             is RoundEditorAction.NextTable -> selectedTableId = nextTableToOpen(
                 tableIds = selectedRoundTables.map { it.tableId },
@@ -469,7 +482,11 @@ fun TournamentScreen(
         UnsavedChangesDialog(
             isSaving = isLoading,
             onSave = { requestSave(action) },
-            onDiscard = { pendingAction = null; discardAll(); perform(action) },
+            onDiscard = {
+                pendingAction = null
+                discardAll()
+                perform(action)
+            },
             onCancel = { pendingAction = null },
         )
     }
@@ -528,121 +545,121 @@ fun TournamentScreen(
         at = sync.lastCheckedAt,
     ).asString()
     Box(modifier = Modifier.trackActivity(activity)) {
-    AppScaffold(
-        title = tournament?.name?.ifBlank { null } ?: stringResource(Res.string.scope_tournament),
-        shortTitle = tournament?.shortName,
-        titleAction = {
-            TournamentEditTitleAction(tournamentId = tournamentId, onEdit = { editingTournament = true })
-        },
-        isLoading = isLoading,
-        showBackgroundLogo = isLoading && tournament == null,
-        contentLoading = isLoading && tournament == null,
-        showProgress = tournament != null && (isLoading || isLoadingRest),
-        onBack = { requestAction(RoundEditorAction.Back) },
-        leadingActions = {
-            ProfileInfo(profile, roleLabel, navController)
-            AppTopBarLeadingActions(
-                onTimer = { requestAction(RoundEditorAction.Timer) },
-                onRanking = { requestAction(RoundEditorAction.Rankings) },
-            )
-            // The code of the tournament in a window of its own, to project it, as the Timer and the Ranking. It does not
-            // leave the table, so it opens also with changes not saved.
-            AppTopBarButton(
-                text = stringResource(Res.string.table_qr_show),
-                icon = Icons.Default.QrCode2,
-                onClick = {
-                    tournament?.let { openTableQrWindow(it.name, it.myTableQrLink(PublicSite.url), it.associationLogoUrl, it.mainOrganizerName(), it.primaryColor) }
-                },
-                enabled = tournament != null,
-            )
-        },
-        actions = {
-            if (canHere(Permission.TOURNAMENT_ROUND_CONTROL)) {
-                AppTopBarButton(
-                    text = stringResource(Res.string.round_control_title),
-                    icon = Icons.Default.Tune,
-                    onClick = { requestAction(RoundEditorAction.RoundControl) },
-                    enabled = !isLoading,
+        AppScaffold(
+            title = tournament?.name?.ifBlank { null } ?: stringResource(Res.string.scope_tournament),
+            shortTitle = tournament?.shortName,
+            titleAction = {
+                TournamentEditTitleAction(tournamentId = tournamentId, onEdit = { editingTournament = true })
+            },
+            isLoading = isLoading,
+            showBackgroundLogo = isLoading && tournament == null,
+            contentLoading = isLoading && tournament == null,
+            showProgress = tournament != null && (isLoading || isLoadingRest),
+            onBack = { requestAction(RoundEditorAction.Back) },
+            leadingActions = {
+                ProfileInfo(profile, roleLabel, navController)
+                AppTopBarLeadingActions(
+                    onTimer = { requestAction(RoundEditorAction.Timer) },
+                    onRanking = { requestAction(RoundEditorAction.Rankings) },
                 )
-            }
-            // The screens that are not used during the rounds, in one menu so that the top bar stays light.
-            AppTopBarMoreMenu {
+                // The code of the tournament in a window of its own, to project it, as the Timer and the Ranking. It does not
+                // leave the table, so it opens also with changes not saved.
                 AppTopBarButton(
-                    text = stringResource(Res.string.players),
-                    icon = Icons.Default.People,
-                    onClick = { requestAction(RoundEditorAction.Players) },
-                    enabled = !isLoading,
+                    text = stringResource(Res.string.table_qr_show),
+                    icon = Icons.Default.QrCode2,
+                    onClick = {
+                        tournament?.let { openTableQrWindow(it.name, it.myTableQrLink(PublicSite.url), it.associationLogoUrl, it.mainOrganizerName(), it.primaryColor) }
+                    },
+                    enabled = tournament != null,
                 )
-                AppTopBarButton(
-                    text = stringResource(Res.string.table_qr_button),
-                    icon = Icons.Default.Badge,
-                    onClick = { requestAction(RoundEditorAction.TableQr) },
-                    enabled = !isLoading,
-                )
-                // A dialog over the table: it opens also with changes not saved, as the QR window.
-                AppTopBarButton(
-                    text = stringResource(Res.string.score_sheets_title),
-                    icon = Icons.Default.Print,
-                    onClick = { scoreSheetsOpen = true },
-                    enabled = !isLoading && tournament != null,
-                )
-                AppTopBarButton(
-                    text = stringResource(Res.string.statistics),
-                    icon = StatisticsIcon,
-                    onClick = { requestAction(RoundEditorAction.Statistics) },
-                    enabled = !isLoading,
-                )
-                AppTopBarButton(
-                    text = stringResource(Res.string.ema_report),
-                    icon = Icons.Outlined.Assessment,
-                    onClick = { requestAction(RoundEditorAction.Export) },
-                    enabled = !isLoading && !isLoadingRest,
-                )
-                if (canHere(Permission.TOURNAMENT_ACTIVITY)) {
-                    AppTopBarLeadingActions(onActivity = { requestAction(RoundEditorAction.Activity) })
+            },
+            actions = {
+                if (canHere(Permission.TOURNAMENT_ROUND_CONTROL)) {
+                    AppTopBarButton(
+                        text = stringResource(Res.string.round_control_title),
+                        icon = Icons.Default.Tune,
+                        onClick = { requestAction(RoundEditorAction.RoundControl) },
+                        enabled = !isLoading,
+                    )
                 }
-                if (dataStatus.isNotBlank()) AppTopBarMenuNote(dataStatus)
-            }
-        },
-    ) {
-        CompositionLocalProvider(
-            LocalHandStatOptions provides HandStatOptions(
-                countBestHands = tournament?.countBestHands ?: true,
-                countChickenHands = tournament?.countChickenHands ?: true,
-            ),
+                // The screens that are not used during the rounds, in one menu so that the top bar stays light.
+                AppTopBarMoreMenu {
+                    AppTopBarButton(
+                        text = stringResource(Res.string.players),
+                        icon = Icons.Default.People,
+                        onClick = { requestAction(RoundEditorAction.Players) },
+                        enabled = !isLoading,
+                    )
+                    AppTopBarButton(
+                        text = stringResource(Res.string.table_qr_button),
+                        icon = Icons.Default.Badge,
+                        onClick = { requestAction(RoundEditorAction.TableQr) },
+                        enabled = !isLoading,
+                    )
+                    // A dialog over the table: it opens also with changes not saved, as the QR window.
+                    AppTopBarButton(
+                        text = stringResource(Res.string.score_sheets_title),
+                        icon = Icons.Default.Print,
+                        onClick = { scoreSheetsOpen = true },
+                        enabled = !isLoading && tournament != null,
+                    )
+                    AppTopBarButton(
+                        text = stringResource(Res.string.statistics),
+                        icon = StatisticsIcon,
+                        onClick = { requestAction(RoundEditorAction.Statistics) },
+                        enabled = !isLoading,
+                    )
+                    AppTopBarButton(
+                        text = stringResource(Res.string.ema_report),
+                        icon = Icons.Outlined.Assessment,
+                        onClick = { requestAction(RoundEditorAction.Export) },
+                        enabled = !isLoading && !isLoadingRest,
+                    )
+                    if (canHere(Permission.TOURNAMENT_ACTIVITY)) {
+                        AppTopBarLeadingActions(onActivity = { requestAction(RoundEditorAction.Activity) })
+                    }
+                    if (dataStatus.isNotBlank()) AppTopBarMenuNote(dataStatus)
+                }
+            },
         ) {
-        Column(Modifier.fillMaxSize()) {
-        Box(Modifier.weight(1f).fillMaxWidth()) {
-        TournamentContent(
-            rounds = rounds,
-            allTables = allTables,
-            tableEditors = tableEditors,
-            selectedRoundId = selectedRoundId,
-            selectedTableId = selectedTableId,
-            enabled = !isLoading,
-            playerNamesById = playerNamesById,
-            roundFocusRequester = roundFocusRequester,
-            scoreFocusRequester = scoreFocusRequester,
-            saveFocusRequester = saveFocusRequester,
-            onSelectRound = { requestAction(RoundEditorAction.SelectRound(it)) },
-            onSelectTable = { requestAction(RoundEditorAction.SelectTable(it)) },
-            onSave = { requestSave(tableIds = listOf(it)) },
-            onSaveAndNext = { requestSave(RoundEditorAction.NextTable(it), listOf(it)) },
-            canResetTable = canHere(Permission.TOURNAMENT_RESET_TABLE),
-            onResetTable = { if (!isLoading) tableToReset = it },
-        )
-        if (dataStatus.isNotBlank() && !LocalCompactLayout.current) {
-            Text(
-                text = dataStatus,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.align(Alignment.BottomEnd).padding(end = MtsSpacing.sm, bottom = MtsSpacing.xxs).alpha(0.55f),
-            )
+            CompositionLocalProvider(
+                LocalHandStatOptions provides HandStatOptions(
+                    countBestHands = tournament?.countBestHands ?: true,
+                    countChickenHands = tournament?.countChickenHands ?: true,
+                ),
+            ) {
+                Column(Modifier.fillMaxSize()) {
+                    Box(Modifier.weight(1f).fillMaxWidth()) {
+                        TournamentContent(
+                            rounds = rounds,
+                            allTables = allTables,
+                            tableEditors = tableEditors,
+                            selectedRoundId = selectedRoundId,
+                            selectedTableId = selectedTableId,
+                            enabled = !isLoading,
+                            playerNamesById = playerNamesById,
+                            roundFocusRequester = roundFocusRequester,
+                            scoreFocusRequester = scoreFocusRequester,
+                            saveFocusRequester = saveFocusRequester,
+                            onSelectRound = { requestAction(RoundEditorAction.SelectRound(it)) },
+                            onSelectTable = { requestAction(RoundEditorAction.SelectTable(it)) },
+                            onSave = { requestSave(tableIds = listOf(it)) },
+                            onSaveAndNext = { requestSave(RoundEditorAction.NextTable(it), listOf(it)) },
+                            canResetTable = canHere(Permission.TOURNAMENT_RESET_TABLE),
+                            onResetTable = { if (!isLoading) tableToReset = it },
+                        )
+                        if (dataStatus.isNotBlank() && !LocalCompactLayout.current) {
+                            Text(
+                                text = dataStatus,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.align(Alignment.BottomEnd).padding(end = MtsSpacing.sm, bottom = MtsSpacing.xxs).alpha(0.55f),
+                            )
+                        }
+                    }
+                }
+            }
         }
-        }
-        }
-        }
-    }
     }
 }
 

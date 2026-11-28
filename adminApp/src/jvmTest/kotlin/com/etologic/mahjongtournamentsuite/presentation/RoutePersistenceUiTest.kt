@@ -44,7 +44,8 @@ class RoutePersistenceUiTest {
         runOnUiThread {
             persistence.save(controller.currentBackStack.value)
             controller.navigate(TournamentsRoute)
-            controller.navigate(TournamentRoute("t1"))
+            // The players opened over it once. The saved tournament does not open them again.
+            controller.navigate(TournamentRoute("t1", openPlayers = true))
             controller.navigate(PlayerCountRoute("t1"))
             controller.navigate(ActivityRoute("t1"))
             persistence.save(controller.currentBackStack.value)

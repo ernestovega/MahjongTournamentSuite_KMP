@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -81,7 +80,6 @@ import com.etologic.mahjongtournamentsuite.presentation.ErrorsRoute
 import com.etologic.mahjongtournamentsuite.presentation.OrganizationsRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayerBaseRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayerCountRoute
-import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.RegistrationsRoute
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
@@ -136,7 +134,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeoutOrNull
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.best_hands_header
 import mahjongtournamentsuite.adminapp.generated.resources.chicken_hands_header
@@ -256,7 +253,7 @@ fun TournamentsScreen(
                     withContext(Dispatchers.Main) {
                         // A tournament with open slots opens on its players, so that the slots get filled first.
                         if (result.value.any { !it.isAssigned }) {
-                            navController.openTournamentOnItsPlayers(tournament.id)
+                            navController.navigate(TournamentRoute(tournamentId = tournament.id, openPlayers = true))
                         } else {
                             navController.navigate(TournamentRoute(tournamentId = tournament.id))
                         }
@@ -346,7 +343,7 @@ fun TournamentsScreen(
                     navController.navigate(RegistrationsRoute(tournamentId = tournament.id))
                     return@CreateTournamentDialog
                 }
-                coroutineScope.launch { navController.openTournamentOnItsPlayers(tournament.id) }
+                navController.navigate(TournamentRoute(tournamentId = tournament.id, openPlayers = true))
             },
         )
     }
@@ -671,19 +668,6 @@ fun ProfileInfo(
             )
         }
     }
-}
-
-/**
- * Opens the tournament and, over it, its players. The players wait until the tournament is on the back stack for real:
- * two screens opened at once leave the one below without a lifecycle, and the navigation library then fails when it
- * removes that screen (when the app closes, or at the end of a UI test).
- */
-private suspend fun NavHostController.openTournamentOnItsPlayers(tournamentId: String) {
-    navigate(TournamentRoute(tournamentId = tournamentId))
-    currentBackStackEntry?.lifecycle?.currentStateFlow?.let { state ->
-        withTimeoutOrNull(2_000) { state.first { it.isAtLeast(Lifecycle.State.CREATED) } }
-    }
-    navigate(PlayersRoute(tournamentId = tournamentId))
 }
 
 @Composable

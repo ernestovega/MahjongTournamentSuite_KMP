@@ -1,9 +1,11 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.foundation.clickable
 import androidx.compose.material3.Text
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assert
@@ -100,6 +102,8 @@ private class ScreenHarness(
     useTotalsOnly: Boolean = false,
     /** Opens the screen from the tournament list, so Back has somewhere to go. */
     private val fromList: Boolean = false,
+    /** Opens the screen as a new tournament does: on its players. */
+    private val openPlayers: Boolean = false,
     roundCount: Int = 1,
 ) {
     val server = FakeTournamentRepository().apply {
@@ -169,13 +173,16 @@ private class ScreenHarness(
                     MtsTheme(useDarkTheme = false) {
                         // A real graph, so the screens that the tournament screen opens (Round control) open too.
                         val navController = rememberNavController()
-                        NavHost(navController, startDestination = if (fromList) TournamentsRoute else TournamentRoute("t1")) {
+                        NavHost(navController, startDestination = if (fromList) TournamentsRoute else TournamentRoute("t1", openPlayers)) {
                             // The other screens are stubs that say where the navigation went.
                             composable<TournamentsRoute> {
                                 Text("Tournament list")
                                 LaunchedEffect(Unit) { if (fromList && openedFromList++ == 0) navController.navigate(TournamentRoute("t1")) }
                             }
-                            composable<PlayersRoute> { Text("Players of ${it.toRoute<PlayersRoute>().tournamentId}") }
+                            composable<PlayersRoute> {
+                                // A click goes back, like the back of the real screen.
+                                Text("Players of ${it.toRoute<PlayersRoute>().tournamentId}", Modifier.clickable { navController.popBackStack() })
+                            }
                             composable<ActivityRoute> { Text("Activity of ${it.toRoute<ActivityRoute>().tournamentId}") }
                             composable<PlayerCountRoute> { Text("Player count of ${it.toRoute<PlayerCountRoute>().tournamentId}") }
                             composable<StatisticsRoute> {
@@ -186,6 +193,7 @@ private class ScreenHarness(
                                 TournamentScreen(
                                     navController = navController,
                                     tournamentId = "t1",
+                                    openPlayers = it.toRoute<TournamentRoute>().openPlayers,
                                     activity = activity,
                                     pollSchedule = schedule,
                                 )
@@ -770,8 +778,7 @@ class TournamentScreenUiTest {
         waitForIdle()
     }
 
-    private fun ComposeUiTest.waitForText(text: String, substring: Boolean = false) =
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(text, substring = substring).fetchSemanticsNodes().isNotEmpty() }
+    private fun ComposeUiTest.waitForText(text: String, substring: Boolean = false) = waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(text, substring = substring).fetchSemanticsNodes().isNotEmpty() }
 
     @Test
     fun playersInMoreOpensThePlayersOfTheTournament() = runComposeUiTest {
@@ -846,6 +853,18 @@ class TournamentScreenUiTest {
             show()
             waitForIdle()
             onAllNodesWithText("Round 1 • Table 1").assertCountEquals(0)
+        }
+    }
+
+    @Test
+    fun aNewTournamentOpensOnItsPlayersOnceAndBackShowsTheTournament() = runComposeUiTest {
+        with(ScreenHarness(openPlayers = true)) {
+            show()
+            waitForText("Players of t1")
+            onNodeWithText("Players of t1").performClick()
+            waitForText("Round 1 • Table 1")
+            waitForIdle()
+            onAllNodesWithText("Players of t1").assertCountEquals(0)
         }
     }
 

@@ -22,6 +22,7 @@ import androidx.compose.ui.test.runComposeUiTest
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
@@ -107,8 +108,7 @@ class TournamentsScreenFlowsUiTest {
         val repository: TournamentRepository = object : TournamentRepository by server {
             override suspend fun listCountries(refreshMode: RefreshMode) = if (countriesFail) AppResult.Failure(AppError.Network) else server.listCountries(refreshMode)
 
-            override suspend fun listTournaments(refreshMode: RefreshMode): AppResult<List<Tournament>> =
-                if ("tournaments" in failing) AppResult.Failure(AppError.Network) else server.listTournaments(refreshMode)
+            override suspend fun listTournaments(refreshMode: RefreshMode): AppResult<List<Tournament>> = if ("tournaments" in failing) AppResult.Failure(AppError.Network) else server.listTournaments(refreshMode)
 
             override suspend fun createTournament(request: CreateTournamentRequest): AppResult<Tournament> {
                 requests += request
@@ -118,12 +118,10 @@ class TournamentsScreenFlowsUiTest {
         }
         private val fakeAdmin = FakeAdminRepository(role)
         val admin: AdminRepository = object : AdminRepository by fakeAdmin {
-            override suspend fun whoAmI(refreshMode: RefreshMode): AppResult<AdminStatus> =
-                if ("admin" in failing) AppResult.Failure(AppError.Network) else fakeAdmin.whoAmI(refreshMode)
+            override suspend fun whoAmI(refreshMode: RefreshMode): AppResult<AdminStatus> = if ("admin" in failing) AppResult.Failure(AppError.Network) else fakeAdmin.whoAmI(refreshMode)
         }
         val auth: AuthRepository = object : AuthRepository by FakeSignedInAuthRepository() {
-            override suspend fun getMe(refreshMode: RefreshMode): AppResult<UserProfile> =
-                if ("profile" in failing) AppResult.Failure(AppError.Network) else AppResult.Success(UserProfile("me", "john.doe-smith@example.test", alias))
+            override suspend fun getMe(refreshMode: RefreshMode): AppResult<UserProfile> = if ("profile" in failing) AppResult.Failure(AppError.Network) else AppResult.Success(UserProfile("me", "john.doe-smith@example.test", alias))
         }
         val store = AppMemoryStore()
     }
@@ -154,7 +152,11 @@ class TournamentsScreenFlowsUiTest {
                         val navController = rememberNavController()
                         NavHost(navController, startDestination = TournamentsRoute) {
                             composable<TournamentsRoute> { TournamentsScreen(navController) }
-                            composable<TournamentRoute> { Text("AT tournament") }
+                            composable<TournamentRoute> {
+                                Text("AT tournament")
+                                // The tournament screen opens the players itself (TournamentScreenUiTest).
+                                if (it.toRoute<TournamentRoute>().openPlayers) Text("AT opens its players")
+                            }
                             composable<PlayersRoute> { Text("AT players") }
                             composable<RegistrationsRoute> { Text("AT registrations") }
                             composable<UsersRoute> { Text("AT users") }
@@ -200,7 +202,7 @@ class TournamentsScreenFlowsUiTest {
     fun aTournamentWithAnOpenSlotOpensOnItsPlayers() = runComposeUiTest {
         show(World(listOf(open), players = assigned.dropLast(1) + TournamentPlayer(id = 4, name = "P4", team = 0)))
         openTheTournament()
-        awaitText("AT players")
+        awaitText("AT opens its players")
     }
 
     @Test
@@ -408,7 +410,7 @@ class TournamentsScreenFlowsUiTest {
         show(World(listOf(open), role = GlobalUserRole.CLUB_ADMIN))
         awaitText("Open Madrid")
         fillTheNewTournament(registrations = false)
-        waitUntil(timeoutMillis = 10_000) { count("AT players") > 0 }
+        waitUntil(timeoutMillis = 10_000) { count("AT opens its players") > 0 }
     }
 
     @Test

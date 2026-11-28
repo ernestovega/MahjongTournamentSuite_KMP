@@ -19,18 +19,16 @@ import com.etologic.mahjongtournamentsuite.domain.repository.SupportRepository
 import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
 import com.etologic.mahjongtournamentsuite.presentation.ActivityRoute
-import com.etologic.mahjongtournamentsuite.presentation.RankingControlRoute
-import com.etologic.mahjongtournamentsuite.presentation.RoundControlRoute
 import com.etologic.mahjongtournamentsuite.presentation.DesignSystemRoute
 import com.etologic.mahjongtournamentsuite.presentation.ErrorsRoute
 import com.etologic.mahjongtournamentsuite.presentation.OrganizationsRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayerBaseRoute
-import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
-import com.etologic.mahjongtournamentsuite.presentation.RegistrationsRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayerCountRoute
-import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountScreen
-import com.etologic.mahjongtournamentsuite.presentation.screen.TableQrProjectionScreen
+import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
+import com.etologic.mahjongtournamentsuite.presentation.RankingControlRoute
+import com.etologic.mahjongtournamentsuite.presentation.RegistrationsRoute
 import com.etologic.mahjongtournamentsuite.presentation.RolesRoute
+import com.etologic.mahjongtournamentsuite.presentation.RoundControlRoute
 import com.etologic.mahjongtournamentsuite.presentation.RoutePersistence
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
 import com.etologic.mahjongtournamentsuite.presentation.SplashRoute
@@ -66,15 +64,17 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.ErrorsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.GlobalUsersScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.OrganizationsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerBaseScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerCountScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayersScreen
-import com.etologic.mahjongtournamentsuite.presentation.screen.RegistrationsScreen
-import com.etologic.mahjongtournamentsuite.presentation.screen.RoundControlScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RankingControlScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RankingStandaloneScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.RegistrationsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RolesScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.RoundControlScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.SignInScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.SplashScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.StatisticsScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.TableQrProjectionScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TeamsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TimerStandaloneScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentScreen
@@ -232,6 +232,7 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
                         TournamentScreen(
                             navController = navController,
                             tournamentId = args.tournamentId,
+                            openPlayers = args.openPlayers,
                         )
                     }
                     screen<RegistrationsRoute> { backStackEntry ->

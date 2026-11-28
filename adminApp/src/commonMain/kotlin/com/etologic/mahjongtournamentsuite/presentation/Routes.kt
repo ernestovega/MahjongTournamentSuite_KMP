@@ -22,9 +22,15 @@ data object PlayerBaseRoute
 @Serializable
 data object OrganizationsRoute
 
+/**
+ * [openPlayers] opens the players over the tournament as soon as the tournament shows: a new tournament, or one with
+ * open slots, opens on its players. Opening both screens at once would leave the tournament without a lifecycle, and the
+ * navigation library fails when it removes a screen like that (when the app closes).
+ */
 @Serializable
 data class TournamentRoute(
     val tournamentId: String,
+    val openPlayers: Boolean = false,
 )
 
 /** [editUid] opens the edit dialog of that account at once. The players screen uses it. */

@@ -33,17 +33,18 @@ private class RouteKind<T : Any>(
     val read: (NavBackStackEntry) -> T?,
 )
 
-private inline fun <reified T : Any> kind(): RouteKind<T> = RouteKind(
+private inline fun <reified T : Any> kind(crossinline saved: (T) -> T = { it }): RouteKind<T> = RouteKind(
     name = T::class.simpleName.orEmpty(),
     serializer = serializer<T>(),
-    read = { entry -> if (entry.destination.hasRoute<T>()) entry.toRoute<T>() else null },
+    read = { entry -> if (entry.destination.hasRoute<T>()) saved(entry.toRoute<T>()) else null },
 )
 
 private val savedKinds: List<RouteKind<*>> = listOf(
     kind<TournamentsRoute>(),
     kind<PlayerBaseRoute>(),
     kind<OrganizationsRoute>(),
-    kind<TournamentRoute>(),
+    // The players opened over the tournament once. A restored tournament does not open them again.
+    kind<TournamentRoute> { it.copy(openPlayers = false) },
     kind<RegistrationsRoute>(),
     kind<PlayerCountRoute>(),
     kind<UsersRoute>(),
