@@ -13,12 +13,24 @@ import androidx.compose.ui.test.runComposeUiTest
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import java.util.Locale
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /** The row of filters of the statistics and the filters dialog. */
 @OptIn(ExperimentalTestApi::class)
 class StatisticsFiltersUiTest {
+    private val originalLocale = Locale.getDefault()
+
+    // The names of the countries follow the language of the system.
+    @BeforeTest
+    fun english() = Locale.setDefault(Locale.ENGLISH)
+
+    @AfterTest
+    fun restoreLocale() = Locale.setDefault(originalLocale)
+
     private val ana = Player(emaId = "04000001", firstName = "Ana", lastName = "Lopez", country = "ESP")
     private val bea = Player(emaId = "04000002", firstName = "Bea", lastName = "Rossi", country = "ITA")
     private val players = listOf(ana, bea)
@@ -160,15 +172,20 @@ class StatisticsFiltersUiTest {
     fun theCountryOfThePlayersCanBeNoneOrAny() = runComposeUiTest {
         val applied = mutableListOf<String?>()
         dialog(StatisticsFilters(playerCountry = "ITA")) { applied += it.playerCountry }
+        fun count(text: String) = onAllNodes(hasText(text) and !hasSetTextAction()).fetchSemanticsNodes().size
         fun choose(value: String, option: String) {
+            val before = count(option)
+            val applies = applied.size
             // The country of the tournaments comes first: the last field with the value is the country of the players.
             onAllNodes(hasText(value) and !hasSetTextAction()).onLast().performClick()
-            waitUntil(timeoutMillis = 5_000) { shows(option) }
+            // The open menu adds the option, also when a field shows it already.
+            waitUntil(timeoutMillis = 5_000) { count(option) > before }
             waitForIdle()
             onAllNodes(hasText(option) and !hasSetTextAction()).onLast().performClick()
+            waitUntil(timeoutMillis = 5_000) { count(value) == 0 || value == option }
             waitForIdle()
             onNodeWithText("Apply").performClick()
-            waitForIdle()
+            waitUntil(timeoutMillis = 5_000) { applied.size > applies }
         }
         choose("Italy", "No country")
         choose("No country", "Any country")
