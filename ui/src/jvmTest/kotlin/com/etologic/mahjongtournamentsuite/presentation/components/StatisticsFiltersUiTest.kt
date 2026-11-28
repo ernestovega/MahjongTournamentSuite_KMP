@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasSetTextAction
@@ -18,6 +19,8 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TestTimeSource
 
 /** The row of filters of the statistics and the filters dialog. */
 @OptIn(ExperimentalTestApi::class)
@@ -38,9 +41,14 @@ class StatisticsFiltersUiTest {
     private val uppsala = Tournament(id = "t-2", name = "Uppsala Open", isTeams = false, numPlayers = 4, numRounds = 1, hostCountry = "SE", eventStartDate = "2026-03-01")
     private val tournaments = listOf(madrid, uppsala)
 
+    // The buttons ignore a second press within 500 ms of real time: the tests move this clock instead.
+    private val clock = TestTimeSource()
+
     private fun ComposeUiTest.dialog(filters: StatisticsFilters, opponents: Set<String> = emptySet(), onApply: (StatisticsFilters) -> Unit = {}) = setContent {
-        MtsTheme(useDarkTheme = false) {
-            StatisticsFiltersDialog(filters = filters, players = players, tournaments = tournaments, onApply = onApply, onDismiss = {}, opponents = opponents)
+        CompositionLocalProvider(LocalPressTimeSource provides clock) {
+            MtsTheme(useDarkTheme = false) {
+                StatisticsFiltersDialog(filters = filters, players = players, tournaments = tournaments, onApply = onApply, onDismiss = {}, opponents = opponents)
+            }
         }
     }
 
@@ -184,6 +192,7 @@ class StatisticsFiltersUiTest {
             onAllNodes(hasText(option) and !hasSetTextAction()).onLast().performClick()
             waitUntil(timeoutMillis = 15_000) { count(value) == 0 || value == option }
             waitForIdle()
+            clock += 1.seconds
             onNodeWithText("Apply").performClick()
             waitUntil(timeoutMillis = 15_000) { applied.size > applies }
         }
