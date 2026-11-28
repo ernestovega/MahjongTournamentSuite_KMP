@@ -8,8 +8,8 @@ agp = "9.4.1"
 # See the published ones with: python3 scripts/versions.py status
 # MAJOR and MINOR only change by hand, when the owner decides.
 web-versionName = "1.0.578"
-admin-versionName = "1.0.521"
-admin-versionCode = "521"
+admin-versionName = "1.0.522"
+admin-versionCode = "522"
 backend-versionName = "1.0.138"
 android-compileSdk = "37"
 android-minSdk = "24"

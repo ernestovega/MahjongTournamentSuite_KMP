@@ -26,4 +26,23 @@ class SharedUiTestsConventionTest {
             }
         assertEquals(emptyList(), offenders, "Move these tests to src/jvmTest, or use common Kotlin only")
     }
+
+    /**
+     * A test hook (`LocalXxxForTests` in commonMain) replaces a system chooser that a test cannot use. The shared UI
+     * tests run on the desktop and on the iOS simulator, so both pickers must read it: an iOS picker that does not
+     * opens UIKit in the test process, and the test fails or crashes only there.
+     */
+    @Test
+    fun everyTestHookIsReadOnTheDesktopAndOnIos() {
+        val modules = listOf("designsystem", "ui", "adminApp", "playerApp", "suite")
+        fun kotlinIn(sourceSet: String) = modules.map { File("../$it/src/$sourceSet") }.filter { it.exists() }
+            .flatMap { root -> root.walkTopDown().filter { it.isFile && it.extension == "kt" }.toList() }
+            .joinToString("\n") { it.readText() }
+        val hooks = Regex("""val (Local\w+ForTests)\b""").findAll(kotlinIn("commonMain")).map { it.groupValues[1] }.toSet()
+        val missing = listOf("jvmMain", "iosMain").flatMap { sourceSet ->
+            val code = kotlinIn(sourceSet)
+            hooks.filterNot { "$it.current" in code }.map { "$it is not read in $sourceSet" }
+        }
+        assertEquals(emptyList(), missing)
+    }
 }

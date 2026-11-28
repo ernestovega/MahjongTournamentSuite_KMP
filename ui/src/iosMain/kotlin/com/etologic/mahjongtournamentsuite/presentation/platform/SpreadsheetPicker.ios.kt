@@ -28,6 +28,15 @@ actual fun rememberSpreadsheetPicker(
     val selected = rememberUpdatedState(onSelected)
     val error = rememberUpdatedState(onError)
     val cancelled = rememberUpdatedState(onCancelled)
+    // The UI tests run on the iOS simulator too, where the document picker of the system cannot be used.
+    LocalPickedSpreadsheetForTests.current?.let { picked ->
+        return remember(picked) {
+            SpreadsheetPicker {
+                val file = picked()
+                if (file == null) cancelled.value() else selected.value(file)
+            }
+        }
+    }
     return remember {
         SpreadsheetPicker {
             val types = listOfNotNull(
