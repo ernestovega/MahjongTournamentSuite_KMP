@@ -19,14 +19,6 @@ internal enum class HandFieldSlot {
     Loser,
     Score,
     Chicken,
-    SubtotalEast,
-    SubtotalSouth,
-    SubtotalWest,
-    SubtotalNorth,
-    PenaltyEast,
-    PenaltySouth,
-    PenaltyWest,
-    PenaltyNorth,
     Done,
 }
 
@@ -35,14 +27,6 @@ internal class HandRowKeyboardNavigator {
     val loser = FocusRequester()
     val score = FocusRequester()
     val chicken = FocusRequester()
-    val subtotalEast = FocusRequester()
-    val subtotalSouth = FocusRequester()
-    val subtotalWest = FocusRequester()
-    val subtotalNorth = FocusRequester()
-    val penaltyEast = FocusRequester()
-    val penaltySouth = FocusRequester()
-    val penaltyWest = FocusRequester()
-    val penaltyNorth = FocusRequester()
     val done = FocusRequester()
 }
 
@@ -67,14 +51,6 @@ private fun HandRowKeyboardNavigator.focusRequesterFor(slot: HandFieldSlot): Foc
     HandFieldSlot.Loser -> loser
     HandFieldSlot.Score -> score
     HandFieldSlot.Chicken -> chicken
-    HandFieldSlot.SubtotalEast -> subtotalEast
-    HandFieldSlot.SubtotalSouth -> subtotalSouth
-    HandFieldSlot.SubtotalWest -> subtotalWest
-    HandFieldSlot.SubtotalNorth -> subtotalNorth
-    HandFieldSlot.PenaltyEast -> penaltyEast
-    HandFieldSlot.PenaltySouth -> penaltySouth
-    HandFieldSlot.PenaltyWest -> penaltyWest
-    HandFieldSlot.PenaltyNorth -> penaltyNorth
     HandFieldSlot.Done -> done
 }
 

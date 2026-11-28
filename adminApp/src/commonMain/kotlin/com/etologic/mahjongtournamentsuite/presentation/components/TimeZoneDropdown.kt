@@ -53,7 +53,7 @@ internal fun deviceTimeZoneId(): String {
 }
 
 /** The short list for a platform that cannot list the zones. It includes the zone of the device. */
-private fun fallbackTimeZoneIds(): List<String> {
+internal fun fallbackTimeZoneIds(): List<String> {
     val deviceZone = runCatching { TimeZone.currentSystemDefault().id }.getOrNull()
     return (FallbackTimeZoneIds + listOfNotNull(deviceZone)).distinct().sortedWith(compareBy({ offsetSeconds(it) }, { it }))
 }

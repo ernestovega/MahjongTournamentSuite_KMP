@@ -12,13 +12,16 @@ import mahjongtournamentsuite.ui.generated.resources.spreadsheet_chooser_filter
 import org.jetbrains.compose.resources.stringResource
 
 /** The save dialog of a spreadsheet: the chosen file, or null when it was cancelled. Tests replace it. */
-internal var chooseSpreadsheetFile: (filterName: String, fileName: String) -> File? = { filterName, fileName ->
+internal var chooseSpreadsheetFile: (filterName: String, fileName: String) -> File? = ::systemSpreadsheetSaveDialog
+
+@NativeDesktopWindow
+private fun systemSpreadsheetSaveDialog(filterName: String, fileName: String): File? {
     val chooser = JFileChooser().apply {
         fileFilter = FileNameExtensionFilter(filterName, "xlsx")
         isAcceptAllFileFilterUsed = false
         selectedFile = File(fileName)
     }
-    if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) chooser.selectedFile else null
+    return if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) chooser.selectedFile else null
 }
 
 @Composable

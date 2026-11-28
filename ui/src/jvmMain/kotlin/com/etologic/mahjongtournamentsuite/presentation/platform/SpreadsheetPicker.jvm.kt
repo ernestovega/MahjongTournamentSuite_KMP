@@ -13,13 +13,16 @@ import mahjongtournamentsuite.ui.generated.resources.spreadsheet_chooser_title
 import org.jetbrains.compose.resources.stringResource
 
 /** The open dialog of a spreadsheet: the chosen file, or null when it was cancelled. Tests replace it. */
-internal var chooseOpenSpreadsheet: (title: String, filterName: String) -> File? = { title, filterName ->
+internal var chooseOpenSpreadsheet: (title: String, filterName: String) -> File? = ::systemSpreadsheetOpenDialog
+
+@NativeDesktopWindow
+private fun systemSpreadsheetOpenDialog(title: String, filterName: String): File? {
     val chooser = JFileChooser().apply {
         dialogTitle = title
         fileFilter = FileNameExtensionFilter(filterName, "csv", "xlsx")
         isAcceptAllFileFilterUsed = false
     }
-    if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) chooser.selectedFile else null
+    return if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) chooser.selectedFile else null
 }
 
 @Composable

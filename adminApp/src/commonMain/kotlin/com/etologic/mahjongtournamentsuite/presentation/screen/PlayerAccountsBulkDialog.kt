@@ -113,9 +113,9 @@ internal fun TournamentPlayer.matches(filter: AccountFilter): Boolean = filter.h
 internal fun TournamentPlayer.matchesQuery(
     query: String,
     displayName: String,
-    emaId: String? = null,
-    countryCode: String = "",
-    countryName: String = "",
+    emaId: String?,
+    countryCode: String,
+    countryName: String,
 ): Boolean {
     val text = query.trim()
     return text.isEmpty() ||

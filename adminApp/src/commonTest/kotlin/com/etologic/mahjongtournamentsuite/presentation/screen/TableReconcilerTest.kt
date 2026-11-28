@@ -169,6 +169,7 @@ class TableReconcilerTest {
         assertEquals("Player east id", "playerEastId".toFieldLabel().render())
         assertEquals("Hand score", "handScore".toFieldLabel().render())
         assertEquals("Is done", "isDone".toFieldLabel().render())
+        assertEquals("Some new field", "someNewField".toFieldLabel().render())
     }
 
     // ---- notice wording

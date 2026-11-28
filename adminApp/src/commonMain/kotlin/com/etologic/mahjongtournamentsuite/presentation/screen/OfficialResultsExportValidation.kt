@@ -102,8 +102,8 @@ private fun TableState.scoreValues() = listOf(
     SeatValue(wind(Res.string.wind_north), playerNorthScore.trim()),
 )
 
+/** The labels as a list in words. There is always at least one. */
 private fun formatLabels(labels: List<UiText>): UiText = when (labels.size) {
-    0 -> UiText.Plain("")
     1 -> labels.single()
     2 -> UiText.of(Res.string.list_and_two, labels[0], labels[1])
     else -> UiText.of(

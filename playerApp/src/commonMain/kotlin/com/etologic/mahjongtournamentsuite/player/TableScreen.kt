@@ -401,7 +401,7 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand) {
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 // A discard shows only its icon before the player who discarded, with no pill (Ernesto, 2026-11-25).
-                if (kind != HandKind.DISCARD) WinTypePill(kind, kind.accent())
+                if (kind != HandKind.DISCARD) WinTypePill(selfDraw = kind == HandKind.SELF_PICK)
                 if (kind == HandKind.DISCARD) {
                     Row(
                         Modifier.weight(1f, fill = false),
@@ -498,20 +498,18 @@ private fun TextStyle.tight(): TextStyle = copy(
 )
 
 /**
- * The way the hand was won: its icon and its name in its color, with no background (Ernesto, 2026-11-25). Only this
- * has color, so the type reads at once without coloring the whole item.
+ * The way the hand ended when nobody discarded: a self-draw or a draw. Its icon and its name in its color, with no
+ * background (Ernesto, 2026-11-25): green for a self-draw and grey for a draw. Only this has color, so the type reads at
+ * once without coloring the whole item. A discard shows the player who discarded instead.
  */
 @Composable
-private fun WinTypePill(kind: HandKind, accent: Color) {
+private fun WinTypePill(selfDraw: Boolean) {
+    val accent = if (selfDraw) MtsTheme.colors.selfPick else MtsTheme.colors.draw
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         // A self-draw shows the explosion, the same as in the dialogs of a hand (Ernesto, 2026-11-25).
-        if (kind == HandKind.SELF_PICK) SelfDrawIcon(18.dp) else Icon(kind.icon(), contentDescription = null, Modifier.size(18.dp), tint = accent)
+        if (selfDraw) SelfDrawIcon(18.dp) else Icon(HandKind.DRAW.icon(), contentDescription = null, Modifier.size(18.dp), tint = accent)
         Text(
-            when (kind) {
-                HandKind.SELF_PICK -> stringResource(Res.string.hand_self_pick)
-                HandKind.DISCARD -> stringResource(Res.string.hand_discard)
-                HandKind.DRAW -> stringResource(Res.string.hand_draw)
-            },
+            stringResource(if (selfDraw) Res.string.hand_self_pick else Res.string.hand_draw),
             // The text font, as the player who discarded: the decorative font looked too heavy here (Ernesto, 2026-11-25).
             style = MaterialTheme.typography.bodyMedium.inTextFont(),
             fontWeight = FontWeight.Bold,
@@ -519,14 +517,6 @@ private fun WinTypePill(kind: HandKind, accent: Color) {
             maxLines = 1,
         )
     }
-}
-
-/** Green for a self-pick, the error red for a discard and grey for a draw. */
-@Composable
-private fun HandKind.accent(): Color = when (this) {
-    HandKind.SELF_PICK -> MtsTheme.colors.selfPick
-    HandKind.DISCARD -> MaterialTheme.colorScheme.error
-    HandKind.DRAW -> MtsTheme.colors.draw
 }
 
 /** The icon of a discard or a draw. A self-draw uses [SelfDrawIcon]. */

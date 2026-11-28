@@ -186,12 +186,12 @@
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/HandDraftState.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="21" column="1" source="standard:no-unused-imports" />
-        <error line="163" column="28" source="standard:condition-wrapping" />
-        <error line="164" column="48" source="standard:condition-wrapping" />
-        <error line="164" column="79" source="standard:condition-wrapping" />
-        <error line="178" column="52" source="standard:condition-wrapping" />
-        <error line="178" column="83" source="standard:condition-wrapping" />
-        <error line="329" column="33" source="standard:multiline-if-else" />
+        <error line="155" column="28" source="standard:condition-wrapping" />
+        <error line="156" column="48" source="standard:condition-wrapping" />
+        <error line="156" column="79" source="standard:condition-wrapping" />
+        <error line="170" column="52" source="standard:condition-wrapping" />
+        <error line="170" column="83" source="standard:condition-wrapping" />
+        <error line="321" column="33" source="standard:multiline-if-else" />
     </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/ManageUserDialog.kt">
         <error line="3" column="1" source="standard:import-ordering" />
@@ -953,7 +953,7 @@
     </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/TextInputs.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="40" column="53" source="standard:function-signature" />
+        <error line="39" column="53" source="standard:function-signature" />
     </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/TimerScreen.kt">
         <error line="3" column="1" source="standard:import-ordering" />
@@ -1162,16 +1162,16 @@
     </file>
     <file name="src/commonTest/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/TableManagerEditorStateTest.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="469" column="37" source="standard:argument-list-wrapping" />
-        <error line="469" column="58" source="standard:argument-list-wrapping" />
-        <error line="469" column="78" source="standard:argument-list-wrapping" />
-        <error line="482" column="37" source="standard:argument-list-wrapping" />
-        <error line="482" column="58" source="standard:argument-list-wrapping" />
-        <error line="482" column="78" source="standard:argument-list-wrapping" />
-        <error line="506" column="26" source="standard:argument-list-wrapping" />
-        <error line="506" column="39" source="standard:argument-list-wrapping" />
-        <error line="506" column="71" source="standard:argument-list-wrapping" />
-        <error line="507" column="35" source="standard:argument-list-wrapping" />
+        <error line="480" column="37" source="standard:argument-list-wrapping" />
+        <error line="480" column="58" source="standard:argument-list-wrapping" />
+        <error line="480" column="78" source="standard:argument-list-wrapping" />
+        <error line="493" column="37" source="standard:argument-list-wrapping" />
+        <error line="493" column="58" source="standard:argument-list-wrapping" />
+        <error line="493" column="78" source="standard:argument-list-wrapping" />
+        <error line="517" column="26" source="standard:argument-list-wrapping" />
+        <error line="517" column="39" source="standard:argument-list-wrapping" />
+        <error line="517" column="71" source="standard:argument-list-wrapping" />
+        <error line="518" column="35" source="standard:argument-list-wrapping" />
     </file>
     <file name="src/commonTest/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/TableReconcilerTest.kt">
         <error line="15" column="80" source="standard:function-signature" />
@@ -1334,44 +1334,44 @@
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
     <file name="src/uiTest/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/HandTextInputsUiTest.kt">
-        <error line="34" column="76" source="standard:function-signature" />
-        <error line="52" column="44" source="standard:statement-wrapping" />
-        <error line="52" column="60" source="standard:statement-wrapping" />
-        <error line="52" column="66" source="standard:statement-wrapping" />
-        <error line="53" column="45" source="standard:statement-wrapping" />
-        <error line="53" column="62" source="standard:statement-wrapping" />
-        <error line="53" column="68" source="standard:statement-wrapping" />
-        <error line="54" column="42" source="standard:statement-wrapping" />
-        <error line="54" column="56" source="standard:statement-wrapping" />
-        <error line="54" column="62" source="standard:statement-wrapping" />
-        <error line="55" column="44" source="standard:statement-wrapping" />
-        <error line="55" column="60" source="standard:statement-wrapping" />
-        <error line="55" column="66" source="standard:statement-wrapping" />
-        <error line="64" column="44" source="standard:statement-wrapping" />
-        <error line="64" column="68" source="standard:statement-wrapping" />
-        <error line="64" column="74" source="standard:statement-wrapping" />
-        <error line="65" column="45" source="standard:statement-wrapping" />
-        <error line="65" column="70" source="standard:statement-wrapping" />
-        <error line="65" column="76" source="standard:statement-wrapping" />
-        <error line="34" column="76" source="standard:function-signature" />
-        <error line="52" column="44" source="standard:statement-wrapping" />
-        <error line="52" column="60" source="standard:statement-wrapping" />
-        <error line="52" column="66" source="standard:statement-wrapping" />
-        <error line="53" column="45" source="standard:statement-wrapping" />
-        <error line="53" column="62" source="standard:statement-wrapping" />
-        <error line="53" column="68" source="standard:statement-wrapping" />
-        <error line="54" column="42" source="standard:statement-wrapping" />
-        <error line="54" column="56" source="standard:statement-wrapping" />
-        <error line="54" column="62" source="standard:statement-wrapping" />
-        <error line="55" column="44" source="standard:statement-wrapping" />
-        <error line="55" column="60" source="standard:statement-wrapping" />
-        <error line="55" column="66" source="standard:statement-wrapping" />
-        <error line="64" column="44" source="standard:statement-wrapping" />
-        <error line="64" column="68" source="standard:statement-wrapping" />
-        <error line="64" column="74" source="standard:statement-wrapping" />
-        <error line="65" column="45" source="standard:statement-wrapping" />
-        <error line="65" column="70" source="standard:statement-wrapping" />
-        <error line="65" column="76" source="standard:statement-wrapping" />
+        <error line="36" column="76" source="standard:function-signature" />
+        <error line="54" column="44" source="standard:statement-wrapping" />
+        <error line="54" column="60" source="standard:statement-wrapping" />
+        <error line="54" column="66" source="standard:statement-wrapping" />
+        <error line="55" column="45" source="standard:statement-wrapping" />
+        <error line="55" column="62" source="standard:statement-wrapping" />
+        <error line="55" column="68" source="standard:statement-wrapping" />
+        <error line="56" column="42" source="standard:statement-wrapping" />
+        <error line="56" column="56" source="standard:statement-wrapping" />
+        <error line="56" column="62" source="standard:statement-wrapping" />
+        <error line="57" column="44" source="standard:statement-wrapping" />
+        <error line="57" column="60" source="standard:statement-wrapping" />
+        <error line="57" column="66" source="standard:statement-wrapping" />
+        <error line="66" column="44" source="standard:statement-wrapping" />
+        <error line="66" column="68" source="standard:statement-wrapping" />
+        <error line="66" column="74" source="standard:statement-wrapping" />
+        <error line="67" column="45" source="standard:statement-wrapping" />
+        <error line="67" column="70" source="standard:statement-wrapping" />
+        <error line="67" column="76" source="standard:statement-wrapping" />
+        <error line="36" column="76" source="standard:function-signature" />
+        <error line="54" column="44" source="standard:statement-wrapping" />
+        <error line="54" column="60" source="standard:statement-wrapping" />
+        <error line="54" column="66" source="standard:statement-wrapping" />
+        <error line="55" column="45" source="standard:statement-wrapping" />
+        <error line="55" column="62" source="standard:statement-wrapping" />
+        <error line="55" column="68" source="standard:statement-wrapping" />
+        <error line="56" column="42" source="standard:statement-wrapping" />
+        <error line="56" column="56" source="standard:statement-wrapping" />
+        <error line="56" column="62" source="standard:statement-wrapping" />
+        <error line="57" column="44" source="standard:statement-wrapping" />
+        <error line="57" column="60" source="standard:statement-wrapping" />
+        <error line="57" column="66" source="standard:statement-wrapping" />
+        <error line="66" column="44" source="standard:statement-wrapping" />
+        <error line="66" column="68" source="standard:statement-wrapping" />
+        <error line="66" column="74" source="standard:statement-wrapping" />
+        <error line="67" column="45" source="standard:statement-wrapping" />
+        <error line="67" column="70" source="standard:statement-wrapping" />
+        <error line="67" column="76" source="standard:statement-wrapping" />
     </file>
     <file name="src/uiTest/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/HandToggleControlUiTest.kt">
         <error line="47" column="48" source="standard:statement-wrapping" />

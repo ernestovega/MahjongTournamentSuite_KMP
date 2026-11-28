@@ -118,6 +118,13 @@ class TimeZoneDropdownUiTest {
         assertTrue(onAllNodes(hasText("*", substring = true)).fetchSemanticsNodes().isNotEmpty())
     }
 
+    @Test
+    fun theShortListOfAPlatformWithoutZonesHasTheZoneOfTheDeviceOnceAndInOrder() {
+        val zones = fallbackTimeZoneIds()
+        assertEquals(zones.distinct(), zones)
+        assertTrue("UTC" in zones)
+    }
+
     private companion object {
         const val FIELD = "field"
     }

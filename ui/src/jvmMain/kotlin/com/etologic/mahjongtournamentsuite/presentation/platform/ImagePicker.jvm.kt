@@ -19,13 +19,16 @@ import mahjongtournamentsuite.ui.generated.resources.image_chooser_title
 import org.jetbrains.compose.resources.stringResource
 
 /** The open dialog of an image: the chosen file, or null when it was cancelled. Tests replace it. */
-internal var chooseImage: (title: String, filterName: String) -> File? = { title, filterName ->
+internal var chooseImage: (title: String, filterName: String) -> File? = ::systemImageOpenDialog
+
+@NativeDesktopWindow
+private fun systemImageOpenDialog(title: String, filterName: String): File? {
     val chooser = JFileChooser().apply {
         dialogTitle = title
         fileFilter = FileNameExtensionFilter(filterName, "jpg", "jpeg", "png", "webp", "gif")
         isAcceptAllFileFilterUsed = false
     }
-    if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) chooser.selectedFile else null
+    return if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) chooser.selectedFile else null
 }
 
 @Composable

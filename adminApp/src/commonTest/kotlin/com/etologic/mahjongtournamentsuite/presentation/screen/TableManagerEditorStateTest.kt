@@ -384,6 +384,17 @@ class TableManagerEditorStateTest {
     }
 
     @Test
+    fun aSelfDrawOfAPlayerWhoIsNotSeatedCountsNothingAndTheTableCanBeOpenedAgain() {
+        val editor = TableManagerEditorState.from(
+            table = sampleTableState(useTotalsOnly = false),
+            hands = listOf(sampleHand(handId = 1, winner = "9", loser = "", score = "8").copy(isDone = true)),
+        )
+        assertEquals("0", editor.displayEastScore.ifBlank { "0" })
+        editor.updateCompletedState(false)
+        assertFalse(editor.isCompleted)
+    }
+
+    @Test
     fun loserHyphenBehavesAsEmptyTsumoValue() {
         val editor = TableManagerEditorState.from(
             table = sampleTableState(useTotalsOnly = false),

@@ -7,6 +7,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 class OfficialResultsExportValidationTest {
@@ -55,6 +56,24 @@ class OfficialResultsExportValidationTest {
     }
 
     @Test
+    fun aSeatWithoutAPlayerOfTheTableIsReported() = runTest {
+        val error = officialResultsExportError(listOf(rankingTable(seats = listOf("1", "2", "3", "9"))))
+        assertContains(error.render(), "North")
+    }
+
+    @Test
+    fun aPlayerInTwoSeatsIsReported() = runTest {
+        val error = officialResultsExportError(listOf(rankingTable(seats = listOf("1", "1", "3", "4"))))
+        assertNotNull(error)
+    }
+
+    @Test
+    fun scoresThatAreNotNumbersAreReported() = runTest {
+        val error = officialResultsExportError(listOf(rankingTable(scores = listOf("x", "y", "-10000", "-30000"))))
+        assertContains(error.render(), "East and South")
+    }
+
+    @Test
     fun tournamentWithoutTablesHasSpecificMessage() = runTest {
         assertEquals(
             "Official results cannot be exported because the tournament has no tables.",
@@ -67,15 +86,16 @@ private fun rankingTable(
     useTotalsOnly: Boolean = true,
     isCompleted: Boolean = false,
     scores: List<String> = listOf("30000", "10000", "-10000", "-30000"),
+    seats: List<String> = listOf("1", "2", "3", "4"),
 ) = RankingTable(
     table = TableState(
         roundId = 2,
         tableId = 3,
         playerIds = listOf(1, 2, 3, 4),
-        playerEastId = "1",
-        playerSouthId = "2",
-        playerWestId = "3",
-        playerNorthId = "4",
+        playerEastId = seats[0],
+        playerSouthId = seats[1],
+        playerWestId = seats[2],
+        playerNorthId = seats[3],
         playerEastScore = scores[0],
         playerSouthScore = scores[1],
         playerWestScore = scores[2],

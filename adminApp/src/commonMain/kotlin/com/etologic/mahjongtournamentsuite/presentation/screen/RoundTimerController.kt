@@ -358,7 +358,7 @@ internal fun List<RoundClock>.applyLocally(
     pending: PendingClockAction,
     durationMinutes: Int,
     serverNowMs: Long,
-    extraMs: Long = 0,
+    extraMs: Long,
 ): List<RoundClock> {
     val current = firstOrNull { it.roundId == pending.roundId }
     val others = filter { it.roundId != pending.roundId }
