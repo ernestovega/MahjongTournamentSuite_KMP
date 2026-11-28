@@ -136,6 +136,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.best_hands_header
 import mahjongtournamentsuite.adminapp.generated.resources.chicken_hands_header
@@ -253,10 +254,11 @@ fun TournamentsScreen(
                     store.upsertPlayers(tournament.id, result.value)
                     // The load suspends. The navigation must run on the main thread, also in the UI tests.
                     withContext(Dispatchers.Main) {
-                        navController.navigate(TournamentRoute(tournamentId = tournament.id))
                         // A tournament with open slots opens on its players, so that the slots get filled first.
                         if (result.value.any { !it.isAssigned }) {
-                            navController.navigate(PlayersRoute(tournamentId = tournament.id))
+                            navController.openTournamentOnItsPlayers(tournament.id)
+                        } else {
+                            navController.navigate(TournamentRoute(tournamentId = tournament.id))
                         }
                     }
                 }
@@ -344,12 +346,7 @@ fun TournamentsScreen(
                     navController.navigate(RegistrationsRoute(tournamentId = tournament.id))
                     return@CreateTournamentDialog
                 }
-                navController.navigate(
-                    TournamentRoute(
-                        tournamentId = tournament.id,
-                    ),
-                )
-                navController.navigate(PlayersRoute(tournamentId = tournament.id))
+                coroutineScope.launch { navController.openTournamentOnItsPlayers(tournament.id) }
             },
         )
     }
@@ -674,6 +671,19 @@ fun ProfileInfo(
             )
         }
     }
+}
+
+/**
+ * Opens the tournament and, over it, its players. The players wait until the tournament is on the back stack for real:
+ * two screens opened at once leave the one below without a lifecycle, and the navigation library then fails when it
+ * removes that screen (when the app closes, or at the end of a UI test).
+ */
+private suspend fun NavHostController.openTournamentOnItsPlayers(tournamentId: String) {
+    navigate(TournamentRoute(tournamentId = tournamentId))
+    currentBackStackEntry?.lifecycle?.currentStateFlow?.let { state ->
+        withTimeoutOrNull(2_000) { state.first { it.isAtLeast(Lifecycle.State.CREATED) } }
+    }
+    navigate(PlayersRoute(tournamentId = tournamentId))
 }
 
 @Composable

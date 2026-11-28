@@ -403,10 +403,7 @@ class TournamentsScreenFlowsUiTest {
 
     @Test
     fun aNewTournamentWithItsDrawOpensOnItsPlayers() = runComposeUiTest {
-        // The new tournament opens on its players, over its tournament screen, which never shows. When the test ends,
-        // the navigation of the iOS simulator destroys that screen before it was created and throws, which an app
-        // never does (it does not end there). The desktop covers this flow.
-        if (uiTestsRunOnIos) return@runComposeUiTest
+        // The new tournament opens on its players, over its tournament screen.
         // A club admin organizes with its club, so the form needs no organizer.
         show(World(listOf(open), role = GlobalUserRole.CLUB_ADMIN))
         awaitText("Open Madrid")
