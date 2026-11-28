@@ -223,7 +223,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
      */
     fun sendToPlayers(
         playerIds: List<Int>,
-        emails: Map<Int, String> = emptyMap(),
+        emails: Map<Int, String>,
     ) = scope.launch {
         accountBusy = true
         accountError = null
