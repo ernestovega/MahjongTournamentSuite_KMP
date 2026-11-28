@@ -1,0 +1,54 @@
+# Compiles the iOS code and the iOS tests of every module on Linux, in a few minutes. Kotlin/Native compiles for the
+# iOS simulator without a Mac, so a test of src/uiTest that uses Java (String.format, java.*) or an actual missing on
+# iOS fails here at once, instead of an hour later in Build · iOS on macOS (Ernesto, 2026-11-28). It runs nothing: the
+# tests themselves run in Build · iOS (ios.yml).
+name: Check · iOS compile
+
+on:
+  push:
+    branches: [develop, main]
+    paths:
+      - "**/src/**"
+      - "**/*.gradle.kts"
+      - "gradle/**"
+      - ".github/workflows/ios-compile.yml"
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  # Only the newest commit of a branch matters.
+  group: ios-compile-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  compile:
+    name: Compile the iOS code and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      # The Kotlin/Native compiler and its iOS libraries (about 1 GB) are downloaded once per Kotlin version.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.konan
+          key: konan-${{ runner.os }}-${{ hashFiles('gradle/libs.versions.toml') }}
+
+      - name: Compile for the iOS simulator
+        run: >
+          ./gradlew --continue
+          :domain:compileTestKotlinIosSimulatorArm64 :data:compileTestKotlinIosSimulatorArm64
+          :designsystem:compileTestKotlinIosSimulatorArm64 :ui:compileTestKotlinIosSimulatorArm64
+          :adminApp:compileTestKotlinIosSimulatorArm64 :playerApp:compileTestKotlinIosSimulatorArm64
+          :suite:compileTestKotlinIosSimulatorArm64
