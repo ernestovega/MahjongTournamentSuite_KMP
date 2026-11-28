@@ -19,9 +19,11 @@ import androidx.compose.ui.test.isFocused
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextInputSelection
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.test.runComposeUiTest
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import kotlin.test.Test
@@ -141,5 +143,59 @@ class HandTextInputsUiTest {
             pressKey(Key.DirectionDown)
             pressKey(Key.A)
         }
+    }
+
+    @Test
+    fun theArrowsInsideTheTextMoveTheCursorAndNotTheFocus() = runComposeUiTest {
+        val moves = mutableListOf<String>()
+        val row = HandRowKeyboardNavigator()
+        setContent {
+            MtsTheme(useDarkTheme = false) {
+                Row {
+                    SimpleHandCellField(
+                        value = "12",
+                        onValueChange = {},
+                        placeholder = "Score",
+                        modifier = Modifier.width(80.dp).testTag("simple"),
+                        onNavigateRight = {
+                            moves += "right"
+                            true
+                        },
+                    )
+                    CompactOutlinedTextField(value = "Ana", onValueChange = {}, modifier = Modifier.width(120.dp).testTag("compact"))
+                    KeyboardAwareOutlinedTextField(
+                        value = "34",
+                        onValueChange = {},
+                        currentSlot = HandFieldSlot.Score,
+                        rowEnabled = true,
+                        rowNavigation = row,
+                        modifier = Modifier.width(80.dp).focusRequester(row.score).testTag("score"),
+                    )
+                }
+            }
+        }
+        inner("simple").requestFocus()
+        inner("simple").performTextInputSelection(TextRange(1))
+        inner("simple").performKeyInput {
+            pressKey(Key.DirectionLeft)
+            pressKey(Key.DirectionLeft)
+            pressKey(Key.DirectionLeft)
+            pressKey(Key.DirectionRight)
+        }
+        inner("compact").requestFocus()
+        inner("compact").performTextInputSelection(TextRange(1))
+        inner("compact").performKeyInput {
+            pressKey(Key.DirectionLeft)
+            pressKey(Key.DirectionLeft)
+            pressKey(Key.DirectionRight)
+        }
+        inner("score").requestFocus()
+        inner("score").performTextInputSelection(TextRange(1))
+        inner("score").performKeyInput {
+            pressKey(Key.DirectionLeft)
+            pressKey(Key.DirectionRight)
+        }
+        waitForIdle()
+        assertEquals(emptyList(), moves)
     }
 }

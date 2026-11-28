@@ -11,7 +11,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -71,11 +70,6 @@ internal fun CompactOutlinedTextField(
     }
     var fieldValue by remember(value) {
         mutableStateOf(TextFieldValue(text = value, selection = TextRange(value.length)))
-    }
-    LaunchedEffect(value) {
-        if (fieldValue.text != value) {
-            fieldValue = fieldValue.copy(text = value, selection = TextRange(value.length))
-        }
     }
     val keyModifier = Modifier.onPreviewKeyEvent { event ->
         if (!enabled || event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
@@ -144,12 +138,6 @@ internal fun KeyboardAwareOutlinedTextField(
     }
     var fieldValue by remember(value) {
         mutableStateOf(TextFieldValue(text = value, selection = TextRange(value.length)))
-    }
-
-    LaunchedEffect(value) {
-        if (fieldValue.text != value) {
-            fieldValue = fieldValue.copy(text = value, selection = TextRange(value.length))
-        }
     }
 
     OutlinedTextField(
@@ -256,12 +244,6 @@ internal fun SimpleHandCellField(
     val borderWidth = if (focused) 2.dp else 1.dp
     var textFieldValue by remember(value) {
         mutableStateOf(TextFieldValue(text = value, selection = TextRange(value.length)))
-    }
-
-    LaunchedEffect(value) {
-        if (textFieldValue.text != value) {
-            textFieldValue = textFieldValue.copy(text = value, selection = TextRange(value.length))
-        }
     }
 
     Box(
