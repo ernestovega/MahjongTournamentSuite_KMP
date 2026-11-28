@@ -2,16 +2,21 @@
 
 package com.etologic.mahjongtournamentsuite.e2e
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
@@ -45,12 +50,16 @@ import androidx.compose.ui.test.waitUntilDoesNotExist
 import androidx.navigationevent.DirectNavigationEventInput
 import androidx.navigationevent.NavigationEventDispatcher
 import androidx.navigationevent.NavigationEventDispatcherOwner
+import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import com.etologic.mahjongtournamentsuite.SuiteRoot
 import com.etologic.mahjongtournamentsuite.SuiteSection
 import com.etologic.mahjongtournamentsuite.SuiteStart
 import com.etologic.mahjongtournamentsuite.data.platform.IosPlatform
 import com.etologic.mahjongtournamentsuite.data.session.storedSessionUid
+import com.etologic.mahjongtournamentsuite.presentation.platform.externalScreenForTests
 import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Duration.Companion.minutes
@@ -86,6 +95,9 @@ class AdminApp {
     private var run by mutableIntStateOf(0)
     private var shown by mutableStateOf(false)
 
+    /** The timer, the rankings or the QR: a sheet over the app on iOS, shown here over the app. Back closes it. */
+    private var sheet by mutableStateOf<(@Composable () -> Unit)?>(null)
+
     /** Runs [block] with a clean app pointed at the local backend. A failure adds the texts on the screen. */
     fun runTest(block: () -> Unit) {
         // Without a backend (the normal test run) the end-to-end tests do nothing.
@@ -94,6 +106,24 @@ class AdminApp {
         // Like on Android, the admin part runs on a tablet (an iPad on its side) and the player part on a phone (an
         // iPhone). E2E_FORM=phone or E2E_FORM=tablet runs every test on the other one too.
         val screen = E2ePlatform.screen(tablet = true)
+        sheet = null
+        externalScreenForTests = { content -> sheet = content }
+        var passed = false
+        try {
+            runTestOnScreen(screen, block) { passed = true }
+        } catch (error: IllegalStateException) {
+            // A test that ends on a screen opened over another one that never showed (the tournament under its players)
+            // makes the navigation library fail when the test removes the app. The test itself passed, so this is not
+            // a failure of the app. Android's run-e2e-tests.sh treats it the same way.
+            if (!passed || !error.isNavigationTeardown()) throw error
+        } finally {
+            externalScreenForTests = null
+        }
+    }
+
+    private fun Throwable.isNavigationTeardown(): Boolean = generateSequence(this) { it.cause }.any { it.message.orEmpty().contains("to be moved to 'DESTROYED'") }
+
+    private fun runTestOnScreen(screen: E2ePlatform.Screen, block: () -> Unit, onPassed: () -> Unit) {
         runSkikoComposeUiTest(size = screen.size, density = screen.density, testTimeout = 30.minutes) {
             compose = this
             setContent {
@@ -101,21 +131,36 @@ class AdminApp {
                     // The back of the system, which the tests send with pressBack. On a device it is the swipe from the
                     // left edge.
                     CompositionLocalProvider(LocalNavigationEventDispatcherOwner provides E2eBack.owner) {
-                        key(run) {
-                            SuiteRoot(
-                                initial = SuiteStart(SuiteSection.ADMIN),
-                                startRequest = null,
-                                onStartHandled = {},
-                                post = { action -> action() },
-                                storedSessionUid = ::storedSessionUid,
-                                onPartShown = {},
-                            )
+                        val open = sheet
+                        // Under a sheet the app stays composed, like on iOS, but out of reach of the tests.
+                        Box(if (open != null) Modifier.fillMaxSize().clearAndSetSemantics {} else Modifier.fillMaxSize()) {
+                            key(run) {
+                                SuiteRoot(
+                                    initial = SuiteStart(SuiteSection.ADMIN),
+                                    startRequest = null,
+                                    onStartHandled = {},
+                                    post = { action -> action() },
+                                    storedSessionUid = ::storedSessionUid,
+                                    onPartShown = {},
+                                )
+                            }
+                        }
+                        if (open != null) {
+                            key(open) {
+                                Box(Modifier.fillMaxSize()) { open() }
+                                NavigationBackHandler(
+                                    state = rememberNavigationEventState(NavigationEventInfo.None),
+                                    isBackEnabled = true,
+                                    onBackCompleted = { sheet = null },
+                                )
+                            }
                         }
                     }
                 }
             }
             try {
                 block()
+                onPassed()
             } catch (error: Throwable) {
                 val screen = runCatching {
                     // The top window, for example a dialog, comes first. A long screen is cut at the end of the report.

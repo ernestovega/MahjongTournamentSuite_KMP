@@ -37,7 +37,17 @@ actual fun openTableQrWindow(tournamentName: String, link: String, logoUrl: Stri
     presentSheet(keepScreenOn = true) { TableQrApp(tournamentName, link, logoUrl, organizerName, organizerColor) }
 }
 
+/**
+ * The end-to-end tests of the iOS simulator show the screen here, inside the app under test: a test process has no
+ * UIApplication to show a sheet over. The app never sets it.
+ */
+var externalScreenForTests: ((@Composable () -> Unit) -> Unit)? = null
+
 private fun presentSheet(keepScreenOn: Boolean, content: @Composable () -> Unit) {
+    externalScreenForTests?.let { show ->
+        show(content)
+        return
+    }
     val controller: UIViewController = ComposeUIViewController {
         if (keepScreenOn) {
             DisposableEffect(Unit) {
