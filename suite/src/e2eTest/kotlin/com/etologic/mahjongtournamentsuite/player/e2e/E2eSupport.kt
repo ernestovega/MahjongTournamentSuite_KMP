@@ -196,7 +196,24 @@ private fun hasClickLabel(label: String): SemanticsMatcher = SemanticsMatcher("O
 /** A node that shows the text, or describes itself with it, or has it as the label of its click action. */
 private fun hasLabel(text: String, substring: Boolean = false): SemanticsMatcher = hasText(text, substring = substring) or hasContentDescription(text, substring = substring) or hasClickLabel(text)
 
+/**
+ * Closes the "Go to my table" reminder with Later when it shows. It is a dialog that only its buttons close, so it
+ * takes every tap of a test that does not deal with it. A test that wants it presses its buttons itself.
+ */
+fun ComposeUiTest.closeTableReminder() {
+    // The floating button that stays while the round plays says "Go to my table" too, but has no Later next to it.
+    val later = hasText(TABLE_REMINDER_LATER, ignoreCase = true) and hasClickAction()
+    val reminder = later and hasAnyAncestor(hasAnyDescendant(hasText(TABLE_REMINDER_GO, ignoreCase = true) and hasClickAction()))
+    if (onAllNodes(reminder).fetchSemanticsNodes().isEmpty()) return
+    onAllNodes(reminder).onLast().tap()
+    runCatching { waitUntil(timeoutMillis = WAIT_MS) { onAllNodes(reminder).fetchSemanticsNodes().isEmpty() } }
+}
+
+private const val TABLE_REMINDER_GO = "Go to my table"
+private const val TABLE_REMINDER_LATER = "Later"
+
 fun ComposeUiTest.clickButton(text: String) {
+    if (!text.equals(TABLE_REMINDER_GO, ignoreCase = true) && !text.equals(TABLE_REMINDER_LATER, ignoreCase = true)) closeTableReminder()
     val label = hasLabel(text)
     // The screens turn their buttons off while they load. A tap on a button that is off does nothing.
     if (onAllNodes(label and hasClickAction()).fetchSemanticsNodes().isNotEmpty()) {
@@ -246,6 +263,7 @@ fun ComposeUiTest.dumpScreen(label: String) {
  */
 @OptIn(ExperimentalTestApi::class)
 fun ComposeUiTest.openTournament(name: String) {
+    closeTableReminder()
     scrollListTo(name)
     val open = hasText("Open") and hasClickAction() and hasAnyAncestor(hasText(name))
     waitUntil(timeoutMillis = WAIT_MS) { onAllNodes(open).fetchSemanticsNodes().isNotEmpty() }

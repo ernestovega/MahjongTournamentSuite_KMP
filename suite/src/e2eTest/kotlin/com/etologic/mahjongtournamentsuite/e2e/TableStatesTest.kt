@@ -89,6 +89,7 @@ class TableStatesTest : AdminE2eTest() {
     @Test
     fun tournamentWithChickenHandsOnShowsTheChickenColumn() = e2e {
         open("Test - Live ongoing tournament")
-        c.waitForText("Chicken")
+        // The chicken switch of the open hand can be below the fold of the hands, as on the iPad on its side.
+        c.scrollListTo("Chicken", substring = true)
     }
 }
