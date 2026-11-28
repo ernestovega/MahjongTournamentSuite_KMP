@@ -166,7 +166,7 @@ fun RoundBarChart(
     maxValue: Double = bars.maxOfOrNull { bar -> bar.filter { it.value > 0 }.sumOf { it.value } }?.takeIf { it > 0 } ?: 1.0,
     height: Dp = 180.dp,
     /** The text of the selected round, in a bubble over its bar. Parts split by " · " show as bullet points. */
-    tooltip: String? = null,
+    tooltip: String?,
 ) {
     val measurer = rememberTextMeasurer()
     val colors = MaterialTheme.colorScheme

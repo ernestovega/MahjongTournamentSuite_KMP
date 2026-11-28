@@ -29,7 +29,7 @@ internal suspend fun RepositoryCache.tournamentManifest(
     backendApi: FunctionsBackendApi,
     token: String,
     tournamentId: String,
-    maxAge: Duration = MANIFEST_SHARE_TIME,
+    maxAge: Duration,
 ): DataVersionsManifestDto = sharedAndSeed(
     key = tournamentManifestKey(tournamentId),
     maxAge = maxAge,
