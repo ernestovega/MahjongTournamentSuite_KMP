@@ -408,6 +408,9 @@ class TournamentsScreenFlowsUiTest {
         awaitText("Open Madrid")
         fillTheNewTournament(registrations = false)
         waitUntil(timeoutMillis = 10_000) { count("AT players") > 0 }
+        // The tournament under the players must settle before the test ends: on iOS, closing the screen in the middle
+        // of the transition destroys a destination that was never created, and the navigation throws.
+        waitForIdle()
     }
 
     @Test
