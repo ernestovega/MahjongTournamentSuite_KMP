@@ -29,5 +29,9 @@ class TelemetryConsentTest {
         assertFalse(NoTelemetry.hasAnswered())
         NoTelemetry.setConsent(true)
         assertFalse(NoTelemetry.hasConsent())
+        NoTelemetry.event("e", emptyMap())
+        NoTelemetry.screen("s")
+        NoTelemetry.error(IllegalStateException(), "area")
+        NoTelemetry.userProperty("p", null)
     }
 }
