@@ -150,7 +150,7 @@ fun TableQrApp(
 @Composable
 private fun AppWithModules(
     isolatedKoin: Boolean = false,
-    modules: List<Module> = adminAppModules,
+    modules: List<Module>,
     content: @Composable () -> Unit,
 ) {
     AppKoin(isolated = isolatedKoin, modules = modules) {
