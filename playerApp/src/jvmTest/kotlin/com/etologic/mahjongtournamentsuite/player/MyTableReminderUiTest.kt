@@ -10,6 +10,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -70,10 +71,12 @@ class MyTableReminderUiTest {
         stopKoin()
     }
 
-    private fun ComposeUiTest.show(storage: SessionStateStorage) = setContent {
+    private var nav: NavHostController? = null
+
+    private fun ComposeUiTest.show(storage: SessionStateStorage?) = setContent {
         KoinApplication(application = { modules(module { factory { MyTableReminderPresenter(repositoryInPlay()) } }) }) {
             MtsTheme(useDarkTheme = false) {
-                val navController = rememberNavController()
+                val navController = rememberNavController().also { nav = it }
                 Box(Modifier.fillMaxSize()) {
                     NavHost(navController, startDestination = TournamentsRoute) {
                         composable<TournamentsRoute> { Text("Tournament list") }
@@ -132,6 +135,29 @@ class MyTableReminderUiTest {
         // No button on the table screen.
         onNodeWithTag(MY_TABLE_BUTTON_TAG).assertDoesNotExist()
         onNodeWithTag(MY_TABLE_REMINDER_TAG).assertDoesNotExist()
+    }
+
+    @Test
+    fun openingTheTableAnotherWayHandlesTheReminder() = runComposeUiTest {
+        val storage = MemoryStorage()
+        show(storage)
+
+        waitUntil(timeoutMillis = 5_000) { runCatching { onNodeWithTag(MY_TABLE_REMINDER_TAG).assertExists() }.isSuccess }
+        runOnIdle { nav!!.navigate(TableRoute("t", 2, 2)) }
+        waitForIdle()
+        onNodeWithText("Table 2").assertExists()
+        kotlin.test.assertEquals("t/2", storage.values["handledTableReminders"])
+    }
+
+    @Test
+    fun withoutAStorageTheClosedReminderStaysInMemory() = runComposeUiTest {
+        show(null)
+
+        waitUntil(timeoutMillis = 5_000) { runCatching { onNodeWithTag(MY_TABLE_REMINDER_TAG).assertExists() }.isSuccess }
+        onNodeWithText("Later").performClick()
+        waitForIdle()
+        onNodeWithTag(MY_TABLE_REMINDER_TAG).assertDoesNotExist()
+        kotlin.test.assertTrue("t/2" in HandledReminders(null))
     }
 
     @Test
