@@ -106,10 +106,8 @@ import kotlin.time.Clock
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import mahjongtournamentsuite.adminapp.generated.resources.Res
@@ -438,12 +436,13 @@ fun CreateTournamentDialog(
         progress = null
         calcStartMark = TimeSource.Monotonic.markNow()
 
-        // The draw reports its progress from the worker threads: the state of the dialog changes on the main thread only.
+        // The draw reports its progress from the worker threads: the state of the dialog changes on the UI thread only.
+        // The scope of the composition runs there on every platform and in the UI tests, which replace Dispatchers.Main.
         val progressSink: (CreateTournamentPresenter.Progress) -> Unit = { p ->
-            coroutineScope.launch(Dispatchers.Main) { progress = p }
+            coroutineScope.launch { progress = p }
         }
 
-        createJob = coroutineScope.launch(Dispatchers.Main) {
+        createJob = coroutineScope.launch {
             try {
                 when (
                     val result = presenter.createTournament(
@@ -477,8 +476,8 @@ fun CreateTournamentDialog(
                 ) {
                     is AppResult.Success -> {
                         store.addTournament(result.value)
-                        // The creation suspends. The navigation of onCreated must run on the main thread.
-                        withContext(Dispatchers.Main) { onCreated(result.value) }
+                        // The creation resumes on the UI thread of the scope, where the navigation of onCreated must run.
+                        onCreated(result.value)
                     }
 
                     is AppResult.Failure -> {
