@@ -69,6 +69,8 @@ class HandRowKeyboardUiTest {
         onNodeWithTag("2-${HandFieldSlot.Loser}").assertIsFocused()
         assertTrue(move(2, HandFieldSlot.Loser, HandArrowDirection.Up))
         onNodeWithTag("1-${HandFieldSlot.Loser}").assertIsFocused()
+        assertTrue(move(1, HandFieldSlot.Loser, HandArrowDirection.Left))
+        onNodeWithTag("1-${HandFieldSlot.Winner}").assertIsFocused()
         assertTrue(move(1, HandFieldSlot.Chicken, HandArrowDirection.Right))
         onNodeWithTag("1-${HandFieldSlot.Done}").assertIsFocused()
 
