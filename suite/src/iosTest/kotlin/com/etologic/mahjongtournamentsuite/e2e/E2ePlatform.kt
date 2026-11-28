@@ -6,6 +6,7 @@ import com.etologic.mahjongtournamentsuite.data.platform.IosFiles
 import com.etologic.mahjongtournamentsuite.data.platform.IosPlatform
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.toKString
+import platform.Foundation.NSFileManager
 import platform.Foundation.NSTimeZone
 import platform.Foundation.NSURLCache
 import platform.Foundation.NSUserDefaults
@@ -39,15 +40,21 @@ object E2ePlatform {
 
     private val defaults get() = NSUserDefaults.standardUserDefaults
 
-    /** No saved session and no choices of an earlier test, with the app pointed at the local backend. */
+    /**
+     * A fresh app, pointed at the local backend. All the tests run in one process, unlike Android, where each test gets a
+     * fresh app (clearPackageData). So the files of the app (the session, the saved tables of the player), its settings
+     * and the answers that the backend lets clients keep for a few seconds (Cache-Control) go, or they would reach the
+     * next test after its fresh seed: a table with the hand that the last test saved, for example.
+     */
     fun resetAppState() {
         IosPlatform.backendUrlOverride = backendUrl
-        IosFiles.delete(sessionFile())
-        listOf("languagePreference", "aiTranslationNoticeSeen", "themePreference", "AppleLanguages", "mts.telemetry.consent")
-            .forEach { defaults.removeObjectForKey(it) }
-        // All the tests run in one process, unlike Android, where each test gets a fresh app. The answers that the
-        // backend lets clients keep for a few seconds (Cache-Control) would otherwise reach the next test, after its
-        // fresh seed: a round clock that the last test stopped, for example.
+        listOf(IosFiles.supportDirectory(), IosFiles.cachesDirectory()).forEach { folder ->
+            NSFileManager.defaultManager.contentsOfDirectoryAtPath(folder, error = null)?.forEach { name ->
+                NSFileManager.defaultManager.removeItemAtPath(IosFiles.child(folder, name.toString()), error = null)
+            }
+        }
+        // The keys of the app. The global ones that the dictionary also lists stay, since only the app domain changes.
+        defaults.dictionaryRepresentation().keys.forEach { key -> defaults.removeObjectForKey(key.toString()) }
         NSURLCache.sharedURLCache.removeAllCachedResponses()
     }
 
