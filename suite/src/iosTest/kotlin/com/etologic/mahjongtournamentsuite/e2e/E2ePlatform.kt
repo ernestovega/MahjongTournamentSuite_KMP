@@ -4,6 +4,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.Density
 import com.etologic.mahjongtournamentsuite.data.platform.IosFiles
 import com.etologic.mahjongtournamentsuite.data.platform.IosPlatform
+import com.etologic.mahjongtournamentsuite.player.PlayerProcessStateForTests
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.toKString
 import platform.Foundation.NSFileManager
@@ -56,6 +57,8 @@ object E2ePlatform {
         // The keys of the app. The global ones that the dictionary also lists stay, since only the app domain changes.
         defaults.dictionaryRepresentation().keys.forEach { key -> defaults.removeObjectForKey(key.toString()) }
         NSURLCache.sharedURLCache.removeAllCachedResponses()
+        // A new start of the app opens the In play tab again.
+        PlayerProcessStateForTests.reset()
     }
 
     /** The app starts already signed in with this session. */

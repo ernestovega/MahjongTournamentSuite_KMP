@@ -368,6 +368,17 @@ internal fun EmptyState(icon: ImageVector, title: String, message: String) {
     AppEmptyState(icon, title, message, compact = true)
 }
 
+/**
+ * What the player part remembers while the process lives, such as the In play tab opened once at the start. The
+ * end-to-end tests of iOS run in one process and start the app afresh for each test, so they forget it. The app never
+ * calls it.
+ */
+object PlayerProcessStateForTests {
+    fun reset() {
+        StartTab.liveOpened = false
+    }
+}
+
 /** The tabs of the start screen. [LIVE] shows only while a tournament is in play. */
 internal enum class StartTab(val title: StringResource, val trackingName: String) {
     LIVE(Res.string.tournaments_tab_live, "In play"),
