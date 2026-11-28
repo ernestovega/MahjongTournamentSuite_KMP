@@ -5,21 +5,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asSkiaBitmap
-import java.io.File
-import javax.swing.JFileChooser
+import com.etologic.mahjongtournamentsuite.presentation.platform.NativeDesktopWindow
 import org.jetbrains.skia.EncodedImageFormat
 import org.jetbrains.skia.Image
+import java.io.File
+import javax.swing.JFileChooser
 
 internal actual fun ImageBitmap.encodePng(): ByteArray =
     Image.makeFromBitmap(asSkiaBitmap()).encodeToData(EncodedImageFormat.PNG)?.bytes ?: error("The image cannot be encoded.")
 
 /** The save dialog of a shared image: the chosen file, or null when it was cancelled. Tests replace it. */
-internal var chooseImageFile: (title: String, fileName: String) -> File? = { title, fileName ->
+internal var chooseImageFile: (title: String, fileName: String) -> File? = ::systemImageSaveDialog
+
+@NativeDesktopWindow
+private fun systemImageSaveDialog(title: String, fileName: String): File? {
     val chooser = JFileChooser().apply {
         dialogTitle = title
         selectedFile = File(fileName)
     }
-    if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) chooser.selectedFile else null
+    return if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) chooser.selectedFile else null
 }
 
 // The JVM target only runs the tests. A computer has no share sheet, so it saves the image where the user chooses.

@@ -55,6 +55,9 @@ kover {
                 packages("*.generated.resources", "*.backend.dto")
                 classes("*ComposableSingletons*", "*_Factory", "*MainKt", "*\$DefaultImpls")
                 annotatedBy("androidx.compose.ui.tooling.preview.Preview")
+                // The windows and the save and open dialogs of the desktop system: the tests run without a screen,
+                // where they cannot open. The tests replace each dialog and measure the code around it.
+                annotatedBy("com.etologic.mahjongtournamentsuite.presentation.platform.NativeDesktopWindow")
             }
         }
     }

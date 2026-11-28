@@ -121,7 +121,7 @@
     </file>
     <file name="src/jvmMain/kotlin/com/etologic/mahjongtournamentsuite/player/ImageShare.jvm.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="13" column="57" source="standard:function-signature" />
+        <error line="14" column="57" source="standard:function-signature" />
     </file>
     <file name="src/jvmTest/kotlin/com/etologic/mahjongtournamentsuite/player/AllTextsResolveTest.kt">
         <error line="3" column="1" source="standard:import-ordering" />

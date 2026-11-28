@@ -6,13 +6,14 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.rememberWindowState
-import java.util.UUID
+import com.etologic.mahjongtournamentsuite.presentation.platform.NativeDesktopWindow
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.app_icon
 import mahjongtournamentsuite.adminapp.generated.resources.rankings
 import mahjongtournamentsuite.adminapp.generated.resources.timer
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import java.util.UUID
 
 sealed class StandaloneWindow {
     abstract val id: String
@@ -60,6 +61,8 @@ object StandaloneWindows {
         )
     }
 
+    /** The open windows. Each one is a window of the desktop system, which the tests without a screen cannot open. */
+    @NativeDesktopWindow
     @Composable
     fun Host() {
         windows.forEach { w ->
