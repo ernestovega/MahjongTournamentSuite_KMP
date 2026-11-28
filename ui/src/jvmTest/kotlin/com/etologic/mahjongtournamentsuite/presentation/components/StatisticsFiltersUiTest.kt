@@ -4,6 +4,7 @@ import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -138,6 +139,40 @@ class StatisticsFiltersUiTest {
         onNodeWithContentDescription("Remove the filter ${ana.displayNameForTest()}", substring = true, ignoreCase = true).performClick()
         waitForIdle()
         assertEquals(StatisticsFilters(tournamentCountry = "ES"), changed)
+    }
+
+    @Test
+    fun theChipOfATableRemovesTheTableAndItsRound() = runComposeUiTest {
+        var changed: StatisticsFilters? = null
+        val filters = StatisticsFilters(tournamentId = madrid.id, roundId = 2, tableId = 3)
+        setContent {
+            MtsTheme(useDarkTheme = false) {
+                StatisticsFilterBar(filters = filters, onChange = { changed = it }, players = players, tournaments = tournaments)
+            }
+        }
+        waitUntil(timeoutMillis = 5_000) { shows("Table 3 · Round 2") }
+        onNodeWithContentDescription("Remove the filter Table 3", substring = true).performClick()
+        waitForIdle()
+        assertEquals(filters.copy(roundId = null, tableId = null), changed)
+    }
+
+    @Test
+    fun theCountryOfThePlayersCanBeNoneOrAny() = runComposeUiTest {
+        val applied = mutableListOf<String?>()
+        dialog(StatisticsFilters(playerCountry = "ITA")) { applied += it.playerCountry }
+        fun choose(value: String, option: String) {
+            // The country of the tournaments comes first: the last field with the value is the country of the players.
+            onAllNodes(hasText(value) and !hasSetTextAction()).onLast().performClick()
+            waitUntil(timeoutMillis = 5_000) { shows(option) }
+            waitForIdle()
+            onAllNodes(hasText(option) and !hasSetTextAction()).onLast().performClick()
+            waitForIdle()
+            onNodeWithText("Apply").performClick()
+            waitForIdle()
+        }
+        choose("Italy", "No country")
+        choose("No country", "Any country")
+        assertEquals(listOf("", null), applied)
     }
 
     @Test

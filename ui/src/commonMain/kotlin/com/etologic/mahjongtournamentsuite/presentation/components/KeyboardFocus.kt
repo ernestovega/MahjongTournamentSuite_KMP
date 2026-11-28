@@ -185,7 +185,7 @@ fun Modifier.textFieldFocusLoop(
 
 /** Activates a custom clickable control with Enter or Numpad Enter. */
 fun Modifier.activateOnEnter(
-    enabled: Boolean = true,
+    enabled: Boolean,
     onClick: () -> Unit,
 ): Modifier = onPreviewKeyEvent { event ->
     if (!enabled || event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false

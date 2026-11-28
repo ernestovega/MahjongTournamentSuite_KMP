@@ -174,6 +174,19 @@ class RulesTopBarUiTest {
         onNodeWithText("How the draw works").assertExists()
     }
 
+    @Test
+    fun aPlayerOfTheTournamentOpensTheirResultsFromTheMenu() = runDesktopComposeUiTest(width = 1200, height = 800) {
+        var opened = 0
+        show { nav ->
+            val drawExplanation = rememberDrawExplanationState()
+            AppScaffold(title = "Madrid Open", actions = { InfoTopBarButtons(nav, drawExplanation, onMyResults = { opened++ }) }) {}
+        }
+        button("More").performClick()
+        button("My results").performClick()
+        waitForIdle()
+        kotlin.test.assertEquals(1, opened)
+    }
+
     /** The top bar of the table screen: the rules, and the contact with support as in the other screens. */
     @Composable
     private fun TableBar(nav: NavHostController) = AppScaffold(title = "Round 1 - Table 1", onBack = {}, actions = { TableTopBarActions(nav) }) {}

@@ -92,7 +92,7 @@ private class RecordingRegistrations(
     }
     override suspend fun register(tournamentId: String, request: RegisterRequest): AppResult<RegisterResult> {
         calls += "register:${request.emaId}"
-        return AppResult.Success(registerAnswer)
+        return if (failing) AppResult.Failure(AppError.Network) else AppResult.Success(registerAnswer)
     }
     override suspend fun confirm(tournamentId: String, token: String): AppResult<OwnRegistration> {
         calls += "confirm:$token"
@@ -100,7 +100,10 @@ private class RecordingRegistrations(
     }
     override suspend fun loadOwn(tournamentId: String): AppResult<OwnRegistration?> = AppResult.Success(own)
     override suspend fun updateOwn(tournamentId: String, foodRestrictions: String, consent: Boolean) = change("food:$foodRestrictions:$consent")
-    override suspend fun cancelOwn(tournamentId: String): AppResult<Unit> = AppResult.Success(Unit)
+    override suspend fun cancelOwn(tournamentId: String): AppResult<Unit> {
+        calls += "cancel"
+        return if (failing) AppResult.Failure(AppError.Network) else AppResult.Success(Unit)
+    }
     override suspend fun createTeam(tournamentId: String, name: String) = change("create:$name")
     override suspend fun renameTeam(tournamentId: String, name: String) = change("rename:$name")
     override suspend fun leaveTeam(tournamentId: String) = change("leave")
@@ -277,6 +280,34 @@ class RegistrationActionsUiTest {
         waitFor("(EMA 10990009)")
         onNodeWithTag("registration-submit").performClick()
         waitFor("with place 4")
+    }
+
+    @Test
+    fun aRegistrationThatIsNotSentShowsTheError() = runComposeUiTest {
+        val repository = RecordingRegistrations(list = AppResult.Success(teamsList.copy(registrations = emptyList(), teams = emptyList())), failing = true)
+        show(repository, auth = account(signedIn = true, emaId = "10990004"))
+        waitFor("Nobody has registered yet.")
+        onNodeWithTag("registration-register").performClick()
+        waitFor("(EMA 10990004)")
+        onNodeWithTag("registration-submit").performClick()
+        waitFor("OK")
+        click("OK")
+        assertEquals(listOf("register:10990004"), repository.calls)
+    }
+
+    @Test
+    fun aCancelThatIsNotSentShowsTheError() = runComposeUiTest {
+        val repository = RecordingRegistrations(own = captain, failing = true)
+        show(repository)
+        waitForTag("registration-manage")
+        onNodeWithTag("registration-manage").performClick()
+        waitFor("Cancel my registration")
+        click("Cancel my registration")
+        waitFor("Cancel your registration?")
+        click("Cancel registration")
+        waitFor("OK")
+        click("OK")
+        assertEquals(listOf("cancel"), repository.calls)
     }
 
     @Test

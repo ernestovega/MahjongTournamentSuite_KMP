@@ -16,7 +16,7 @@ import kotlin.math.max
 @Composable
 fun StaggeredColumns(
     modifier: Modifier = Modifier,
-    minColumnWidth: Dp = 420.dp,
+    minColumnWidth: Dp,
     spacing: Dp = 16.dp,
     maxColumns: Int = Int.MAX_VALUE,
     content: @Composable () -> Unit,

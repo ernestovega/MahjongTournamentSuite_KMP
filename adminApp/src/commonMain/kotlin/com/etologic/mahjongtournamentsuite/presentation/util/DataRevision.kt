@@ -23,13 +23,13 @@ fun dataRevisionLabel(revision: Long?): String = revision?.let { "r$it" }.orEmpt
 private fun Int.two() = toString().padStart(2, '0')
 
 /** `20261011-1530`. It sorts in time order and has no character that a file system refuses. */
-fun fileStamp(now: Instant, zone: TimeZone = TimeZone.currentSystemDefault()): String {
+fun fileStamp(now: Instant, zone: TimeZone): String {
     val time = now.toLocalDateTime(zone)
     return "${time.year}${(time.month.ordinal + 1).two()}${time.day.two()}-${time.hour.two()}${time.minute.two()}"
 }
 
 /** `15:30:12`, for the screen. */
-fun clockLabel(now: Instant, zone: TimeZone = TimeZone.currentSystemDefault()): String {
+fun clockLabel(now: Instant, zone: TimeZone): String {
     val time = now.toLocalDateTime(zone)
     return "${time.hour.two()}:${time.minute.two()}:${time.second.two()}"
 }

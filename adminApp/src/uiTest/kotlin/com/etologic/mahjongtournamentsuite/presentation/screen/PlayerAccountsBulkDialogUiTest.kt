@@ -117,6 +117,13 @@ class PlayerAccountsBulkDialogUiTest {
     }
 
     @Test
+    fun anEmailThatTheUserMayReadShowsInItsRow() = runComposeUiTest {
+        show(list = listOf(TournamentPlayer(id = 1, name = "P1", team = 0, assignedEmaId = "11", hasEmail = true, email = "p1@example.test")))
+
+        onNodeWithText("p1@example.test").assertIsDisplayed()
+    }
+
+    @Test
     fun sendsOnlyTheSelectedPlayersAndTheSelectionClearsWhenTheFilterChanges() = runComposeUiTest {
         var sent: List<Int> = emptyList()
         show(onSend = { ids, _ -> sent = ids })

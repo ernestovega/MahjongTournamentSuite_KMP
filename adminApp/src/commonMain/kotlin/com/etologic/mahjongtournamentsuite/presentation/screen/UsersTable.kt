@@ -94,7 +94,7 @@ internal fun UsersTable(
     onToggleSelected: (String) -> Unit,
     onEdit: (ManagedUser) -> Unit,
     // The space after the last account, so the floating buttons do not cover it.
-    bottomPadding: Dp = 24.dp,
+    bottomPadding: Dp,
     selectedCount: Int = 0,
     onSelectAllShown: () -> Unit = {},
     onClearSelection: () -> Unit = {},

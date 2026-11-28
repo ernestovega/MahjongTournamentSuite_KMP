@@ -150,7 +150,7 @@ fun TournamentRoundChips(
     selected: Int?,
     onSelect: (Int?) -> Unit,
     modifier: Modifier = Modifier,
-    edge: Dp = 0.dp,
+    edge: Dp,
 ) {
     val played = remember(statistics, roundIds) { statistics.playedRounds(roundIds) }
     if (played.isEmpty()) return
@@ -180,7 +180,7 @@ fun PlayerRoundChips(
     selected: Int?,
     onSelect: (Int?) -> Unit,
     modifier: Modifier = Modifier,
-    edge: Dp = 0.dp,
+    edge: Dp,
 ) {
     val played = remember(results) { results.map { it.roundId }.distinct().sorted() }
     if (played.isEmpty()) return

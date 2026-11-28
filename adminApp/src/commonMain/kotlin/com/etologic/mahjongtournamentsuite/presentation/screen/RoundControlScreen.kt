@@ -823,7 +823,7 @@ private fun ModeChips(
     tag: String,
     selected: ControlMode,
     enabled: Boolean,
-    autoLabel: StringResource = Res.string.round_control_auto,
+    autoLabel: StringResource,
     onSelect: (ControlMode) -> Unit,
 ) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

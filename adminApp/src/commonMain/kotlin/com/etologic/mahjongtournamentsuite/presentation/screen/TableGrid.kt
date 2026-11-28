@@ -183,7 +183,6 @@ internal fun RowScope.GridCell(
 internal fun RowScope.GridHeaderCell(
     text: String,
     modifier: Modifier,
-    subtext: String? = null,
     icon: DrawableResource? = null,
     last: Boolean = false,
 ) {
@@ -209,16 +208,6 @@ internal fun RowScope.GridHeaderCell(
                     text = text,
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     maxLines = 2,
-                )
-            }
-            if (subtext != null) {
-                Text(
-                    text = subtext,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }

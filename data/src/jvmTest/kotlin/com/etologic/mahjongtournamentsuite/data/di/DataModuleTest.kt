@@ -2,6 +2,8 @@ package com.etologic.mahjongtournamentsuite.data.di
 
 import com.etologic.mahjongtournamentsuite.data.network.ApiConfiguration
 import com.etologic.mahjongtournamentsuite.data.platform.PlatformNameProvider
+import com.etologic.mahjongtournamentsuite.data.telemetry.DesktopTelemetryConfig
+import com.etologic.mahjongtournamentsuite.data.telemetry.ReportingTelemetry
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.FeatureFlagsRepository
@@ -28,6 +30,7 @@ import java.nio.file.Files
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertIs
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 
@@ -99,6 +102,19 @@ class DataModuleTest {
         val app = koinApplication { modules(module { single<Any>(named("telemetry")) { telemetry() } }) }
 
         assertSame(NoTelemetry, app.koin.get<Any>(named("telemetry")))
+        app.close()
+    }
+
+    /**
+     * Without the API secret of the desktop analytics, as in a local build, the real telemetry of the graph sends
+     * nothing and closes with the graph. A build with the secret skips this test, so that no test sends analytics.
+     */
+    @Test
+    fun withoutTheSecretTheRealTelemetrySendsNothing() {
+        if (DesktopTelemetryConfig.apiSecret.isNotBlank()) return
+        val app = koinApplication { modules(dataModule) }
+
+        assertIs<ReportingTelemetry>(app.koin.get<Telemetry>())
         app.close()
     }
 
