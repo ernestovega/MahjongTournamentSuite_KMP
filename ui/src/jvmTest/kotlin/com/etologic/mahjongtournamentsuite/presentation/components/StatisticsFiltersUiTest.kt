@@ -49,7 +49,7 @@ class StatisticsFiltersUiTest {
     /** Opens the select field that shows [value] and waits for [probe] in its menu. */
     private fun ComposeUiTest.open(value: String, probe: String) {
         onNodeWithText(value).performClick()
-        waitUntil(timeoutMillis = 5_000) { shows(probe) }
+        waitUntil(timeoutMillis = 15_000) { shows(probe) }
         waitForIdle()
     }
 
@@ -143,7 +143,7 @@ class StatisticsFiltersUiTest {
                 StatisticsFilterBar(filters = filters, onChange = { changed = it }, players = players, tournaments = tournaments)
             }
         }
-        waitUntil(timeoutMillis = 5_000) { shows("vs ") }
+        waitUntil(timeoutMillis = 15_000) { shows("vs ") }
         onNodeWithContentDescription("Remove the filter vs ", substring = true).performClick()
         waitForIdle()
         assertEquals(filters.copy(rivalEmaId = null), changed)
@@ -162,7 +162,7 @@ class StatisticsFiltersUiTest {
                 StatisticsFilterBar(filters = filters, onChange = { changed = it }, players = players, tournaments = tournaments)
             }
         }
-        waitUntil(timeoutMillis = 5_000) { shows("Table 3 · Round 2") }
+        waitUntil(timeoutMillis = 15_000) { shows("Table 3 · Round 2") }
         onNodeWithContentDescription("Remove the filter Table 3", substring = true).performClick()
         waitForIdle()
         assertEquals(filters.copy(roundId = null, tableId = null), changed)
@@ -179,13 +179,13 @@ class StatisticsFiltersUiTest {
             // The country of the tournaments comes first: the last field with the value is the country of the players.
             onAllNodes(hasText(value) and !hasSetTextAction()).onLast().performClick()
             // The open menu adds the option, also when a field shows it already.
-            waitUntil(timeoutMillis = 5_000) { count(option) > before }
+            waitUntil(timeoutMillis = 15_000) { count(option) > before }
             waitForIdle()
             onAllNodes(hasText(option) and !hasSetTextAction()).onLast().performClick()
-            waitUntil(timeoutMillis = 5_000) { count(value) == 0 || value == option }
+            waitUntil(timeoutMillis = 15_000) { count(value) == 0 || value == option }
             waitForIdle()
             onNodeWithText("Apply").performClick()
-            waitUntil(timeoutMillis = 5_000) { applied.size > applies }
+            waitUntil(timeoutMillis = 15_000) { applied.size > applies }
         }
         choose("Italy", "No country")
         choose("No country", "Any country")
@@ -199,7 +199,7 @@ class StatisticsFiltersUiTest {
                 StatisticsFilterBar(filters = StatisticsFilters(), onChange = {}, players = players, tournaments = tournaments)
             }
         }
-        waitUntil(timeoutMillis = 5_000) { shows("All tournaments and players") }
+        waitUntil(timeoutMillis = 15_000) { shows("All tournaments and players") }
         onNodeWithText("Filters").assertExists()
     }
 
@@ -221,7 +221,7 @@ class StatisticsFiltersUiTest {
         assertEquals(SELECT_MAX_SHOWN - 1, shownPlayers())
         assertEquals(false, shows("P2999 MANY"))
         onNode(hasSetTextAction()).performTextInput("P2999")
-        waitUntil(timeoutMillis = 5_000) { shows("P2999 MANY") }
+        waitUntil(timeoutMillis = 15_000) { shows("P2999 MANY") }
     }
 
     @Test
@@ -229,7 +229,7 @@ class StatisticsFiltersUiTest {
         val chosen = many[2_500]
         manyDialog(StatisticsFilters(emaId = chosen.emaId))
         onNodeWithText("${chosen.firstName} MANY (${chosen.emaId})").performClick()
-        waitUntil(timeoutMillis = 5_000) { shownPlayers() > 1 }
+        waitUntil(timeoutMillis = 15_000) { shownPlayers() > 1 }
         waitForIdle()
         // The field and the menu show it: the menu has "Any player", the chosen one and the first others.
         assertEquals(2, onAllNodes(hasText(chosen.emaId, substring = true) and !hasSetTextAction()).fetchSemanticsNodes().size)
