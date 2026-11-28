@@ -1162,16 +1162,16 @@
     </file>
     <file name="src/commonTest/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/TableManagerEditorStateTest.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="469" column="37" source="standard:argument-list-wrapping" />
-        <error line="469" column="58" source="standard:argument-list-wrapping" />
-        <error line="469" column="78" source="standard:argument-list-wrapping" />
-        <error line="482" column="37" source="standard:argument-list-wrapping" />
-        <error line="482" column="58" source="standard:argument-list-wrapping" />
-        <error line="482" column="78" source="standard:argument-list-wrapping" />
-        <error line="506" column="26" source="standard:argument-list-wrapping" />
-        <error line="506" column="39" source="standard:argument-list-wrapping" />
-        <error line="506" column="71" source="standard:argument-list-wrapping" />
-        <error line="507" column="35" source="standard:argument-list-wrapping" />
+        <error line="480" column="37" source="standard:argument-list-wrapping" />
+        <error line="480" column="58" source="standard:argument-list-wrapping" />
+        <error line="480" column="78" source="standard:argument-list-wrapping" />
+        <error line="493" column="37" source="standard:argument-list-wrapping" />
+        <error line="493" column="58" source="standard:argument-list-wrapping" />
+        <error line="493" column="78" source="standard:argument-list-wrapping" />
+        <error line="517" column="26" source="standard:argument-list-wrapping" />
+        <error line="517" column="39" source="standard:argument-list-wrapping" />
+        <error line="517" column="71" source="standard:argument-list-wrapping" />
+        <error line="518" column="35" source="standard:argument-list-wrapping" />
     </file>
     <file name="src/commonTest/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/TableReconcilerTest.kt">
         <error line="15" column="80" source="standard:function-signature" />
