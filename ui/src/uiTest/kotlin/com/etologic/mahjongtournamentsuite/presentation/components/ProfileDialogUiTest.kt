@@ -85,6 +85,36 @@ class ProfileDialogUiTest {
     }
 
     @Test
+    fun aDeleteThatFailsKeepsTheAccountAndTheQuestionOpen() = runComposeUiTest {
+        var deletes = 0
+        var deleted = false
+        setContent {
+            TestTheme {
+                ProfileDialog(
+                    profile = player,
+                    onSavePhoto = { _, _ -> error("unused") },
+                    onRemovePhoto = { error("unused") },
+                    onSaveAlias = { error("unused") },
+                    onSaved = {},
+                    onDismiss = {},
+                    onDeleteAccount = {
+                        deletes++
+                        AppResult.Failure(AppError.Network)
+                    },
+                    onAccountDeleted = { deleted = true },
+                )
+            }
+        }
+
+        onNodeWithText("Delete my account").performScrollTo().performClick()
+        onNodeWithText("Delete").performClick()
+        waitUntil(timeoutMillis = 5_000) { deletes == 1 }
+        waitForIdle()
+        onNodeWithText("Delete your account?").assertExists()
+        assertEquals(false, deleted)
+    }
+
+    @Test
     fun withoutTheDeleteCallbackTheDialogHasNoDeleteButton() = runComposeUiTest {
         setContent {
             TestTheme {
