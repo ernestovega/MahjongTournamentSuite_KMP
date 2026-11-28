@@ -7,6 +7,7 @@ import com.etologic.mahjongtournamentsuite.data.platform.IosPlatform
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.toKString
 import platform.Foundation.NSTimeZone
+import platform.Foundation.NSURLCache
 import platform.Foundation.NSUserDefaults
 import platform.Foundation.localTimeZone
 import platform.posix.getenv
@@ -44,6 +45,10 @@ object E2ePlatform {
         IosFiles.delete(sessionFile())
         listOf("languagePreference", "aiTranslationNoticeSeen", "themePreference", "AppleLanguages", "mts.telemetry.consent")
             .forEach { defaults.removeObjectForKey(it) }
+        // All the tests run in one process, unlike Android, where each test gets a fresh app. The answers that the
+        // backend lets clients keep for a few seconds (Cache-Control) would otherwise reach the next test, after its
+        // fresh seed: a round clock that the last test stopped, for example.
+        NSURLCache.sharedURLCache.removeAllCachedResponses()
     }
 
     /** The app starts already signed in with this session. */
