@@ -1,5 +1,5 @@
-# Builds the iOS app (iosApp) for the simulator, opens it there and keeps screenshots of the first screens. It checks
-# nothing: until the release there are no new gates in CI. Run it by hand from Actions > Build · iOS, or it runs on a
+# Builds the iOS app (iosApp) for the simulator, opens it on an iPhone and on an iPad and keeps screenshots of the first
+# screens. The job fails when the app is not running at the end. Run it by hand from Actions > Build · iOS, or it runs on a
 # push that touches the iOS code. See docs/ios-release.md.
 name: Build · iOS
 
@@ -150,11 +150,42 @@ jobs:
           xcrun simctl spawn "$DEVICE" log show --last 2m --predicate 'process == "iosApp"' --style compact > build/ios-screens/app.log || true
           # A short report in the log of the job: is the app still running, what it logged, and how many colours each
           # screenshot has (a blank or black screen has one or two).
-          if xcrun simctl spawn "$DEVICE" launchctl list | grep -q com.etologic.mahjongtournamentsuite; then echo "App running"; else echo "App NOT running"; fi
           grep -iE "error|exception|terminat|crash|fatal" build/ios-screens/app.log | tail -40 || true
-          for shot in build/ios-screens/*.png; do
+          for shot in build/ios-screens/iphone-*.png; do
             echo "$shot: $(sips -g pixelWidth -g pixelHeight "$shot" | tail -2 | awk '{print $2}' | xargs)"
           done
+          # An app that closed by itself on the way fails the job.
+          if xcrun simctl spawn "$DEVICE" launchctl list | grep -q com.etologic.mahjongtournamentsuite; then echo "App running"; else echo "::error::The app is not running on the iPhone"; exit 1; fi
+          xcrun simctl shutdown "$DEVICE"
+
+      # The same app on an iPad (Ernesto, 2026-11-28: there is no iPad to try it on): the wide layout, the light and
+      # dark themes, a link of the site, and the app must still be running at the end.
+      - name: Open the app on an iPad
+        run: |
+          DEVICE=$(xcrun simctl list devices available | grep -E "^\s+iPad Pro 13-inch" | tail -1 | sed -E 's/.*\(([0-9A-F-]+)\).*/\1/')
+          [ -n "$DEVICE" ] || DEVICE=$(xcrun simctl list devices available | grep -E "^\s+iPad" | tail -1 | sed -E 's/.*\(([0-9A-F-]+)\).*/\1/')
+          echo "Simulator $DEVICE"
+          xcrun simctl boot "$DEVICE"
+          xcrun simctl bootstatus "$DEVICE" -b
+          xcrun simctl install "$DEVICE" build/ios/Build/Products/Debug-iphonesimulator/iosApp.app
+          xcrun simctl ui "$DEVICE" appearance light
+          xcrun simctl launch "$DEVICE" com.etologic.mahjongtournamentsuite
+          for second in 10 30; do
+            sleep 15
+            xcrun simctl io "$DEVICE" screenshot "build/ios-screens/ipad-${second}s.png"
+          done
+          xcrun simctl ui "$DEVICE" appearance dark
+          sleep 5
+          xcrun simctl io "$DEVICE" screenshot build/ios-screens/ipad-dark.png
+          xcrun simctl openurl "$DEVICE" "https://mts.mahjongmadrid.com/support" || true
+          sleep 8
+          xcrun simctl io "$DEVICE" screenshot build/ios-screens/ipad-link.png
+          xcrun simctl spawn "$DEVICE" log show --last 2m --predicate 'process == "iosApp"' --style compact > build/ios-screens/ipad-app.log || true
+          grep -iE "error|exception|terminat|crash|fatal" build/ios-screens/ipad-app.log | tail -40 || true
+          for shot in build/ios-screens/ipad-*.png; do
+            echo "$shot: $(sips -g pixelWidth -g pixelHeight "$shot" | tail -2 | awk '{print $2}' | xargs)"
+          done
+          if xcrun simctl spawn "$DEVICE" launchctl list | grep -q com.etologic.mahjongtournamentsuite; then echo "App running"; else echo "::error::The app is not running on the iPad"; exit 1; fi
 
       - name: Keep the build log
         if: always()
