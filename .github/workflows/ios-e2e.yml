@@ -1,0 +1,150 @@
+# Runs the end-to-end tests of the whole app (suite/src/e2eTest) on the iOS simulator, against the local test backend,
+# like Test · UI (emulators) does on Android (ui-tests.yml). The same tests: the admin part on an iPad on its side and the
+# player part on an iPhone. Ernesto has no iPhone or iPad (2026-11-28), so this is how the iOS app is tried end to end.
+# The simulator reaches the backend of the Mac at 127.0.0.1. See docs/ios-release.md.
+name: Test · UI (iOS simulator)
+
+on:
+  # Every night at 03:30 UTC, after the Android tests start.
+  schedule:
+    - cron: "30 3 * * *"
+  workflow_dispatch:
+    inputs:
+      form:
+        description: "Screen: default (admin on an iPad, player on an iPhone), phone or tablet (every test there)"
+        type: choice
+        options: [default, phone, tablet]
+        default: default
+      tests:
+        description: Optional test class or class.method, comma separated (for example com.etologic.mahjongtournamentsuite.e2e.SignInTest)
+        type: string
+        required: false
+
+concurrency:
+  group: ios-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # The seed writes round times in the time zone of the backend, like on Android.
+  TZ: UTC
+
+jobs:
+  e2e:
+    name: End-to-end tests on the iOS simulator
+    # The repository is public, so the macOS runners cost nothing.
+    runs-on: macos-26
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Newest Xcode
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_27*.app 2>/dev/null | sort -V | tail -1)
+          [ -n "$XCODE" ] || XCODE=$(ls -d /Applications/Xcode_[0-9]*.app | sort -V | tail -1)
+          sudo xcode-select -s "$XCODE/Contents/Developer"
+          xcodebuild -version
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            firebase/functions/package-lock.json
+
+      - name: Memory for the Kotlin/Native compiler
+        run: |
+          mkdir -p "$HOME/.gradle"
+          {
+            echo "org.gradle.jvmargs=-Xmx2g -Dfile.encoding=UTF-8"
+            echo "kotlin.daemon.jvmargs=-Xmx1g"
+            echo "kotlin.native.disableCompilerDaemon=true"
+            echo "kotlin.native.jvmArgs=-Xmx4g"
+          } >> "$HOME/.gradle/gradle.properties"
+
+      # The test binary takes a while to link. It does not need the backend, so it goes first.
+      - name: Build the tests
+        run: ./gradlew :suite:linkDebugTestIosSimulatorArm64
+
+      - name: Install Firebase CLI and functions dependencies
+        run: |
+          npm ci --no-audit --no-fund
+          npm ci --no-audit --no-fund --prefix firebase/functions
+          echo "$GITHUB_WORKSPACE/node_modules/.bin" >> "$GITHUB_PATH"
+
+      - name: Start the local backend
+        working-directory: firebase/functions
+        env:
+          E2E_JAVA_HOME: ${{ env.JAVA_HOME }}
+        run: |
+          nohup npm run e2e:backend > "$RUNNER_TEMP/e2e-backend.log" 2>&1 &
+          for _ in $(seq 1 120); do
+            curl -s -o /dev/null http://127.0.0.1:5055/ && exit 0
+            sleep 5
+          done
+          cat "$RUNNER_TEMP/e2e-backend.log"
+          exit 1
+
+      # A test that fails runs again up to two times, alone: the Compose test harness sometimes fails a test that is
+      # fine (the same as scripts/run-e2e-tests.sh does on Android). Other failures stay failures.
+      - name: Run the tests
+        env:
+          E2E_BACKEND_URL: http://127.0.0.1:5055/api
+          E2E_WAIT_MS: "60000"
+          E2E_FORM: ${{ inputs.form != 'default' && inputs.form || '' }}
+          TESTS: ${{ inputs.tests }}
+        run: |
+          results=suite/build/test-results/iosSimulatorArm64Test
+          filters=()
+          IFS=',' read -ra wanted <<< "$TESTS"
+          for test in "${wanted[@]}"; do [ -n "$test" ] && filters+=(--tests "$test"); done
+          failed() {
+            python3 - "$results" <<'PY'
+          import glob, sys, xml.etree.ElementTree as ET
+          for path in glob.glob(sys.argv[1] + "/*.xml"):
+              for case in ET.parse(path).getroot().iter("testcase"):
+                  if any(c.tag in ("failure", "error") for c in case):
+                      name = case.get("name").split("[")[0]
+                      cls = case.get("classname").removeprefix("iosSimulatorArm64Test.")
+                      print(f"{cls}.{name}")
+          PY
+          }
+          ./gradlew :suite:iosSimulatorArm64Test "${filters[@]}" --continue && exit 0
+          for attempt in 2 3; do
+            again=$(failed)
+            [ -n "$again" ] || exit 1
+            echo "Run $attempt of the failed tests:"; echo "$again"
+            args=(); for test in $again; do args+=(--tests "$test"); done
+            ./gradlew :suite:iosSimulatorArm64Test "${args[@]}" --continue && exit 0
+          done
+          exit 1
+
+      - name: Report
+        if: always()
+        run: |
+          for f in suite/build/test-results/iosSimulatorArm64Test/*.xml; do
+            [ -f "$f" ] || continue
+            grep -o 'testsuite name="[^"]*" tests="[0-9]*" skipped="[0-9]*" failures="[0-9]*"' "$f"
+          done
+          grep -l "<failure" suite/build/test-results/iosSimulatorArm64Test/*.xml 2>/dev/null | while read f; do
+            grep -B1 -A30 "<failure" "$f" | head -60
+          done
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: ios-e2e
+          path: |
+            suite/build/test-results/iosSimulatorArm64Test/
+            ${{ runner.temp }}/e2e-backend.log
+          if-no-files-found: ignore

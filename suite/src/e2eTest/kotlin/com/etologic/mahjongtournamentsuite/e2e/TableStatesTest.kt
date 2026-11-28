@@ -1,0 +1,94 @@
+@file:OptIn(androidx.compose.ui.test.ExperimentalTestApi::class)
+
+package com.etologic.mahjongtournamentsuite.e2e
+
+import kotlin.test.Test
+
+/** What the table editor shows for the different table states of the seeded tournaments. */
+class TableStatesTest : AdminE2eTest() {
+    private fun open(name: String) {
+        start(E2eAccounts.ADMIN, ready = PROFILE_BUTTON)
+        c.openTournament(name)
+        c.waitForAnyText("Players & results", "Tournament players")
+        c.waitForText("Players & results")
+    }
+
+    @Test
+    fun penaltiesAreExplainedInTheScoreCheck() = e2e {
+        // Table 1 of round 1 of this tournament has the "penalties" style of the seed.
+        open("Test - Draws and penalties")
+        c.selectTable(1)
+        c.waitForText("rather than 0, but this matches the penalties.", substring = true)
+        c.waitForText("has a penalty of", substring = true)
+    }
+
+    @Test
+    fun finishedTableShowsSixteenHandsDone() = e2e {
+        open("Test - One table left, broken logo, chicken hands off")
+        c.waitForText("16 of 16 hands done.")
+    }
+
+    @Test
+    fun totalsTableWithWrongSumShowsAWarning() = e2e {
+        open("Test - Tables with only totals")
+        c.clickButton("Next round")
+        c.waitForText("Round 2")
+        c.selectTable(2)
+        c.waitForText("rather than 0", substring = true)
+    }
+
+    @Test
+    fun totalsTableWithValidSumShowsATick() = e2e {
+        open("Test - Tables with only totals")
+        c.waitForText("Manual scores")
+        // The seed draws random hands, and some of them carry penalties. The test looks for a table of round 1 whose
+        // scores add up to 0.
+        val tick = "The four scores add up to 0."
+        val found = (1..4).any { table ->
+            c.selectTable(table)
+            runCatching { c.waitForText(tick, timeoutMs = 5_000) }.isSuccess
+        }
+        check(found) { "No table of round 1 shows \"$tick\"" }
+    }
+
+    @Test
+    fun incompleteRoundShowsFinishedAndUnfinishedTables() = e2e {
+        open("Test - Every incomplete table state")
+        c.waitForText("Round 2")
+        c.waitForText("Completed")
+        c.waitForText("Incomplete")
+    }
+
+    @Test
+    fun partialTableShowsHowManyHandsAreDone() = e2e {
+        open("Test - Every incomplete table state")
+        c.waitForText("Round 2")
+        c.selectTable(2)
+        c.waitForText("9 of 16 hands done.")
+    }
+
+    @Test
+    fun largeTournamentListsSixteenTablesInARound() = e2e {
+        open("Test - Large team tournament")
+        c.waitForText("Round 3")
+        c.scrollListTo("16")
+    }
+
+    @Test
+    fun notStartedTournamentOpensOnTheFirstRound() = e2e {
+        open("Test - Registered, not started")
+        c.waitForText("Round 1")
+    }
+
+    @Test
+    fun tournamentWithChickenHandsOffHidesTheChickenColumn() = e2e {
+        open("Test - One table left, broken logo, chicken hands off")
+        c.assertNoText("Chicken")
+    }
+
+    @Test
+    fun tournamentWithChickenHandsOnShowsTheChickenColumn() = e2e {
+        open("Test - Live ongoing tournament")
+        c.waitForText("Chicken")
+    }
+}

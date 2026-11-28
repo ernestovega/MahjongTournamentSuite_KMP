@@ -1,0 +1,117 @@
+@file:OptIn(androidx.compose.ui.test.ExperimentalTestApi::class)
+
+package com.etologic.mahjongtournamentsuite.player.e2e
+
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.performClick
+import com.etologic.mahjongtournamentsuite.player.SEAT_OPTION_TAG
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+
+/**
+ * A round starts when an organizer presses Play on the Timer. Before it, the players wait for the gong and can set the
+ * seats of their table. The players set the seats themselves when nobody set them.
+ */
+class PlayerRoundStartTest : PlayerE2eTest() {
+    private val extraTimeTournament = "Test - Match time over, extra time running"
+
+    @BeforeTest
+    fun freshData() = onlyWithBackend { E2eApi.reset("test-live-ongoing", "test-match-extra-time") }
+
+    @AfterTest
+    fun restoreData() = onlyWithBackend { E2eApi.reset("test-live-ongoing", "test-match-extra-time") }
+
+    /** Plays an organizer on the Timer of round 1 of test-match-extra-time. */
+    private fun timer(body: String) {
+        val reply = E2eApi.call("POST", "/tournaments/test-match-extra-time/rounds/1/clock", E2eApi.signIn(E2eAccounts.ADMIN), body)
+        check(reply.status == 200) { "The Timer failed: ${reply.status} ${reply.body}" }
+    }
+
+    /** Plays an admin on Round control, the plan B of the Timer, for round 1 of test-match-extra-time. */
+    private fun control(body: String) {
+        val reply = E2eApi.call("POST", "/tournaments/test-match-extra-time/rounds/1/control", E2eApi.signIn(E2eAccounts.ADMIN), body)
+        check(reply.status == 200) { "Round control failed: ${reply.status} ${reply.body}" }
+    }
+
+    private fun openExtraTimeTable() {
+        start(E2eAccounts.EXTRA_TIME, ready = "My tournaments")
+        c.openTournament(extraTimeTournament)
+        c.waitForText("Me")
+        c.settle()
+        c.clickButton("Me")
+        c.waitForText("Table 1", substring = true)
+        c.onAllNodes(hasText("Table 1", substring = true) and hasClickAction()).onFirst().performClick()
+        c.waitForText("Round 1 - Table 1")
+    }
+
+    @Test
+    fun beforePlayThePlayersWaitForTheGongAndPlayShowsTheHandButtons() = e2e {
+        // The organizer resets the clock of a round with hands. The hands stay.
+        timer("""{"action":"reset","force":true}""")
+        openExtraTimeTable()
+        c.waitForText("The hand buttons appear when the round starts.")
+        c.assertNoText("Add draw")
+
+        timer("""{"action":"start"}""")
+
+        // The app reads the clock every few seconds while the round waits for its gong.
+        c.waitForText("Add draw", timeoutMs = 30_000)
+        c.waitForText("Time left:", substring = true)
+    }
+
+    @Test
+    fun aPlayerSetsTheSeatsOfATableWithoutSeats() = e2e {
+        start(E2eAccounts.WAITING, ready = "My tournaments")
+        c.openTournament("Test - Live ongoing tournament")
+        c.waitForText("Me")
+        c.scrollListTo("0/16 hands")
+        c.clickButton("0/16 hands")
+        c.waitForText("Set the seats of the table to start entering hands.")
+        c.assertNoText("Add draw")
+
+        c.clickButton("Set the seats")
+        c.waitForText("Who sits at East?")
+        // Each pick asks for the next wind. The fourth player takes North without a question.
+        listOf("South", "West", "North").forEach { next ->
+            c.onAllNodesWithTag(SEAT_OPTION_TAG).onFirst().performClick()
+            c.waitForText(if (next == "North") "Seats of the table" else "Who sits at $next?")
+        }
+        c.clickButton("Save the seats")
+
+        listOf("Add draw", "Add win", "Add penalty", "Change the seats").forEach { c.waitForText(it) }
+    }
+
+    @Test
+    fun anOrganizerClosesTheHandEntryAndATableControlOpensItAgain() = e2e {
+        timer("""{"action":"reset","force":true}""")
+        timer("""{"action":"start"}""")
+        openExtraTimeTable()
+        c.waitForText("Add draw")
+
+        control("""{"hands":"closed"}""")
+        // The app reads the tournament, with its controls, every few seconds while the round is in play.
+        c.waitForText("An organizer closed the hand entry of this table for now.", substring = true, timeoutMs = 60_000)
+        c.assertNoText("Add draw")
+
+        control("""{"table":{"tableId":1,"hands":"open"}}""")
+        c.waitForText("Add draw", timeoutMs = 60_000)
+        c.assertNoText("An organizer closed the hand entry of this table for now.", substring = true)
+    }
+
+    @Test
+    fun anOpenRoundShowsTheHandButtonsBeforeTheGong() = e2e {
+        timer("""{"action":"reset","force":true}""")
+        openExtraTimeTable()
+        c.waitForText("The hand buttons appear when the round starts.")
+        c.assertNoText("Add draw")
+
+        control("""{"hands":"open"}""")
+
+        c.waitForText("Add draw", timeoutMs = 60_000)
+        c.assertNoText("The hand buttons appear when the round starts.")
+    }
+}

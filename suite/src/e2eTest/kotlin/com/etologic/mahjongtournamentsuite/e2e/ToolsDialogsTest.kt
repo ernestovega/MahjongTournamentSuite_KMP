@@ -1,0 +1,58 @@
+@file:OptIn(androidx.compose.ui.test.ExperimentalTestApi::class)
+
+package com.etologic.mahjongtournamentsuite.e2e
+
+import kotlin.test.Test
+
+/** The ID card and invitation dialogs of the players screen. */
+class ToolsDialogsTest : AdminE2eTest() {
+    private fun openPlayers(tournament: String = "Test - Live ongoing tournament") {
+        start(E2eAccounts.ADMIN, ready = PROFILE_BUTTON)
+        c.openTournament(tournament)
+        // A tournament with open slots opens on the players screen, so that the slots get filled first.
+        c.waitForAnyText("Players & results", "Tournament players")
+        if (c.isOnScreen("Players & results")) c.clickMoreMenuButton("Players")
+        c.waitForText("Tournament players")
+    }
+
+    @Test
+    fun idCardsDialogShowsItsSettings() = e2e {
+        openPlayers()
+        c.clickButton("ID cards")
+        listOf(
+            "Create ID cards", "Cards per sheet", "Card size", "Width (mm)", "Height (mm)", "Portrait", "Landscape",
+            "Front sheet", "Back sheet", "Restore settings",
+        ).forEach { c.waitForText(it) }
+    }
+
+    @Test
+    fun idCardsDialogClosesWithCancel() = e2e {
+        openPlayers()
+        c.clickButton("ID cards")
+        c.waitForText("Create ID cards")
+        c.clickButton("Cancel")
+        c.waitForNoText("Create ID cards")
+    }
+
+    @Test
+    fun invitationsDialogCountsPlayersByState() = e2e {
+        openPlayers()
+        c.clickButton("Invitations")
+        c.waitForText("Invitations and reminders")
+        c.waitForText("All (40)")
+        c.waitForText("No account (", substring = true)
+        c.waitForText("Has account (", substring = true)
+    }
+
+    @Test
+    fun selectAllShownSelectsThePlayersAndClearEmptiesTheSelection() = e2e {
+        openPlayers()
+        c.clickButton("Invitations")
+        c.waitForText("0 selected")
+        c.clickButton("All (40)")
+        c.clickButton("Select all shown (40)")
+        c.waitForText("40 selected")
+        c.clickLastButton("Clear")
+        c.waitForText("0 selected")
+    }
+}

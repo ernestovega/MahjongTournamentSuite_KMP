@@ -1,0 +1,109 @@
+package com.etologic.mahjongtournamentsuite.e2e
+
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.request.header
+import io.ktor.client.request.request
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpMethod
+import kotlinx.coroutines.runBlocking
+import org.json.JSONObject
+
+/** A small client for the local test backend. Tests use it to play another user or to restore data. */
+object E2eApi {
+    data class Reply(val status: Int, val body: String) {
+        fun json(): JSONObject = JSONObject(body)
+    }
+
+    private val client = HttpClient {
+        expectSuccess = false
+        install(HttpTimeout) {
+            connectTimeoutMillis = 10_000
+            requestTimeoutMillis = 60_000
+        }
+    }
+
+    fun call(method: String, path: String, token: String? = null, body: String? = null): Reply = runBlocking {
+        val response = client.request(if (path.startsWith("http")) path else E2E_BACKEND_URL + path) {
+            this.method = HttpMethod.parse(method)
+            header("content-type", "application/json")
+            token?.let { header("authorization", "Bearer $it") }
+            if (body != null) setBody(body)
+        }
+        Reply(response.status.value, response.bodyAsText())
+    }
+
+    private fun signInReply(email: String): JSONObject {
+        val reply = call("POST", "/auth/signIn", body = """{"email":"$email","password":"${E2eAccounts.PASSWORD}"}""")
+        check(reply.status == 200) { "Sign-in of $email failed: ${reply.status} ${reply.body}" }
+        return reply.json()
+    }
+
+    fun signIn(email: String): String = signInReply(email).getString("idToken")
+
+    /** The text that the app saves as its session. A test writes it to start the app already signed in. */
+    fun sessionFileText(email: String): String = signInReply(email).let {
+        JSONObject()
+            .put("uid", it.getString("uid"))
+            .put("idToken", it.getString("idToken"))
+            .put("refreshToken", it.getString("refreshToken"))
+            .toString()
+    }
+
+    /** Writes the original data of the tournaments again. It also removes changes that other tests made. */
+    fun reset(vararg tournamentIds: String) {
+        val reply = call("POST", "${E2E_BACKEND_URL.removeSuffix("/api")}/__e2e/reset?only=${tournamentIds.joinToString(",")}")
+        check(reply.status == 200) { "Reset failed: ${reply.status} ${reply.body}" }
+    }
+
+    /** The emails that the local backend "sent". It keeps them in memory because no mail server runs. */
+    fun sentEmails(): List<JSONObject> {
+        val reply = call("GET", "${E2E_BACKEND_URL.removeSuffix("/api")}/__e2e/mail")
+        check(reply.status == 200) { "Reading the mail box failed: ${reply.status} ${reply.body}" }
+        val list = reply.json().getJSONArray("emails")
+        return (0 until list.length()).map { list.getJSONObject(it) }
+    }
+
+    /** Gives every slot of the tournament a pending email, as the import does: `<prefix>slot7@example.test` for slot 7. */
+    fun setSlotEmails(tournamentId: String, prefix: String = "") {
+        val reply = call("POST", "${E2E_BACKEND_URL.removeSuffix("/api")}/__e2e/slot-emails?tournament=$tournamentId&prefix=$prefix")
+        check(reply.status == 200) { "Setting the slot emails failed: ${reply.status} ${reply.body}" }
+    }
+
+    fun clearEmails() {
+        call("DELETE", "${E2E_BACKEND_URL.removeSuffix("/api")}/__e2e/mail")
+    }
+
+    /** Plays another editor: writes hand 16 of round 3, table 6 of test-last-table, as a finished hand. */
+    /** The player ids at a table, in the order East, South, West, North. The seed decides who sits there. */
+    fun tableSeats(tournamentId: String, round: Int, table: Int): List<String> {
+        val data = call("GET", "/tournaments/$tournamentId/tables/$round/$table", signIn(E2eAccounts.ADMIN)).json().getJSONObject("table")
+        return listOf("playerEastId", "playerSouthId", "playerWestId", "playerNorthId").map { data.get(it).toString() }
+    }
+
+    /** The players of table 6 of round 3 of `test-last-table`, the table with one hand left. */
+    fun lastTableSeats(): List<String> = tableSeats("test-last-table", 3, 6)
+
+    /** The version of table 6 of round 3 of `test-last-table`. Every save on the server raises it. */
+    fun lastTableVersion(token: String = signIn(E2eAccounts.ADMIN)): Int =
+        call("GET", "/tournaments/test-last-table/tables/3/6", token).json().getJSONObject("table").getInt("version")
+
+    fun otherEditorFinishesLastHand(winner: String = lastTableSeats()[0], loser: String = lastTableSeats()[1], score: String = "8") {
+        val token = signIn(E2eAccounts.ADMIN)
+        val table = call("GET", "/tournaments/test-last-table/tables/3/6", token).json().getJSONObject("table")
+        val body = """{"expectedVersion":${table.getInt("version")},"tablePatch":{},"handPatches":[{"handId":16,"patch":{"playerWinnerId":"$winner","playerLooserId":"$loser","handScore":"$score","isDone":true}}]}"""
+        val reply = call("PUT", "/tournaments/test-last-table/tables/3/6/state", token, body)
+        check(reply.status == 200) { "The other editor could not save: ${reply.status} ${reply.body}" }
+    }
+
+    /** Deletes the tournaments that a test created. The seeded `test-*` tournaments stay. */
+    fun deleteTournamentsNamed(prefix: String) {
+        val token = signIn(E2eAccounts.ADMIN)
+        val list = call("GET", "/tournaments", token).json().getJSONArray("tournaments")
+        for (index in 0 until list.length()) {
+            val item = list.getJSONObject(index)
+            if (item.getString("name").startsWith(prefix)) call("DELETE", "/tournaments/${item.getString("id")}", token)
+        }
+    }
+}

@@ -27,7 +27,10 @@ object IosPlatform {
      * The backend of this build, from `MTSBackendUrl` in the Info.plist. The staging build names the staging project.
      * Without the key the app uses the production backend.
      */
-    val backendUrl: String? get() = infoString("MTSBackendUrl")?.ifBlank { null }
+    val backendUrl: String? get() = backendUrlOverride ?: infoString("MTSBackendUrl")?.ifBlank { null }
+
+    /** The end-to-end tests set this before the first request to use a local backend. The app never sets it. */
+    var backendUrlOverride: String? = null
 
     /** The version that the user sees, from the Info.plist. */
     val versionName: String? get() = infoString("CFBundleShortVersionString")

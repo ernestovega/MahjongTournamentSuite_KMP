@@ -1,0 +1,215 @@
+@file:OptIn(androidx.compose.ui.test.ExperimentalTestApi::class)
+
+package com.etologic.mahjongtournamentsuite.e2e
+
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isToggleable
+import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import kotlin.test.AfterTest
+import kotlin.test.Test
+
+class EditTournamentTest : AdminE2eTest() {
+    @AfterTest
+    fun restoreData() = onlyWithBackend { E2eApi.reset("test-live-ongoing", "test-no-extras") }
+
+    private fun openDialog(name: String = "Test - Live ongoing tournament") {
+        start(E2eAccounts.ADMIN, ready = PROFILE_BUTTON)
+        c.openTournament(name)
+        c.waitForText("Players & results")
+        c.clickButton("Edit tournament")
+        c.waitForText(DIALOG_TAB)
+    }
+
+    @Test
+    fun dialogShowsStoredValues() = e2e {
+        openDialog()
+        c.clickButton("Venue")
+        listOf("Eskalerria", "test-live@example.com", "Madrid").forEach { c.waitForText(it) }
+        // The color and the logo come from the main organizer, the test club of the seed.
+        c.clickButton("Organizers")
+        c.waitForText("Test Mahjong Club")
+        c.clickButton("Schedule")
+        listOf("Tournament schedule", "Player agenda").forEach { c.waitForText(it) }
+    }
+
+    @Test
+    fun dialogShowsReadOnlyTournamentData() = e2e {
+        openDialog()
+        c.clickButton("Data")
+        listOf("test-live-ongoing", "Created by UID", "Created by name", "Created at", "Updated at", "Tries").forEach { c.waitForText(it) }
+    }
+
+    @Test
+    fun dialogListsOneRowPerRoundAndPerAgendaItem() = e2e {
+        openDialog()
+        c.clickButton("Schedule")
+        c.waitForText("Round 6")
+        c.assertNoText("Round 7")
+        c.waitForText("Registration and breakfast")
+        c.waitForText("Lunch")
+        c.waitForText("Awards ceremony")
+    }
+
+    @Test
+    fun cancelClosesWithoutSaving() = e2e {
+        openDialog()
+        c.clickButton("Cancel")
+        c.waitForNoText(DIALOG_TAB)
+        c.waitForText("Round 4")
+    }
+
+    @Test
+    fun saveRenamesTheTournament() = e2e {
+        openDialog()
+        c.field("Tournament name").performTextReplacementText("Live renamed by a test")
+        c.clickButton("Save")
+        c.waitForNoText(DIALOG_TAB)
+        c.waitForText("Live renamed by a test")
+    }
+
+    @Test
+    fun tournamentWithoutAgendaOpensTheDialog() = e2e {
+        openDialog("Test - Without best hands or chicken hands")
+        c.waitForText(DIALOG_TAB)
+        c.clickButton("Schedule")
+        c.waitForText("Add activity")
+    }
+
+    @Test
+    fun addActivityAddsAnAgendaRow() = e2e {
+        openDialog()
+        c.clickButton("Schedule")
+        c.clickButton("Add activity")
+        c.waitForText("Choose activity 4 date")
+    }
+
+    @Test
+    fun removeActivityRemovesAnAgendaRow() = e2e {
+        openDialog()
+        c.clickButton("Schedule")
+        c.clickButton("Remove")
+        c.waitForNoText("Choose activity 3 date")
+    }
+
+    @Test
+    fun editorSaveIsRefusedByTheServer() = e2e {
+        start(E2eAccounts.EDITOR, ready = PROFILE_BUTTON)
+        c.openTournament("Test - Live ongoing tournament")
+        c.waitForText("Players & results")
+        c.clickButton("Edit tournament")
+        c.waitForText(DIALOG_TAB)
+        c.field("Tournament name").performTextReplacementText("Renamed by an editor")
+        c.clickButton("Save")
+        c.waitForText("You do not have permission to perform this action.")
+    }
+
+    /** The edit dialog and the confirmation both have a "Delete" button. The confirmation is the last one. */
+    private fun pressDeleteInConfirmation() {
+        c.onAllNodes(hasText("Delete") and hasClickAction()).onLast().performClick()
+    }
+
+    @Test
+    fun deleteAsksForConfirmation() = e2e {
+        openDialog()
+        c.clickButton("Delete")
+        c.waitForText("Delete tournament")
+        // The message goes on with what happens to the editors of the tournament, in the same text.
+        c.waitForText("This will permanently delete \"Test - Live ongoing tournament\" (ID: test-live-ongoing).", substring = true)
+    }
+
+    @Test
+    fun cancelDeleteKeepsTheTournament() = e2e {
+        openDialog()
+        c.clickButton("Delete")
+        c.waitForText("Delete tournament")
+        c.onAllNodes(hasText("Cancel") and hasClickAction()).onLast().performClick()
+        c.waitForNoText("Delete tournament")
+        c.waitForText(DIALOG_TAB)
+    }
+
+    @Test
+    fun confirmedDeleteRemovesTheTournamentFromTheList() = e2e {
+        val name = "Test - Without best hands or chicken hands"
+        openDialog(name)
+        c.clickButton("Delete")
+        c.waitForText("Delete tournament")
+        pressDeleteInConfirmation()
+        c.waitForText(PROFILE_BUTTON)
+        c.waitForNoText(name)
+    }
+
+    private fun liveTournamentJson() = E2eApi.call("GET", "/tournaments", E2eApi.signIn(E2eAccounts.ADMIN))
+        .json().getJSONArray("tournaments").let { list -> (0 until list.length()).map { list.getJSONObject(it) }.first { it.getString("id") == "test-live-ongoing" } }
+
+    @Test
+    fun dialogShowsTheMatchTimeSettings() = e2e {
+        openDialog()
+        // The match settings are on the General tab, where the dialog opens.
+        listOf("Match duration (minutes)", "120", "Finish the hand in play").forEach { c.waitForText(it) }
+        c.assertNoText("Extra time (minutes)")
+        // The live tournament has no stored time zone, so the form suggests the zone of the device.
+        c.clickButton("Venue")
+        // A zone that the list does not have, such as "Etc/UTC", shows as "UTC".
+        val zone = E2ePlatform.timeZoneId()
+        val shown = if (zone == "UTC" || (zone.contains('/') && !zone.startsWith("Etc/") && !zone.startsWith("SystemV/"))) zone else "UTC"
+        c.waitForText("Time zone")
+        // The field shows the offset and the name, for example "UTC +0 · UTC".
+        c.waitForText(shown, substring = true)
+    }
+
+    @Test
+    fun matchDurationZeroIsRefusedOnSave() = e2e {
+        openDialog()
+        c.field("Match duration (minutes)").performTextReplacementText("0")
+        c.clickButton("Save")
+        c.waitForText("Match duration must be a whole number of minutes from 1 to 600.")
+        c.waitForText(DIALOG_TAB)
+    }
+
+    /**
+     * Turns on the "Finish the hand in play" switch of the General tab, found by its label. The dialog is last in the
+     * tree. Turning it on shows the extra time field.
+     */
+    private fun toggleFinishTheHand() {
+        // The switch and its label are one control (MtsSwitchRow), so the toggleable node holds the label.
+        val switch = c.onAllNodes(isToggleable() and hasText("Finish the hand in play")).onLast()
+        switch.performScrollTo()
+        switch.assertIsOff()
+        switch.performClick()
+        switch.assertIsOn()
+        c.waitForText("Extra time (minutes)")
+    }
+
+    @Test
+    fun extraTimeZeroIsRefusedWhenTheHandIsFinished() = e2e {
+        openDialog()
+        toggleFinishTheHand()
+        c.field("Extra time (minutes)").performTextReplacementText("0")
+        c.clickButton("Save")
+        c.waitForText("Extra time must be a whole number of minutes from 1 to 120.")
+    }
+
+    @Test
+    fun savedMatchTimeSettingsReachTheServer() = e2e {
+        openDialog()
+        c.field("Match duration (minutes)").performTextReplacementText("95")
+        toggleFinishTheHand()
+        c.field("Extra time (minutes)").performTextReplacementText("20")
+        c.clickButton("Save")
+        c.waitForNoText(DIALOG_TAB)
+        val tournament = liveTournamentJson()
+        check(tournament.getInt("matchDurationMinutes") == 95) { "Duration: ${tournament.opt("matchDurationMinutes")}" }
+        check(tournament.getString("matchEndMode") == "FINISH_HAND") { "End mode: ${tournament.opt("matchEndMode")}" }
+        check(tournament.getInt("matchExtraMinutes") == 20) { "Extra time: ${tournament.opt("matchExtraMinutes")}" }
+    }
+
+    private companion object {
+        /** A tab of the edit dialog, so it shows while the dialog is open. */
+        const val DIALOG_TAB = "Organizers"
+    }
+}

@@ -53,9 +53,29 @@ kotlin {
         iosMain.dependencies {
             implementation(projects.data)
         }
-        iosTest.dependencies {
-            implementation(libs.kotlin.test)
+        iosTest {
+            // The end-to-end tests of the whole app against the local test backend (docs/ios-release.md). They do
+            // nothing without the backend, so the normal test run skips them.
+            kotlin.srcDir("src/e2eTest/kotlin")
+            dependencies {
+                implementation(libs.kotlin.test)
+                implementation(libs.compose.ui.test)
+                implementation(libs.androidx.navigation.compose)
+                implementation(libs.kotlinx.coroutines.core)
+                implementation(libs.kotlinx.datetime)
+                implementation(libs.kotlinx.serialization.json)
+                implementation(libs.ktor.client.core)
+                implementation(projects.data)
+            }
         }
+    }
+}
+
+// The end-to-end tests of src/e2eTest read the address of the local backend, the wait and the screen on the simulator
+// (E2ePlatform). The simulator passes the variables that start with SIMCTL_CHILD_ to the test, without the prefix.
+tasks.withType<org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeSimulatorTest>().configureEach {
+    listOf("E2E_BACKEND_URL", "E2E_WAIT_MS", "E2E_FORM").forEach { name ->
+        providers.environmentVariable(name).orNull?.let { environment("SIMCTL_CHILD_$name", it) }
     }
 }
 

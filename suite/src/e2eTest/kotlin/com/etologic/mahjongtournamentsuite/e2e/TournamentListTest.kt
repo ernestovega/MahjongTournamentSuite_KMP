@@ -1,0 +1,117 @@
+@file:OptIn(androidx.compose.ui.test.ExperimentalTestApi::class)
+
+package com.etologic.mahjongtournamentsuite.e2e
+
+import kotlin.test.Test
+
+class TournamentListTest : AdminE2eTest() {
+    @Test
+    fun adminSeesTheTestTournamentsWithTheirDetails() = e2e {
+        start(E2eAccounts.ADMIN)
+        // The list is lazy and has more tournaments than the screen, so the test scrolls to each one.
+        listOf("LIVE", "LASTTABLE", "LARGE", "EXTREMES10", "UPCOMING", "INCOMPL", "BARE").forEach { c.scrollListTo(it) }
+    }
+
+    @Test
+    fun rowsShowTeamsAndFeatureSwitches() = e2e {
+        start(E2eAccounts.ADMIN)
+        c.waitForText("Team tournament")
+        c.waitForText("Individual tournament")
+        // BARE has both switches off. LASTTABLE counts best hands but not chicken hands.
+        // Those rows can be below the screen, so the test scrolls to them.
+        c.scrollListTo("Best hands not counted")
+        c.scrollListTo("Chicken hands not counted")
+        c.waitForText("Best hands counted")
+        c.waitForText("Chicken hands counted")
+    }
+
+    @Test
+    fun rowsShowPlayerCounts() = e2e {
+        start(E2eAccounts.ADMIN)
+        c.waitForText("40")
+        c.waitForText("24")
+        c.waitForText("64")
+    }
+
+    @Test
+    fun veryLongTournamentNameIsInTheList() = e2e {
+        start(E2eAccounts.ADMIN)
+        // Other tests seed tournaments again, which moves them to the top. The list may need a scroll.
+        c.scrollListTo("Test - Extreme scores, penalties and a very long tournament name to check wrapping everywhere")
+    }
+
+    @Test
+    fun tournamentWithoutLogoShowsPlaceholderAndBrokenLogoShowsNothingBroken() = e2e {
+        start(E2eAccounts.ADMIN)
+        c.waitForText("No logo for Test - Live ongoing tournament", substring = false)
+        // The address of the broken logo does not load. The row must still be there and open.
+        c.waitForText("Test - One table left, broken logo, chicken hands off")
+    }
+
+    @Test
+    fun adminHasAllTopBarActions() = e2e {
+        start(E2eAccounts.ADMIN)
+        // "Super Admin" is the role under the name. It opens the profile, which holds the theme and the Logout button.
+        // "Timer" opens the independent Timer, which is not tied to a tournament. "New tournament" is the floating button.
+        listOf(PROFILE_BUTTON, "Super Admin", "Users", "DEV", "Stats", "EMA players", "New tournament", "Timer")
+            .forEach { c.waitForText(it) }
+    }
+
+    @Test
+    fun editorSeesOnlyAssignedTournaments() = e2e {
+        start(E2eAccounts.EDITOR)
+        c.waitForText("Test - One table left, broken logo, chicken hands off")
+        c.waitForText("Test - Every incomplete table state")
+        c.waitForText("Test - Minimum 16 players")
+        c.assertNoText("Test - Large team tournament")
+        c.assertNoText("Test - Registered, not started")
+    }
+
+    @Test
+    fun editorHasNoAdminActions() = e2e {
+        start(E2eAccounts.EDITOR)
+        c.waitForText("EMA players")
+        c.assertNoText("New tournament")
+        c.assertNoText("DEV")
+    }
+
+    @Test
+    fun editorWithoutTournamentsSeesAnEmptyMessage() = e2e {
+        start(E2eAccounts.OUTSIDER, ready = "No tournaments yet")
+    }
+
+    /** The admin part is for admins and editors. A player who reaches it goes back to the player part, signed in. */
+    @Test
+    fun playerSessionGoesBackToThePlayerPart() = e2e {
+        start(E2eAccounts.PLAYER, ready = "My tournaments")
+        c.assertNoText("Manager app")
+        c.assertNoText(PROFILE_BUTTON)
+        c.assertNoText("New tournament")
+        c.assertNoText("App errors")
+    }
+
+    // A player cannot open the admin screens any more, so the next two tests ask the server directly.
+
+    @Test
+    fun playerOpeningAppUsersGetsAPermissionError() = e2e {
+        val reply = E2eApi.call("GET", "/admin/users", E2eApi.signIn(E2eAccounts.PLAYER))
+        check(reply.status == 403) { "A player read the app users: ${reply.status} ${reply.body}" }
+    }
+
+    @Test
+    fun playerSeesOnlyThePlayersOfOwnTournamentsInTheRegistry() = e2e {
+        val all = E2eApi.call("GET", "/ema-player-registry", E2eApi.signIn(E2eAccounts.ADMIN)).json().getJSONArray("players").length()
+        val reply = E2eApi.call("GET", "/ema-player-registry", E2eApi.signIn(E2eAccounts.PLAYER))
+        check(reply.status == 200) { "The registry read failed: ${reply.status} ${reply.body}" }
+        val seen = reply.json().getJSONArray("players").length()
+        check(seen in 1 until all) { "A player sees $seen of the $all registry players. It must be only the players of own tournaments." }
+    }
+
+    @Test
+    fun openingARowShowsTheTournament() = e2e {
+        start(E2eAccounts.ADMIN)
+        c.openTournament("Test - Live ongoing tournament")
+        c.waitForText("Players & results")
+        c.waitForText("Round 4")
+    }
+}
