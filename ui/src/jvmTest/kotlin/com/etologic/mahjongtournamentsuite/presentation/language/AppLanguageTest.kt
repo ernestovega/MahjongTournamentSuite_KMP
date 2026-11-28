@@ -65,6 +65,18 @@ class AppLanguageTest {
     fun restoreLocale() = Locale.setDefault(original)
 
     @Test
+    fun aStoreWithoutSystemLanguagesOrNoticeUsesTheDefaults() {
+        val store = object : LanguageStore {
+            override fun load(): String? = null
+            override fun save(tag: String) = Unit
+            override fun apply(tag: String) = Unit
+        }
+        assertEquals(emptyList(), store.systemTags())
+        assertEquals(true, store.aiNoticeSeen())
+        store.saveAiNoticeSeen()
+    }
+
+    @Test
     fun aKnownTagGivesItsLanguage() {
         assertEquals(AppLanguage.Spanish, AppLanguage.fromTag("es"))
         assertEquals(AppLanguage.French, AppLanguage.fromTag("fr"))

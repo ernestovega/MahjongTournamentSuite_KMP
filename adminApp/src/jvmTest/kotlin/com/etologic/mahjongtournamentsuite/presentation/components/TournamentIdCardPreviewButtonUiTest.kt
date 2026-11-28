@@ -11,6 +11,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
+import com.etologic.mahjongtournamentsuite.presentation.platform.chooseSaveFile
 import com.etologic.mahjongtournamentsuite.presentation.presenter.IdCardProofPresenter
 import com.etologic.mahjongtournamentsuite.presentation.screen.FakeTournamentRepository
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -19,6 +20,8 @@ import kotlinx.coroutines.CompletableDeferred
 import org.koin.compose.KoinContext
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
+import java.io.File
+import kotlin.io.path.createTempDirectory
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -61,5 +64,40 @@ class TournamentIdCardPreviewButtonUiTest {
         answer.complete(AppResult.Failure(AppError.Network))
         waitUntil(timeoutMillis = 5_000) { errors.isNotEmpty() }
         onNodeWithText("Generate ID card preview").assertExists()
+    }
+
+    @Test
+    fun theProofIsSavedWithTheShortNameAndTheYear() = runComposeUiTest {
+        val server: TournamentRepository = object : TournamentRepository by FakeTournamentRepository() {
+            override suspend fun generateIdCardProof(request: IdCardProofRequest): AppResult<ByteArray> = AppResult.Success(byteArrayOf(7))
+        }
+        val folder = createTempDirectory("proof").toFile()
+        val names = mutableListOf<String>()
+        val system = chooseSaveFile
+        chooseSaveFile = { _, name -> File(folder, name).also { names += name } }
+        try {
+            val koin = koinApplication { modules(module { single { IdCardProofPresenter(server) } }) }.koin
+            setContent {
+                KoinContext(koin) {
+                    MtsTheme(useDarkTheme = false) {
+                        TournamentIdCardPreviewButton(
+                            shortName = "  ",
+                            primaryColor = "#123456",
+                            year = "",
+                            associationLogoContentType = null,
+                            associationLogoBytes = null,
+                            associationLogoUrl = null,
+                            onError = {},
+                        )
+                    }
+                }
+            }
+            onNodeWithText("Generate ID card preview").performClick()
+            waitUntil(timeoutMillis = 5_000) { names.isNotEmpty() }
+            assertEquals("tournament-proof-id-card-proof.pdf", names.single())
+        } finally {
+            chooseSaveFile = system
+            folder.deleteRecursively()
+        }
     }
 }
