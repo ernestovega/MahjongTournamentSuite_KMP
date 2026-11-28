@@ -1,14 +1,14 @@
 package org.json
 
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray as KJsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonObject as KJsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.longOrNull
+import kotlinx.serialization.json.JsonArray as KJsonArray
+import kotlinx.serialization.json.JsonObject as KJsonObject
 
 /*
  * The small part of the `org.json` API of Android that the end-to-end tests use, in common Kotlin, so the same tests

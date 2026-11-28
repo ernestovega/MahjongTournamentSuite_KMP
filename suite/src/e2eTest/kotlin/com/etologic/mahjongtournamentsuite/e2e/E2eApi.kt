@@ -86,8 +86,7 @@ object E2eApi {
     fun lastTableSeats(): List<String> = tableSeats("test-last-table", 3, 6)
 
     /** The version of table 6 of round 3 of `test-last-table`. Every save on the server raises it. */
-    fun lastTableVersion(token: String = signIn(E2eAccounts.ADMIN)): Int =
-        call("GET", "/tournaments/test-last-table/tables/3/6", token).json().getJSONObject("table").getInt("version")
+    fun lastTableVersion(token: String = signIn(E2eAccounts.ADMIN)): Int = call("GET", "/tournaments/test-last-table/tables/3/6", token).json().getJSONObject("table").getInt("version")
 
     fun otherEditorFinishesLastHand(winner: String = lastTableSeats()[0], loser: String = lastTableSeats()[1], score: String = "8") {
         val token = signIn(E2eAccounts.ADMIN)

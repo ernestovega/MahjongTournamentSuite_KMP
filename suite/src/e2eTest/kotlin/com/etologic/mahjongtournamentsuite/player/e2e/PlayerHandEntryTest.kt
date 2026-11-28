@@ -2,9 +2,6 @@
 
 package com.etologic.mahjongtournamentsuite.player.e2e
 
-
-
-
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test

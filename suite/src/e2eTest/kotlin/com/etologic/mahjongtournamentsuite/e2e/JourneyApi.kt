@@ -77,9 +77,14 @@ object JourneyApi {
             .put("matchEndMode", "STOP")
             .put("players", JSONArray(players.map { JSONObject().put("id", it).put("team", 0) }))
             .put("tables", JSONArray(tables.map { JSONObject().put("roundId", it.roundId).put("tableId", it.tableId).put("playerIds", JSONArray(it.playerIds)) }))
-            .put("roundSchedules", JSONArray((1..rounds).map {
-                JSONObject().put("roundId", it).put("date", now.date.toString()).put("startTime", "${now.hour.toString().padStart(2, '0')}:${now.minute.toString().padStart(2, '0')}")
-            }))
+            .put(
+                "roundSchedules",
+                JSONArray(
+                    (1..rounds).map {
+                        JSONObject().put("roundId", it).put("date", now.date.toString()).put("startTime", "${now.hour.toString().padStart(2, '0')}:${now.minute.toString().padStart(2, '0')}")
+                    },
+                ),
+            )
         ok(E2eApi.call("POST", "/tournaments", token(E2eAccounts.ADMIN), body.toString()), "Creating the tournament")
         return tournamentId(name)
     }
@@ -103,9 +108,8 @@ object JourneyApi {
         }
     }
 
-    fun table(tournamentId: String, table: DrawTable): JSONObject =
-        ok(E2eApi.call("GET", "/tournaments/$tournamentId/tables/${table.roundId}/${table.tableId}", token(E2eAccounts.ADMIN)), "Reading a table")
-            .json().getJSONObject("table")
+    fun table(tournamentId: String, table: DrawTable): JSONObject = ok(E2eApi.call("GET", "/tournaments/$tournamentId/tables/${table.roundId}/${table.tableId}", token(E2eAccounts.ADMIN)), "Reading a table")
+        .json().getJSONObject("table")
 
     /** The organizer puts the EMA player in the slot. */
     fun assign(tournamentId: String, slot: Int, emaId: String) {
@@ -124,8 +128,7 @@ object JourneyApi {
 
     private fun version(tournamentId: String, table: DrawTable): Int = table(tournamentId, table).optInt("version", 0)
 
-    private fun seatsAreSet(tournamentId: String, table: DrawTable): Boolean =
-        table(tournamentId, table).optString("playerEastId", "").let { it.isNotBlank() && it != "null" }
+    private fun seatsAreSet(tournamentId: String, table: DrawTable): Boolean = table(tournamentId, table).optString("playerEastId", "").let { it.isNotBlank() && it != "null" }
 
     /** A player of the table sets the seats from the phone, in the order of the draw, unless someone did already. */
     fun setSeats(tournamentId: String, table: DrawTable, by: Player) {

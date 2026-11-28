@@ -24,18 +24,15 @@ class RoundControlTest : AdminE2eTest() {
         c.waitForText("What the players can do")
     }
 
-    private fun controls(tournamentId: String): JSONArray =
-        E2eApi.call("GET", "/public/tournaments/$tournamentId/round-clocks", null).json().getJSONArray("roundControls")
+    private fun controls(tournamentId: String): JSONArray = E2eApi.call("GET", "/public/tournaments/$tournamentId/round-clocks", null).json().getJSONArray("roundControls")
 
-    private fun clocks(tournamentId: String): JSONArray =
-        E2eApi.call("GET", "/public/tournaments/$tournamentId/round-clocks", null).json().getJSONArray("roundClocks")
+    private fun clocks(tournamentId: String): JSONArray = E2eApi.call("GET", "/public/tournaments/$tournamentId/round-clocks", null).json().getJSONArray("roundClocks")
 
     // One sign-in for the whole test: the polls below would pass the limit of sign-ins per minute.
     private val adminToken by lazy { E2eApi.signIn(E2eAccounts.ADMIN) }
 
-    private fun isCompleted(round: Int, table: Int): Boolean =
-        E2eApi.call("GET", "/tournaments/$LIVE_ID/tables/$round/$table", adminToken).json()
-            .getJSONObject("table").getBoolean("isCompleted")
+    private fun isCompleted(round: Int, table: Int): Boolean = E2eApi.call("GET", "/tournaments/$LIVE_ID/tables/$round/$table", adminToken).json()
+        .getJSONObject("table").getBoolean("isCompleted")
 
     private fun click(tag: String) {
         c.onNodeWithTag(tag).performScrollTo().performClick()

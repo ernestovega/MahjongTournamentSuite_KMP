@@ -2,13 +2,12 @@
 
 package com.etologic.mahjongtournamentsuite.player.e2e
 
-import com.etologic.mahjongtournamentsuite.e2e.E2ePlatform
-import com.etologic.mahjongtournamentsuite.e2e.keyboardShown
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import com.etologic.mahjongtournamentsuite.e2e.E2ePlatform
+import com.etologic.mahjongtournamentsuite.e2e.keyboardShown
 import kotlin.test.Test
 
 /** The search field of the ranking: a field that shows all names, and a search field in the menu that filters them. */

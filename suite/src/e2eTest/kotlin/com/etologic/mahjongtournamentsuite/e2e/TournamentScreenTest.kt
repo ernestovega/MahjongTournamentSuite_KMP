@@ -2,9 +2,6 @@
 
 package com.etologic.mahjongtournamentsuite.e2e
 
-import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.performClick
 import kotlin.test.Test
 
 /** The tournament screen for the seeded scenarios. It opens on the first table that needs work. */

@@ -2,7 +2,6 @@
 
 package com.etologic.mahjongtournamentsuite.player.e2e
 
-import com.etologic.mahjongtournamentsuite.e2e.E2ePlatform
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.hasClickAction
@@ -10,6 +9,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
+import com.etologic.mahjongtournamentsuite.e2e.E2ePlatform
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test

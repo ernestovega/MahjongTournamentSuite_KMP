@@ -1,9 +1,9 @@
 package com.etologic.mahjongtournamentsuite.e2e
 
-import com.etologic.mahjongtournamentsuite.data.platform.IosFiles
-import com.etologic.mahjongtournamentsuite.data.platform.IosPlatform
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.Density
+import com.etologic.mahjongtournamentsuite.data.platform.IosFiles
+import com.etologic.mahjongtournamentsuite.data.platform.IosPlatform
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.toKString
 import platform.Foundation.NSTimeZone

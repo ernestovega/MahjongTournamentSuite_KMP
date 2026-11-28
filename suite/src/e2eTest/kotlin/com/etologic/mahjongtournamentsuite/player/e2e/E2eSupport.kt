@@ -4,51 +4,50 @@ package com.etologic.mahjongtournamentsuite.player.e2e
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
-import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsNode
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ComposeUiTest
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasScrollToNodeAction
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isEnabled
+import androidx.compose.ui.test.isRoot
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.test.runSkikoComposeUiTest
 import androidx.compose.ui.test.waitUntilAtLeastOneExists
 import androidx.compose.ui.test.waitUntilDoesNotExist
-import androidx.compose.ui.test.runSkikoComposeUiTest
-import kotlin.time.Duration.Companion.minutes
+import androidx.navigationevent.compose.LocalNavigationEventDispatcherOwner
 import com.etologic.mahjongtournamentsuite.SuiteRoot
 import com.etologic.mahjongtournamentsuite.data.platform.IosPlatform
 import com.etologic.mahjongtournamentsuite.data.session.storedSessionUid
 import com.etologic.mahjongtournamentsuite.e2e.E2eBack
 import com.etologic.mahjongtournamentsuite.e2e.E2ePlatform
-
-import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.SemanticsNodeInteraction
-import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
-import androidx.compose.ui.test.hasAnyAncestor
-import androidx.compose.ui.test.hasAnyDescendant
-import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.assertCountEquals
-import androidx.compose.ui.test.hasContentDescription
-import androidx.compose.ui.test.hasScrollToNodeAction
-import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.performScrollToNode
-import androidx.compose.ui.test.hasTestTag
-import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onLast
-import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performSemanticsAction
-import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.performTextReplacement
-import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.semantics.getOrNull
-import androidx.compose.ui.test.isEnabled
-import androidx.compose.ui.test.isRoot
 import com.etologic.mahjongtournamentsuite.player.PLAYER_CHOICE_TAG
-import androidx.compose.ui.semantics.SemanticsNode
+import kotlin.time.Duration.Companion.minutes
 
 /** The accounts of the local test backend. See firebase/functions/src/scripts/startE2eBackend.ts. */
 object E2eAccounts {
@@ -96,16 +95,16 @@ class PlayerApp {
                     // The back of the system, which the tests send with pressBack. On a device it is the swipe from the
                     // left edge.
                     CompositionLocalProvider(LocalNavigationEventDispatcherOwner provides E2eBack.owner) {
-                    key(run) {
-                        SuiteRoot(
-                            initial = null,
-                            startRequest = null,
-                            onStartHandled = {},
-                            post = { action -> action() },
-                            storedSessionUid = ::storedSessionUid,
-                            onPartShown = {},
-                        )
-                    }
+                        key(run) {
+                            SuiteRoot(
+                                initial = null,
+                                startRequest = null,
+                                onStartHandled = {},
+                                post = { action -> action() },
+                                storedSessionUid = ::storedSessionUid,
+                                onPartShown = {},
+                            )
+                        }
                     }
                 }
             }
@@ -169,8 +168,7 @@ fun ComposeUiTest.waitForNoText(text: String, substring: Boolean = false, timeou
     waitUntilDoesNotExist(hasLabel(text, substring), timeoutMs)
 }
 
-fun SemanticsNodeInteractionsProvider.text(text: String, substring: Boolean = false): SemanticsNodeInteraction =
-    onNodeWithText(text, substring = substring)
+fun SemanticsNodeInteractionsProvider.text(text: String, substring: Boolean = false): SemanticsNodeInteraction = onNodeWithText(text, substring = substring)
 
 /**
  * Opens the sign-in form. Everything is public, so the app opens on the tournament list and the Sign in button of the
@@ -193,12 +191,10 @@ fun ComposeUiTest.signIn(email: String, password: String = E2eAccounts.PASSWORD)
 
 /** Presses a button by its text. A screen title can have the same text, so only nodes that click are used. */
 /** A node whose click action has this label, such as the profile button with the photo and the name. */
-private fun hasClickLabel(label: String): SemanticsMatcher =
-    SemanticsMatcher("OnClick label = '$label'") { it.config.getOrNull(SemanticsActions.OnClick)?.label == label }
+private fun hasClickLabel(label: String): SemanticsMatcher = SemanticsMatcher("OnClick label = '$label'") { it.config.getOrNull(SemanticsActions.OnClick)?.label == label }
 
 /** A node that shows the text, or describes itself with it, or has it as the label of its click action. */
-private fun hasLabel(text: String, substring: Boolean = false): SemanticsMatcher =
-    hasText(text, substring = substring) or hasContentDescription(text, substring = substring) or hasClickLabel(text)
+private fun hasLabel(text: String, substring: Boolean = false): SemanticsMatcher = hasText(text, substring = substring) or hasContentDescription(text, substring = substring) or hasClickLabel(text)
 
 fun ComposeUiTest.clickButton(text: String) {
     val label = hasLabel(text)
@@ -301,8 +297,7 @@ fun SemanticsNodeInteraction.performTextInputText(text: String) = performTextInp
 fun SemanticsNodeInteraction.performTextReplacementText(text: String) = performTextReplacement(text)
 
 /** True when a text is on the screen now. */
-fun ComposeUiTest.isOnScreen(text: String): Boolean =
-    onAllNodes(hasText(text) or hasContentDescription(text)).fetchSemanticsNodes().isNotEmpty()
+fun ComposeUiTest.isOnScreen(text: String): Boolean = onAllNodes(hasText(text) or hasContentDescription(text)).fetchSemanticsNodes().isNotEmpty()
 
 /** Waits until one of the texts is on the screen. */
 @OptIn(ExperimentalTestApi::class)

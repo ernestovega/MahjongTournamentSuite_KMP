@@ -2,7 +2,6 @@
 
 package com.etologic.mahjongtournamentsuite.player.e2e
 
-import com.etologic.mahjongtournamentsuite.e2e.E2ePlatform
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasClickAction
@@ -10,6 +9,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
+import com.etologic.mahjongtournamentsuite.e2e.E2ePlatform
 import kotlin.test.Test
 
 /** The buttons of the app ignore a second press within 500 ms. See DebouncedButtons.kt. */
